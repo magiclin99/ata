@@ -102,6 +102,7 @@ final class AppModel: ObservableObject {
     /// Opened straight from the disk image or from a quarantined download (macOS runs it from a temporary,
     /// read-only place): ATA doesn't start receiving, it asks to be moved to Applications first.
     @Published private(set) var needsMoveToApplications = false
+    private(set) var runningFromDiskImage = false
     private(set) var originalAppURL: URL?
 
     private let options = LaunchOptions.parse()
@@ -137,9 +138,11 @@ final class AppModel: ObservableObject {
         if let lf = options.logFile { Log.setFile(lf) }
         let info = Bundle.main.infoDictionary
         if let problem = InstallLocation.problem() {
-            Log.info("running from \(problem) (\(Bundle.main.bundlePath)); asking to move ATA to Applications first")
+            Log.info("running from \(problem.rawValue) (\(Bundle.main.bundlePath)); asking to move ATA to Applications first")
             needsMoveToApplications = true
+            runningFromDiskImage = problem == .diskImage
             originalAppURL = InstallLocation.originalURL()
+            Log.info("the downloaded copy is at \(originalAppURL?.path ?? "unknown")")
             DispatchQueue.main.async { MainWindowController.shared.show() }
             return
         }

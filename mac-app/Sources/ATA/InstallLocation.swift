@@ -4,11 +4,16 @@ import Foundation
 /// Downloads; macOS then runs it from a read-only disk image or a temporary "translocated" copy, which disappears
 /// when the disk image is ejected or the Mac restarts, so pairing and "open at login" would break.
 enum InstallLocation {
-    /// nil when the location is fine; otherwise a short reason for the log.
-    static func problem(bundleURL: URL = Bundle.main.bundleURL) -> String? {
-        if bundleURL.path.contains("/AppTranslocation/") { return "a translocated copy (opened from a download)" }
+    enum Problem: String {
+        case translocated = "a translocated copy (opened from a download)"
+        case diskImage = "a read-only volume (the disk image)"
+    }
+
+    /// nil when the location is fine.
+    static func problem(bundleURL: URL = Bundle.main.bundleURL) -> Problem? {
+        if bundleURL.path.contains("/AppTranslocation/") { return .translocated }
         let ro = (try? bundleURL.resourceValues(forKeys: [.volumeIsReadOnlyKey]))?.volumeIsReadOnly ?? false
-        if ro { return "a read-only volume (the disk image)" }
+        if ro { return .diskImage }
         return nil
     }
 

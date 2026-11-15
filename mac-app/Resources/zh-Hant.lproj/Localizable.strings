@@ -26,7 +26,7 @@
 "Pairing QR code" = "配對用的 QR code";
 "Waiting for your phone… This QR code works for %lld:%@ more." = "等待手機掃描…這個 QR code 還可以用 %lld:%@。";
 "Paired with “%@”" = "已和「%@」配對";
-"Now share photos or files on your phone and choose ATA. They'll arrive on this Mac." = "現在在手機上分享照片或檔案，選 ATA，就會傳到這台 Mac。";
+"Now, in Photos or any app on your phone, tap Share and choose “Send to Mac”. Your files arrive on this Mac." = "現在在手機的相簿或任何 app 按「分享」，選「傳到 Mac」，檔案就會傳到這台 Mac。";
 "If your Mac asks whether ATA may accept incoming network connections, click “Allow” so your phone can deliver files." = "如果 Mac 詢問是否讓 ATA「接受傳入的網路連線」，請按「允許」，手機才能把檔案送進來。";
 "Pairing didn't work" = "配對沒有成功";
 "This QR code no longer works" = "這個 QR code 已經失效";
@@ -44,6 +44,7 @@
 "Welcome to ATA" = "歡迎使用 ATA";
 "Move ATA to Applications first" = "請先把 ATA 移到「應用程式」";
 "Drag ATA into your Applications folder, then open it from there." = "把 ATA 拖到「應用程式」檔案夾，再從那裡打開。";
+"In the ATA download window, drag ATA onto the Applications folder, then open ATA from Applications." = "在 ATA 的下載視窗裡，把 ATA 拖到「應用程式」檔案夾，再從「應用程式」打開 ATA。";
 "Show ATA in Finder" = "在 Finder 中顯示 ATA";
 "ATA lets you send photos and files from your Android phone to this Mac." = "ATA 讓你把 Android 手機上的照片和檔案傳到這台 Mac。";
 "ATA keeps running in the background, even after you close this window. To see this window again, open ATA again, or click its icon in the Dock." = "關掉這個視窗後，ATA 會繼續在背景執行。想再看到這個視窗，再打開一次 ATA，或按 Dock 上的 ATA 圖像就可以。";
@@ -54,7 +55,7 @@
 "Your Mac's firewall is blocking your phone, so sending is slower." = "Mac 的防火牆擋住了手機，所以傳得比較慢。";
 "How to Fix…" = "怎麼修正…";
 "Recently Received" = "最近收到的檔案";
-"Nothing received yet. On your phone, share a photo or file and choose ATA." = "還沒有收到檔案。在手機上分享照片或檔案，選 ATA 就可以。";
+"Nothing received yet. On your phone, tap Share in any app and choose “Send to Mac”." = "還沒有收到檔案。在手機上任何 app 按「分享」，選「傳到 Mac」就可以。";
 "Show in Finder" = "在 Finder 中顯示";
 "Files are saved in “%@”." = "檔案會存在「%@」。";
 "Clear List" = "清除列表";

@@ -53,7 +53,13 @@ struct MainView: View {
         VStack(spacing: 14) {
             Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 72, height: 72)
             Text("Move ATA to Applications first").font(.title2.weight(.semibold))
-            Text("Drag ATA into your Applications folder, then open it from there.")
+            Group {
+                if model.runningFromDiskImage {
+                    Text("In the ATA download window, drag ATA onto the Applications folder, then open ATA from Applications.")
+                } else {
+                    Text("Drag ATA into your Applications folder, then open it from there.")
+                }
+            }
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
@@ -102,7 +108,7 @@ struct MainView: View {
             if !model.recentFiles.isEmpty || !model.devices.isEmpty {
                 Section {
                     if model.recentFiles.isEmpty {
-                        Text("Nothing received yet. On your phone, share a photo or file and choose ATA.")
+                        Text("Nothing received yet. On your phone, tap Share in any app and choose “Send to Mac”.")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(model.recentFiles, id: \.self) { url in

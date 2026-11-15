@@ -116,7 +116,7 @@ struct PairedNextSteps: View {
     var body: some View {
         VStack(spacing: 10) {
             Text("Paired with “\(name)”").font(.headline)
-            Text("Now share photos or files on your phone and choose ATA. They'll arrive on this Mac.")
+            Text("Now, in Photos or any app on your phone, tap Share and choose “Send to Mac”. Your files arrive on this Mac.")
                 .font(.callout).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             if model.openAtLoginTurnedOnForYou {

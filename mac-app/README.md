@@ -58,7 +58,7 @@ settings: delete `~/Library/Application Support/io.github.magiclin99.ata.mac` an
    - If the macOS firewall is on, ATA explains the "accept incoming network connections" question and then makes
      macOS ask it right away (it listens for a moment), instead of in the middle of the first transfer. On
      macOS 15 and later it does the same for the "find devices on your local network" question (see Permissions).
-2. On your phone, share photos or files and choose ATA. They arrive in your Downloads folder (you can change that in
+2. On your phone, tap Share in Photos or any app and choose **Send to Mac**. Files arrive in your Downloads folder (you can change that in
    the window). A notification says where they were saved; click it to see the file in Finder. The window also lists
    the latest files with a **Show in Finder** button.
 
