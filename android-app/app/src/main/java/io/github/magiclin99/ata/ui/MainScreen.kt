@@ -296,9 +296,8 @@ private fun PairingDialog(s: PairState, onClose: () -> Unit, onCancel: () -> Uni
     )
 }
 
-/** Public pages on the project site. The help page is a placeholder until the site has one. */
-private const val PRIVACY_URL = "https://magiclin99.github.io/ata/privacy"
-private const val HELP_URL = "https://magiclin99.github.io/ata/support"
+/** Public pages on the project site. The help page URL is a per-language string resource (help_url). */
+private const val PRIVACY_URL = "https://magiclin99.github.io/ata/privacy/" // one bilingual page
 
 /**
  * Reserved voluntary-donation entry: shown only when BuildConfig.SUPPORT_URL is non-empty AND
@@ -325,7 +324,8 @@ private fun AboutLinks(onLicenses: () -> Unit) {
         )
         TextButton(onClick = onLicenses) { Text(stringResource(R.string.licenses)) }
         TextButton(onClick = { open(PRIVACY_URL) }) { Text(stringResource(R.string.privacy_policy)) }
-        TextButton(onClick = { open(HELP_URL) }) { Text(stringResource(R.string.support)) }
+        val helpUrl = stringResource(R.string.help_url) // per language: /zh-tw/support/ or /support/
+        TextButton(onClick = { open(helpUrl) }) { Text(stringResource(R.string.support)) }
         donationUrl?.let { url -> TextButton(onClick = { open(url) }) { Text(stringResource(R.string.support_ata)) } }
     }
 }

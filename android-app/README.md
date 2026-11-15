@@ -110,4 +110,4 @@ happened plus one thing to try (`Texts.kt`, `res/values*/strings.xml`). Specific
   non-empty **and** the flag is true; it just opens the URL in the browser. Keep the flag false for Google Play
   builds: Google Play's Payments policy restricts in-app links to outside payment pages, so it has to be re-checked
   before the row is ever enabled there. A donation never unlocks anything.
-- The About section's "Help and feedback" link (`HELP_URL` in `MainScreen.kt`) is a separate, ordinary support page.
+- The About section's "Help and feedback" link (`help_url` string, per language) opens the site's Help page.

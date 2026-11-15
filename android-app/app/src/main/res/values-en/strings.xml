@@ -7,6 +7,7 @@
     <string name="empty_install">Is ATA installed on your Mac? If not, send yourself the download link and open it on the Mac.</string>
     <string name="empty_pair">Once it\'s installed, tap \"Pair with a Mac\" and scan the QR code that ATA shows on the Mac (don\'t see one? Click \"Pair a Phone…\" in ATA on the Mac).</string>
     <string name="send_install_link">Send the download link to myself</string>
+    <string name="help_url">https://magiclin99.github.io/ata/support/</string>
     <string name="install_url">https://magiclin99.github.io/ata/install/</string>
     <string name="install_share_text">Open this link on your Mac to download ATA: %1$s</string>
     <string name="paired_on">Paired %1$s</string>
