@@ -74,17 +74,12 @@ ditto "$APP" "$DMGROOT/ATA.app"
 ln -s /Applications "$DMGROOT/Applications"
 hdiutil create -quiet -volname "ATA $VERSION" -srcfolder "$DMGROOT" -fs HFS+ -format UDZO -imagekey zlib-level=9 -ov "$DIST/$DMG"
 # Sign the disk image too (same identity), so its origin can be checked with `codesign -dv`.
-(
-    SEARCH_BEFORE=()
-    while IFS= read -r l; do l="${l#"${l%%[![:space:]]*}"}"; l="${l%\"}"; SEARCH_BEFORE+=("${l#\"}"); done \
-        < <(security list-keychains -d user)
-    trap 'security list-keychains -d user -s "${SEARCH_BEFORE[@]}"; security lock-keychain "$ATA_SIGN_KEYCHAIN"' EXIT
-    if [ -n "${ATA_SIGN_KEYCHAIN_PASSWORD_FILE:-}" ]; then
-        printf 'unlock-keychain -p %s %s\n' "$(cat "$ATA_SIGN_KEYCHAIN_PASSWORD_FILE")" "$ATA_SIGN_KEYCHAIN" | security -i >/dev/null
-    fi
-    security list-keychains -d user -s "${SEARCH_BEFORE[@]}" "$ATA_SIGN_KEYCHAIN"
-    codesign --force --sign "$CERT_SHA1" --keychain "$ATA_SIGN_KEYCHAIN" --timestamp=none --identifier "$BUNDLE_ID.dmg" "$DIST/$DMG"
-)
+KC="$ATA_SIGN_KEYCHAIN"
+KC_PASSWORD_FILE="${ATA_SIGN_KEYCHAIN_PASSWORD_FILE:-}"
+. "$ROOT/scripts/signing-keychain.sh"
+signing_keychain_open
+codesign --force --sign "$CERT_SHA1" --keychain "$KC" --timestamp=none --identifier "$BUNDLE_ID.dmg" "$DIST/$DMG"
+signing_keychain_close
 
 cp "$ROOT/install.sh" "$DIST/install.sh"
 (
@@ -103,11 +98,7 @@ hdiutil detach -quiet "$MNT"; trap - EXIT
 echo "dmg mounts; ATA.app inside verifies"
 
 echo "== signing keychain"
-# A locked keychain refuses show-keychain-info (no prompt in a script); success would mean it is still unlocked.
-if security show-keychain-info "$ATA_SIGN_KEYCHAIN" >/dev/null 2>&1; then
-    echo "signing keychain is still unlocked" >&2; exit 1
-fi
-echo "signing keychain is locked again"
+echo "signing keychain: $(swift "$ROOT/scripts/keychain-state.swift" "$ATA_SIGN_KEYCHAIN" 2>/dev/null), not on the search list"
 echo "== done"
 ls -l "$DIST"
 cat "$DIST/SHA256SUMS.txt"

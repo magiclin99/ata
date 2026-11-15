@@ -10,8 +10,9 @@
 #                            codesign only finds identities in keychains on the user search list, so the keychain is
 #                            added to the list for the duration of the signing step and the exact previous list is
 #                            restored on exit. The login keychain is not touched.
-#   ATA_SIGN_KEYCHAIN_PASSWORD_FILE   if set, the keychain is unlocked with the password in this file (via stdin,
-#                            never on a command line). The keychain is locked again right after signing.
+#   ATA_SIGN_KEYCHAIN_PASSWORD_FILE   required with ATA_SIGN_KEYCHAIN: its password (read via stdin, never on a
+#                            command line). The keychain is unlocked only around the codesign calls and locked again
+#                            right after, so macOS never needs to ask for its password.
 #   ATA_APP_OUT              output path of the .app (default build/ATA.app)
 #   ATA_UNIVERSAL=1          build arm64 + x86_64 (what releases ship)
 #
@@ -58,28 +59,22 @@ SIGN_FLAGS=(--force --sign "$SIGN_ID")
 if [ "$SIGN_ID" != "-" ]; then
     # Apple's timestamp service only serves Apple-issued certificates.
     SIGN_FLAGS+=(--timestamp=none)
-    if [ -n "${ATA_SIGN_KEYCHAIN:-}" ]; then
-        KC="$ATA_SIGN_KEYCHAIN"
-        [ -f "$KC" ] || { echo "ATA_SIGN_KEYCHAIN: no such keychain: $KC" >&2; exit 1; }
-        SIGN_FLAGS+=(--keychain "$KC")
-        if [ -n "${ATA_SIGN_KEYCHAIN_PASSWORD_FILE:-}" ]; then
-            # `security -i` reads the command from stdin: the password never shows up in `ps`.
-            printf 'unlock-keychain -p %s %s\n' "$(cat "$ATA_SIGN_KEYCHAIN_PASSWORD_FILE")" "$KC" | security -i >/dev/null
-        fi
-        SEARCH_BEFORE=()
-        while IFS= read -r l; do l="${l#"${l%%[![:space:]]*}"}"; l="${l%\"}"; SEARCH_BEFORE+=("${l#\"}"); done \
-            < <(security list-keychains -d user)
-        # Put the search list back and lock the signing keychain again, also when signing fails.
-        restore_search_list() { security list-keychains -d user -s "${SEARCH_BEFORE[@]}"; security lock-keychain "$KC"; }
-        trap restore_search_list EXIT
-        security list-keychains -d user -s "${SEARCH_BEFORE[@]}" "$KC"
-    fi
 fi
-
-# Inside-out signing.
-codesign "${SIGN_FLAGS[@]}" "$APP/Contents/Frameworks/WebRTC.framework"
-codesign "${SIGN_FLAGS[@]}" --identifier "$BUNDLE_ID" "$APP"
-[ "$(type -t restore_search_list)" = function ] && { restore_search_list; trap - EXIT; }
+if [ "$SIGN_ID" != "-" ] && [ -n "${ATA_SIGN_KEYCHAIN:-}" ]; then
+    # Unlock → sign → restore search list → lock, in one guarded window (see scripts/signing-keychain.sh).
+    KC="$ATA_SIGN_KEYCHAIN"
+    KC_PASSWORD_FILE="${ATA_SIGN_KEYCHAIN_PASSWORD_FILE:-}"
+    . "$ROOT/scripts/signing-keychain.sh"
+    signing_keychain_open
+    SIGN_FLAGS+=(--keychain "$KC")
+    codesign "${SIGN_FLAGS[@]}" "$APP/Contents/Frameworks/WebRTC.framework"
+    codesign "${SIGN_FLAGS[@]}" --identifier "$BUNDLE_ID" "$APP"
+    signing_keychain_close
+else
+    # Inside-out signing.
+    codesign "${SIGN_FLAGS[@]}" "$APP/Contents/Frameworks/WebRTC.framework"
+    codesign "${SIGN_FLAGS[@]}" --identifier "$BUNDLE_ID" "$APP"
+fi
 codesign --verify --deep --strict "$APP"
 
 [ "$SIGN_ID" = "-" ] && SIGNED_WITH="ad-hoc" || SIGNED_WITH="$SIGN_ID"
