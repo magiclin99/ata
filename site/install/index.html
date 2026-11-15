@@ -27,24 +27,22 @@
 <section class="hero">
   <h1>Install ATA on your Mac</h1>
   <p class="lede">It takes about two minutes. The first time you open ATA, your Mac shows a security warning. That's expected,
-    and this page shows exactly what to click.</p>
+    and step 3 shows exactly what to click.</p>
   <p class="note-line">You need macOS 14 or later. Not sure? Click the Apple menu in the top-left corner → <strong>About This Mac</strong>.</p>
 </section>
 
 <section aria-labelledby="s1">
   <h2 id="s1">1. Download</h2>
-  <p><a class="btn primary big" href="https://github.com/magiclin99/ata/releases/download/v1.0.2/ATA-1.0.2.dmg">Download ATA for Mac</a></p>
+  <p><a class="btn primary big" href="https://github.com/magiclin99/ata/releases/latest/download/ATA.dmg">Download ATA for Mac</a></p>
   <p class="note-line">Free. Works on any Mac with macOS 14 or later.</p>
 </section>
 
 <section aria-labelledby="s2">
-  <h2 id="s2">2. Move ATA into Applications</h2>
-  <ol class="big-steps">
-    <li>Open the file you just downloaded (<strong>ATA-1.0.2.dmg</strong>, in your Downloads folder).</li>
-    <li>A small window opens with the ATA icon and an <strong>Applications</strong> folder. <strong>Drag ATA onto Applications.</strong>
-      <figure class="shot"><img src="../assets/img/dmg-window.png" width="350" height="145" alt="The download window: an Applications folder on the left and the ATA icon on the right." style="max-width:350px"><figcaption>Real screenshot. Drag the ATA icon onto the Applications folder.</figcaption></figure></li>
-  </ol>
-  <div class="tip">Don't open ATA from this window or from your Downloads folder. It may seem to work, but it can't start by itself when your Mac starts, and your Mac may keep asking the same questions. Drag it into Applications first, then open it from there.</div>
+  <h2 id="s2">2. Drag ATA into Applications</h2>
+  <p>Open the <strong>ATA</strong> file you just downloaded (in your Downloads folder). In the window that opens, drag ATA onto the
+    <strong>Applications</strong> folder, following the arrow.</p>
+  <figure class="shot"><img src="../assets/img/dmg-window.png" width="800" height="525" alt="The download window: the ATA icon on the left, an arrow, and the Applications folder on the right, with the words “Drag ATA to Applications”." style="max-width:400px"><figcaption>Real screenshot.</figcaption></figure>
+  <p class="note-line">If you open ATA straight from this window, it asks you to move it to Applications first.</p>
 </section>
 
 <section aria-labelledby="s3">
@@ -67,28 +65,34 @@
     <li>Open <strong>System Settings</strong> → <strong>Privacy &amp; Security</strong>, and scroll down. Next to the message that ATA was blocked, click <strong>Open Anyway</strong>.</li>
     <li>Click <strong>Open Anyway</strong> again, and enter your Mac password (or use Touch ID).</li>
   </ol>
-  <p class="note-line">We checked the macOS 14 screens on a real Mac. The macOS 15 button names come from Apple's own instructions. If the
+  <p class="note-line">We checked the macOS 14 screens on a real Mac. The macOS 15 steps follow Apple's own instructions and
+    haven't been checked on a real Mac yet; if you see something different, please <a href="../support/">tell us</a>. If the
     Open Anyway button is missing, double-click ATA once more and look again (it only shows for about an hour).</p>
 </section>
 
 <section aria-labelledby="s4">
-  <h2 id="s4">4. Allow, then pair your phone</h2>
+  <h2 id="s4">4. Pair your phone</h2>
+  <p>ATA opens with a QR code already showing.</p>
+  <figure class="shot"><img src="../assets/img/welcome-en.png" width="640" height="954" alt="ATA's first window: a note about Bluetooth, “Welcome to ATA”, a large QR code to scan with ATA on your phone, and a small QR code under “No ATA on your phone yet?”." style="max-width:320px"><figcaption>Real screenshot. The pairing QR code is blurred here; yours will be sharp.</figcaption></figure>
   <ol class="big-steps">
-    <li>When your Mac asks if ATA may use <strong>Bluetooth</strong>, click <strong>Allow</strong>. ATA uses it so your phone can find this Mac.</li>
-    <li>If your Mac asks whether ATA may <strong>accept incoming network connections</strong>, or find devices on your network, click <strong>Allow</strong>. That's what makes sending fast.</li>
-    <li>In the ATA window, click <strong>Pair New Device…</strong> and a QR code appears.</li>
-    <li>On your phone, open ATA, tap <strong>Pair with a Mac</strong>, allow what it asks, and point the camera at the QR code.</li>
+    <li>When your Mac asks if ATA may use <strong>Bluetooth</strong>, click <strong>Allow</strong>.</li>
+    <li>On your phone, open ATA, tap <strong>Pair with a Mac</strong>, allow what it asks, and scan the big QR code.
+      No ATA on your phone yet? Scan the small QR code with your phone's camera to get it.</li>
+    <li>If your Mac then asks whether ATA may <strong>accept incoming network connections</strong>, click <strong>Allow</strong>.
+      It only asks if your Mac's firewall is on.
+      <figure class="shot"><img src="../assets/img/firewall-question.png" width="400" height="406" alt="macOS message: Do you want the application “ATA.app” to accept incoming network connections? Buttons: Deny, Allow." style="max-width:220px"><figcaption>Real screenshot, macOS 14.</figcaption></figure>
+      On macOS 15 or later it may also ask whether ATA may <strong>find devices on your local network</strong>. Click
+      <strong>Allow</strong> there too. (We haven't checked this on a real Mac yet.)</li>
   </ol>
   <div class="tip">Done! Now try it: on your phone, open a photo, tap <strong>Share</strong> → <strong>Send to Mac</strong>. The photo appears in your Mac's <strong>Downloads</strong> folder.
-    (The first time, ATA may be hidden under "More" in the share menu.)</div>
+    (The first time, Send to Mac may be under "More" in the share menu.)</div>
 </section>
 
 <section aria-labelledby="keep">
   <h2 id="keep">Keep ATA ready</h2>
   <ul class="tight">
-    <li>ATA has to be open on the Mac to receive files. Closing its window is fine: it keeps running quietly.</li>
-    <li>In the ATA window, turn on <strong>Launch at Login</strong> so it's ready after you restart your Mac.</li>
-    <li>To bring the window back, open ATA again from Applications.</li>
+    <li>When you pair your first phone, ATA turns on <strong>Open at Login</strong>, so it's ready after you restart your Mac. You can switch it off in the ATA window.</li>
+    <li>Closing the ATA window is fine: ATA keeps running. To see the window again, click ATA in the Dock.</li>
   </ul>
 </section>
 
@@ -108,7 +112,7 @@
 <section aria-labelledby="update">
   <h2 id="update">Updating and removing</h2>
   <ul class="tight">
-    <li><strong>Update:</strong> in ATA, click <strong>Check for Updates…</strong>, download the new version, and drag it into Applications again (choose <strong>Replace</strong>). ATA doesn't update by itself.</li>
+    <li><strong>Update:</strong> ATA doesn't update by itself. Download it again with the button in step 1, drag it into Applications, and choose <strong>Replace</strong>. Then allow it once more, as in step 3. Your paired phones and settings are kept. (Or run the Terminal command above again.)</li>
     <li><strong>Remove:</strong> in the ATA window, click <strong>Quit ATA</strong>, then drag ATA from Applications to the Trash.</li>
   </ul>
 </section>

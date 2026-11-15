@@ -26,29 +26,26 @@
 <main id="main" class="wrap">
 <section class="hero">
   <h1>在 Mac 上安裝 ATA</h1>
-  <p class="lede">大約兩分鐘。第一次打開 ATA 時，Mac 會跳出一個安全提醒，這是正常的，下面會告訴你每一步該按哪裡。</p>
+  <p class="lede">大約兩分鐘。第一次打開 ATA 時，Mac 會跳出一個安全提醒，這是正常的，第 3 步會告訴你該按哪裡。</p>
   <p class="note-line">需要 macOS 14 以上。不確定的話：點螢幕左上角的蘋果選單 →「<strong>關於這台 Mac</strong>」就能看到。</p>
 </section>
 
 <section aria-labelledby="s1">
   <h2 id="s1">1. 下載</h2>
-  <p><a class="btn primary big" href="https://github.com/magiclin99/ata/releases/download/v1.0.2/ATA-1.0.2.dmg">下載 Mac 版 ATA</a></p>
+  <p><a class="btn primary big" href="https://github.com/magiclin99/ata/releases/latest/download/ATA.dmg">下載 Mac 版 ATA</a></p>
   <p class="note-line">免費。macOS 14 以上的 Mac 都能用。</p>
 </section>
 
 <section aria-labelledby="s2">
-  <h2 id="s2">2. 把 ATA 放進「應用程式」</h2>
-  <ol class="big-steps">
-    <li>打開剛下載的檔案（「下載項目」裡的 <strong>ATA-1.0.2.dmg</strong>）。</li>
-    <li>會出現一個小視窗，裡面有 ATA 圖示和「<strong>應用程式</strong>」檔案夾。<strong>把 ATA 拖到「應用程式」上。</strong>
-      <figure class="shot"><img src="../../assets/img/dmg-window.png" width="350" height="145" alt="下載的視窗：左邊是應用程式檔案夾，右邊是 ATA 圖示。" style="max-width:350px"><figcaption>實機截圖（英文介面，「Applications」就是「應用程式」）。把右邊的 ATA 拖到左邊的檔案夾上。</figcaption></figure></li>
-  </ol>
-  <div class="tip">請不要直接在這個視窗或「下載項目」裡打開 ATA。看起來好像能用，但它沒辦法在開機時自動打開，Mac 也可能一直重複問同樣的問題。一定要先拖到「應用程式」，再從那裡打開。</div>
+  <h2 id="s2">2. 把 ATA 拖到「應用程式」</h2>
+  <p>打開剛下載的 <strong>ATA</strong> 檔案（在「下載項目」裡）。在跳出來的視窗裡，照著箭頭，把 ATA 拖到「<strong>應用程式</strong>」檔案夾上。</p>
+  <figure class="shot"><img src="../../assets/img/dmg-window.png" width="800" height="525" alt="下載的視窗：左邊是 ATA 圖示，中間一個箭頭，右邊是應用程式檔案夾，下面寫著「把 ATA 拖到「應用程式」」。" style="max-width:400px"><figcaption>實機截圖（英文介面，「Applications」就是「應用程式」）。</figcaption></figure>
+  <p class="note-line">如果直接在這個視窗裡打開 ATA，它會請你先把 ATA 移到「應用程式」。</p>
 </section>
 
 <section aria-labelledby="s3">
   <h2 id="s3">3. 打開 ATA（第一次要允許一下）</h2>
-  <p>打開「<strong>應用程式</strong>」檔案夾，雙擊 <strong>ATA</strong>。Mac 會說它無法檢查 ATA。這是因為 ATA 不是從 App Store 下載的，也沒有付費送 Apple 檢查。只要允許一次就好，請照你的 macOS 版本操作：</p>
+  <p>打開「<strong>應用程式</strong>」檔案夾，按兩下 <strong>ATA</strong>。Mac 會說它無法檢查 ATA。這是因為 ATA 不是從 App Store 下載的，也沒有付費送 Apple 檢查。只要允許一次就好，請照你的 macOS 版本操作：</p>
 
   <h3><span class="ver">macOS 14</span>Sonoma</h3>
   <ol class="big-steps">
@@ -64,26 +61,28 @@
     <li>打開「<strong>系統設定</strong>」→「<strong>隱私權與安全性</strong>」，往下捲，在顯示 ATA 已被阻擋的訊息旁邊，按「<strong>強制打開</strong>」。</li>
     <li>再按一次「<strong>強制打開</strong>」，輸入 Mac 的登入密碼（或用 Touch ID）。</li>
   </ol>
-  <p class="note-line">macOS 14 的畫面是我們在實機上確認的；macOS 15 和中文介面的按鈕名稱依照 Apple 的官方說明，如果你看到的字不一樣，請<a href="../support/">告訴我們</a>。找不到「強制打開」的話，再雙擊一次 ATA 後回來看（這個按鈕只會出現大約一小時）。</p>
+  <p class="note-line">macOS 14 的畫面是我們在實機上確認的；macOS 15 的步驟和中文介面的按鈕名稱依照 Apple 的官方說明，還沒有在實機上確認過。如果你看到的字不一樣，請<a href="../support/">告訴我們</a>。找不到「強制打開」的話，再按兩下 ATA，然後回來看（這個按鈕只會出現大約一小時）。</p>
 </section>
 
 <section aria-labelledby="s4">
-  <h2 id="s4">4. 允許，然後和手機配對</h2>
+  <h2 id="s4">4. 和手機配對</h2>
+  <p>ATA 打開時，畫面上就已經有一個 QR code。</p>
+  <figure class="shot"><img src="../../assets/img/welcome-zh-tw.png" width="640" height="933" alt="ATA 第一次打開的視窗：上面是藍牙的說明，接著是「歡迎使用 ATA」、一個要用手機上的 ATA 掃描的大 QR code，下面「手機還沒有 ATA？」旁邊有一個小 QR code。" style="max-width:320px"><figcaption>實機截圖。配對用的 QR code 在這裡刻意模糊處理，你的畫面上會是清楚的。</figcaption></figure>
   <ol class="big-steps">
-    <li>Mac 詢問 ATA 能不能使用<strong>藍牙</strong>時，按「<strong>允許</strong>」。ATA 要用藍牙讓手機找到這台 Mac。</li>
-    <li>如果 Mac 詢問是否允許 ATA「<strong>接受傳入的網路連線</strong>」或尋找網路上的裝置，也按「<strong>允許</strong>」，這樣傳起來才快。</li>
-    <li>在 ATA 視窗裡按「<strong>配對新裝置…</strong>」，畫面會出現一個 QR code。</li>
-    <li>在手機上打開 ATA，點「<strong>與 Mac 配對</strong>」，允許它詢問的權限，再把相機對準 QR code。</li>
+    <li>Mac 詢問 ATA 能不能使用<strong>藍牙</strong>時，按「<strong>允許</strong>」。</li>
+    <li>在手機上打開 ATA，點「<strong>與 Mac 配對</strong>」，允許它詢問的權限，再掃描大的 QR code。手機還沒有 ATA 的話，用手機相機掃小的 QR code 就能下載。</li>
+    <li>接著如果 Mac 詢問是否讓 ATA「<strong>接受傳入的網路連線</strong>」，按「<strong>允許</strong>」。只有 Mac 的防火牆開著時才會問。
+      <figure class="shot"><img src="../../assets/img/firewall-question.png" width="400" height="406" alt="macOS 訊息（英文介面）：詢問是否讓「ATA.app」接受傳入的網路連線。按鈕：Deny（拒絕）、Allow（允許）。" style="max-width:220px"><figcaption>macOS 14 實機截圖（英文介面，右邊的「Allow」就是「允許」）。</figcaption></figure>
+      macOS 15 以上可能還會詢問是否讓 ATA「<strong>尋找區域網路上的裝置</strong>」，一樣按「<strong>允許</strong>」。（這一步我們還沒有在實機上確認過。）</li>
   </ol>
-  <div class="tip">完成了！試試看：在手機上打開一張照片，按「<strong>分享</strong>」→「<strong>傳到 Mac</strong>」，照片就會出現在 Mac 的「<strong>下載項目</strong>」裡。（第一次可能要在分享選單的「更多」裡才找得到 ATA。）</div>
+  <div class="tip">完成了！試試看：在手機上打開一張照片，按「<strong>分享</strong>」→「<strong>傳到 Mac</strong>」，照片就會出現在 Mac 的「<strong>下載項目</strong>」裡。（第一次可能要在分享選單的「更多」裡才找得到「傳到 Mac」。）</div>
 </section>
 
 <section aria-labelledby="keep">
   <h2 id="keep">讓 ATA 隨時準備好</h2>
   <ul class="tight">
-    <li>Mac 上的 ATA 要開著才收得到檔案。關掉視窗沒關係，它會在背景繼續執行。</li>
-    <li>在 ATA 視窗裡打開「<strong>登入時啟動</strong>」，重新開機後就不用再手動打開。</li>
-    <li>想叫回視窗，從「應用程式」再打開一次 ATA 就好。</li>
+    <li>配對第一支手機時，ATA 會幫你打開「<strong>登入時打開</strong>」，Mac 重新開機後就會自己準備好。不想要的話，可以在 ATA 視窗裡關掉。</li>
+    <li>關掉 ATA 視窗沒關係，它會繼續在背景執行。想再看到視窗，按 Dock 上的 ATA 圖像就可以。</li>
   </ul>
 </section>
 
@@ -103,7 +102,7 @@
 <section aria-labelledby="update">
   <h2 id="update">更新與移除</h2>
   <ul class="tight">
-    <li><strong>更新：</strong>在 ATA 裡按「<strong>檢查更新…</strong>」，下載新版，再拖到「應用程式」一次（選「<strong>取代</strong>」）。ATA 不會自己更新。</li>
+    <li><strong>更新：</strong>ATA 不會自己更新。用第 1 步的按鈕再下載一次，拖到「應用程式」，選「<strong>取代</strong>」，然後照第 3 步再允許一次。已配對的手機和設定都會保留。（也可以再執行一次上面的終端機指令。）</li>
     <li><strong>移除：</strong>在 ATA 視窗按「<strong>結束 ATA</strong>」，再把「應用程式」裡的 ATA 拖到垃圾桶。</li>
   </ul>
 </section>

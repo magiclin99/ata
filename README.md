@@ -28,9 +28,10 @@ purchases, no limits, no ads) and collect nothing. You can read the code to chec
 curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh
 ```
 
-The latest release is **ATA 1.0.2 for Mac** ([release notes](https://github.com/magiclin99/ata/releases/latest)).
+The latest release is **ATA 1.0.3 for Mac** ([release notes](https://github.com/magiclin99/ata/releases/latest)).
 The command installs whatever the latest release is, verifies its checksum and its signing certificate, and is also
-how you update. Or download the `.dmg` from [Releases](https://github.com/magiclin99/ata/releases/latest). The app
+how you update. Or [download `ATA.dmg`](https://github.com/magiclin99/ata/releases/latest/download/ATA.dmg) (always
+the latest release). The app
 isn't notarized, so the first launch needs one **Open Anyway** step. See the
 [install guide](https://magiclin99.github.io/ata/install/). macOS 14 or later, Apple silicon and Intel.
 

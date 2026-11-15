@@ -70,7 +70,7 @@
   <details><summary>It says it couldn't reach my Mac</summary>
     <p>Connect your phone to the <strong>same Wi-Fi</strong> as your Mac and try again. Some office, school, hotel, and public Wi-Fi networks block this kind of connection when the two devices are on different networks.</p></details>
   <details id="firewall" open><summary>Sending is slow, or ATA says the firewall is blocking it</summary>
-    <p>Your Mac's firewall may be stopping your phone from connecting directly. Then sending still works, but slowly. To fix it:</p>
+    <p>Your Mac's firewall may be stopping your phone from connecting directly, usually because <strong>Deny</strong> was clicked when your Mac asked about ATA. Sending still works, but slowly. To fix it:</p>
     <ol>
       <li>Open <strong>System Settings → Network → Firewall → Options…</strong></li>
       <li>Find <strong>ATA</strong> and set it to <strong>Allow incoming connections</strong>. If ATA appears more than once, select the extra ones and click <strong>−</strong> so only one is left.</li>
@@ -78,11 +78,15 @@
     </ol>
     <p>If your Mac asks whether ATA may "accept incoming network connections", click <strong>Allow</strong>. You don't need to turn the firewall off.</p></details>
   <details><summary>It worked yesterday, but not after I restarted my Mac</summary>
-    <p>ATA has to be open on the Mac. Open it from Applications, and turn on <strong>Launch at Login</strong> in the ATA window so it starts by itself next time.</p></details>
+    <p>ATA has to be running on the Mac. It turns on <strong>Open at Login</strong> when you pair your first phone, so this happens only if that was switched off. Open ATA from Applications and turn <strong>Open at Login</strong> back on in the ATA window.</p></details>
+  <details><summary>I closed the ATA window. Where did it go?</summary>
+    <p>ATA keeps running after you close its window. Click ATA in the Dock to see the window again. If you turned off <strong>Show ATA in the Dock</strong>, click the ATA icon in the menu bar at the top of the screen, or open ATA again from Applications.</p></details>
+  <details><summary>ATA says "Move ATA to Applications first"</summary>
+    <p>ATA was opened straight from the download window. Drag ATA onto the <strong>Applications</strong> folder in that window, then open ATA from Applications. (<a href="../install/#s2">See step 2 of the install guide.</a>)</p></details>
   <details><summary>I can't find ATA in my phone's share menu</summary>
     <p>Look for <strong>Send to Mac</strong>. The first time, it may be under <strong>More</strong> at the end of the list. After you use it, Android usually shows it nearer the front.</p></details>
   <details><summary>The QR code doesn't work</summary>
-    <p>Each QR code works once and only for 5 minutes. On the Mac, click <strong>Pair New Device…</strong> again for a fresh one.</p></details>
+    <p>Each QR code works once and only for 5 minutes. On the Mac, click <strong>Show a New QR Code</strong>, or <strong>Pair a Phone…</strong> in the ATA window, for a fresh one.</p></details>
   <details><summary>A transfer stopped halfway</summary>
     <p>Files that finished are already on your Mac. Just share the rest again.</p></details>
   <details><summary>Can I pair more than one Mac or phone?</summary>

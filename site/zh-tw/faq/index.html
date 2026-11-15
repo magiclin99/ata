@@ -69,7 +69,7 @@
   <details><summary>顯示連不上我的 Mac</summary>
     <p>讓手機連上和 Mac <strong>同一個 Wi-Fi</strong>，再試一次。有些公司、學校、飯店或公共 Wi-Fi，在兩台不在同一個網路時會擋住這種連線。</p></details>
   <details id="firewall" open><summary>傳得很慢，或 ATA 說被防火牆擋住</summary>
-    <p>可能是 Mac 的防火牆擋住了手機的直接連線。這時還是傳得過去，只是很慢。修正方法：</p>
+    <p>可能是 Mac 的防火牆擋住了手機的直接連線，通常是因為 Mac 詢問時按了「<strong>拒絕</strong>」。這時還是傳得過去，只是很慢。修正方法：</p>
     <ol>
       <li>打開「<strong>系統設定</strong>」→「<strong>網路</strong>」→「<strong>防火牆</strong>」→「<strong>選項⋯</strong>」。</li>
       <li>找到 <strong>ATA</strong>，設成「<strong>允許傳入連線</strong>」。如果 ATA 出現不只一個，選取多出來的那幾個，按「<strong>−</strong>」刪掉，只留一個。</li>
@@ -77,11 +77,15 @@
     </ol>
     <p>如果 Mac 詢問是否允許 ATA「接受傳入的網路連線」，請按「<strong>允許</strong>」。不需要把防火牆關掉。</p></details>
   <details><summary>昨天還能用，Mac 重新開機後就不行了</summary>
-    <p>Mac 上的 ATA 要開著才收得到。從「應用程式」打開 ATA，並在 ATA 視窗裡打開「<strong>登入時啟動</strong>」，之後開機就會自動執行。</p></details>
+    <p>Mac 上的 ATA 要開著才收得到。配對第一支手機時，ATA 會打開「<strong>登入時打開</strong>」，所以通常是這個設定被關掉了。從「應用程式」打開 ATA，在 ATA 視窗裡把「<strong>登入時打開</strong>」再打開就好。</p></details>
+  <details><summary>關掉 ATA 視窗後，它跑去哪了？</summary>
+    <p>關掉視窗後，ATA 會繼續在背景執行。按 Dock 上的 ATA 圖像，就能再看到視窗。如果你關掉了「<strong>在 Dock 顯示 ATA</strong>」，就點螢幕最上方選單列裡的 ATA 圖像，或從「應用程式」再打開一次 ATA。</p></details>
+  <details><summary>ATA 說「請先把 ATA 移到『應用程式』」</summary>
+    <p>這是因為 ATA 是直接從下載的視窗裡打開的。在那個視窗裡把 ATA 拖到「<strong>應用程式</strong>」檔案夾上，再從「應用程式」打開 ATA。（<a href="../install/#s2">請看安裝說明第 2 步</a>）</p></details>
   <details><summary>手機的分享選單裡找不到 ATA</summary>
     <p>找「<strong>傳到 Mac</strong>」。第一次可能藏在清單最後的「<strong>更多</strong>」裡，用過之後，Android 通常會把它排到前面。</p></details>
   <details><summary>QR code 掃了沒反應</summary>
-    <p>每個 QR code 只能用一次，而且只有 5 分鐘有效。在 Mac 上再按一次「<strong>配對新裝置…</strong>」，換一個新的就好。</p></details>
+    <p>每個 QR code 只能用一次，而且只有 5 分鐘有效。在 Mac 上按「<strong>產生新的 QR code</strong>」，或在 ATA 視窗裡按「<strong>配對手機…</strong>」，換一個新的就好。</p></details>
   <details><summary>傳到一半停了</summary>
     <p>已經傳完的檔案都在 Mac 上了，剩下的再分享一次就好。</p></details>
   <details><summary>可以配對好幾台 Mac 或好幾支手機嗎？</summary>
