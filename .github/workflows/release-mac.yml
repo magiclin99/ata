@@ -1,0 +1,110 @@
+# Builds, signs and publishes an ATA for Mac release when a tag like v1.0.0 is pushed.
+#
+# Location: repository root (mac-app/ + SPEC.md + spec/ + site/). The first step finds mac-app/Package.swift, so the
+# file also works if the Mac app is ever moved to the repository root.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   MAC_SIGNING_P12_BASE64     base64 of ata-signing.p12 (~/ata-secrets/mac/github-secret-p12-base64.txt)
+#   MAC_SIGNING_P12_PASSWORD   password of that .p12 (~/ata-secrets/mac/p12-password.txt)
+# The signing certificate must match signing/ata-signing-cert.pem; scripts/release.sh refuses anything else.
+
+name: Release (Mac)
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # create the release and upload assets
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Locate the Mac app
+        run: |
+          if [ -f mac-app/Package.swift ]; then dir=mac-app; elif [ -f Package.swift ]; then dir=.; else echo "Package.swift not found" >&2; exit 1; fi
+          echo "APP_DIR=$dir" >> "$GITHUB_ENV"
+          swift --version
+          xcodebuild -version
+
+      - name: Check the tag matches the app version
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match Resources/Info.plist version $version" >&2; exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Test
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          # VectorTests read ../spec/vectors.json (the canonical protocol vectors) when the spec sits next to the app.
+          if [ -f ../spec/vectors.json ]; then swift test; else echo "::warning::../spec/vectors.json not in this checkout; skipping VectorTests"; swift test --skip VectorTests; fi
+
+      - name: Import the signing identity into a temporary keychain
+        env:
+          P12_BASE64: ${{ secrets.MAC_SIGNING_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.MAC_SIGNING_P12_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "$P12_BASE64" ] || [ -z "$P12_PASSWORD" ]; then
+            echo "MAC_SIGNING_P12_BASE64 / MAC_SIGNING_P12_PASSWORD secrets are not set" >&2; exit 1
+          fi
+          kc="$RUNNER_TEMP/ata-signing.keychain-db"
+          kcpw="$(openssl rand -hex 32)"
+          echo "::add-mask::$kcpw"
+          printf '%s' "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/ata-signing.p12"
+          security create-keychain -p "$kcpw" "$kc"
+          security set-keychain-settings -lut 3600 "$kc"
+          security unlock-keychain -p "$kcpw" "$kc"
+          security import "$RUNNER_TEMP/ata-signing.p12" -k "$kc" -f pkcs12 -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$kcpw" "$kc" >/dev/null
+          rm -f "$RUNNER_TEMP/ata-signing.p12"
+          printf '%s' "$kcpw" > "$RUNNER_TEMP/ata-keychain-password"
+          echo "ATA_SIGN_KEYCHAIN=$kc" >> "$GITHUB_ENV"
+          echo "ATA_SIGN_KEYCHAIN_PASSWORD_FILE=$RUNNER_TEMP/ata-keychain-password" >> "$GITHUB_ENV"
+          security find-identity -p codesigning "$kc"
+
+      - name: Build, sign and package
+        working-directory: ${{ env.APP_DIR }}
+        run: scripts/release.sh
+
+      - name: Publish the GitHub release
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/notes.md" <<EOF
+          ATA for Mac $VERSION — receive files from your Android phone on your Mac computer. Requires macOS 14 or later.
+
+          **Install (recommended):** paste into Terminal
+
+              curl -fsSL https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/install.sh | sh
+
+          **Or download** \`ATA-$VERSION.dmg\` (or \`.zip\`), drag ATA to Applications, then open it with right-click → Open the
+          first time (ATA is not notarized by Apple). See the README for details.
+
+          SHA-256 checksums are in \`SHA256SUMS.txt\`. The app is signed with ATA's own certificate
+          (\`signing/ata-signing-cert.pem\` in this repository).
+          EOF
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --title "ATA $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          fi
+
+      - name: Remove the temporary keychain
+        if: always()
+        run: |
+          if [ -n "${ATA_SIGN_KEYCHAIN:-}" ]; then security delete-keychain "$ATA_SIGN_KEYCHAIN" || true; fi
+          rm -f "$RUNNER_TEMP/ata-keychain-password" "$RUNNER_TEMP/ata-signing.p12"

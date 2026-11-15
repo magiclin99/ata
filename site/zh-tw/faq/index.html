@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATA 常見問題</title>
+<meta name="description" content="ATA 的常見問題：距離、網路、速度、隱私、價格，以及它做不到的事。">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../assets/touch-icon-180.png">
+<link rel="alternate" hreflang="en" href="https://magiclin99.github.io/ata/faq/">
+<link rel="alternate" hreflang="zh-Hant-TW" href="https://magiclin99.github.io/ata/zh-tw/faq/">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">跳到主要內容</a>
+<header class="site"><div class="wrap">
+  <a class="brand" href="../"><img src="../../assets/favicon.svg" alt="" width="34" height="34">ATA</a>
+  <nav class="main" aria-label="主選單">
+    <a href="../">首頁</a>
+    <a href="../install/">Mac 安裝</a>
+    <a href="./" aria-current="page">常見問題</a>
+    <a href="../support/">說明</a>
+    <a href="../../privacy/#zh-tw">隱私權</a>
+    <a class="lang" href="../../faq/" hreflang="en" lang="en">English</a>
+  </nav>
+</div></header>
+
+<main id="main" class="wrap">
+<section class="hero">
+  <h1>常見問題</h1>
+</section>
+
+<section aria-labelledby="basics">
+  <h2 id="basics">能做什麼、不能做什麼</h2>
+  <details><summary>支援 iPhone、iPad，或從 Mac 傳回手機嗎？</summary>
+    <p>不支援。ATA 只有單向：從 Android 手機（Android 9 以上、支援藍牙低功耗）傳到 Mac 電腦（macOS 14 以上）。</p></details>
+  <details><summary>手機和 Mac 要多近？</summary>
+    <p>大約同一個房間。ATA 用藍牙找到 Mac 並開始每一次傳輸，超出藍牙範圍就找不到，沒有遠端傳送的功能。</p></details>
+  <details><summary>一定要連同一個 Wi-Fi 嗎？</summary>
+    <p>不一定，但同一個 Wi-Fi 快很多。ATA 會先試區網；如果手機和 Mac 不在同一個網路（例如手機用行動網路），會改試透過網際網路的 P2P 直連。這條路比較慢（我們用行動網路實測約每秒 1 MB），而且會用到行動數據。</p></details>
+  <details><summary>速度多快？</summary>
+    <p>我們實測同一個 Wi-Fi 下約 60 MB 大約 6 秒（含建立連線），實際速度取決於你的 Wi-Fi。不同網路之間會慢很多，行動網路約每秒 1 MB。</p></details>
+  <details><summary>App 顯示「找不到直連路徑」怎麼辦？</summary>
+    <p>代表區網和 P2P 直連都建立不起來。部分公司、學校、飯店或公共 Wi-Fi 等限制嚴格的網路會擋住裝置之間的直接連線，而 ATA 刻意不設任何轉送伺服器。請把手機連到和 Mac 相同的 Wi-Fi 再試一次。</p></details>
+  <details><summary>可以傳什麼檔案？有大小限制嗎？</summary>
+    <p>任何能從 app 分享出來的檔案都可以，一次也可以傳多個。ATA 沒有設定大小上限；如果 Mac 的存檔資料夾空間不足，Mac 會拒絕這次傳輸。</p></details>
+  <details><summary>檔案存在哪裡？</summary>
+    <p>預設存在 Mac 的「下載項目」，可以在 Mac 的 ATA 中（<strong>Save to "…"…</strong>）改成其他資料夾。遇到同名檔案會自動加上編號，不會覆蓋原檔。</p></details>
+  <details><summary>傳到一半中斷會怎樣？</summary>
+    <p>已經傳完的檔案會留在 Mac 上；只收到一部分的檔案會被刪除，重新傳送即可。每個檔案存檔前都會比對校驗碼。目前不支援續傳。</p></details>
+  <details><summary>可以配對多台 Mac 或多支手機嗎？</summary>
+    <p>可以。手機會列出所有已配對的 Mac 並標示哪些在附近，每次由你點選。一台 Mac 可以和多支手機配對，但同一時間只接收一支手機的傳輸。</p></details>
+  <details><summary>手機上的 ATA 要一直開著嗎？</summary>
+    <p>不用。開始傳送後會在背景繼續，通知列會顯示進度並可以取消。Mac 上的 ATA 則必須在執行中（常駐在選單列）。</p></details>
+</section>
+
+<section aria-labelledby="privacy">
+  <h2 id="privacy">隱私與安全</h2>
+  <details><summary>檔案會經過伺服器嗎？</summary>
+    <p>不會。同一個網路時直接走你的 Wi-Fi，不同網路時走 P2P 直連。ATA 沒有轉送伺服器，也沒有雲端儲存。</p></details>
+  <details><summary>那「STUN 伺服器」是什麼？</summary>
+    <p>跨網路建立 P2P 直連時，每台裝置要先問公開的 STUN 伺服器「我的公開 IP 位址是什麼」。ATA 使用 Google 和 Cloudflare 的公開 STUN 伺服器。它們看得到裝置的 IP 位址（任何網際網路連線都無法避免），但看不到你的檔案、檔名或其他任何內容。同一個 Wi-Fi 傳輸時不會用到它們。</p></details>
+  <details><summary>怎麼加密？</summary>
+    <p>用 QR code 配對時，會產生一把只有你的手機和 Mac 共有的隨機 256 位元金鑰。每次連線都用它驗證身分，連線資訊和檔案都經過加密（區網使用 AES-256-GCM；P2P 直連使用 DTLS，其指紋透過已加密的藍牙通道交換）。完整協定公開在<a href="https://github.com/magiclin99/ata">公開 repo</a>。</p></details>
+  <details><summary>ATA 會收集資料嗎？</summary>
+    <p>不會。沒有帳號、沒有伺服器，也沒有廣告、分析或當機回報 SDK，兩個 app 都不會傳任何資料給開發者或第三方。唯一的對外接觸見上方 STUN 伺服器那一題：需要建立 P2P 直連時，兩台公開的 STUN 伺服器會看到你的 IP 位址。詳見<a href="../support/">說明</a><a href="../../privacy/#zh-tw">隱私權政策</a>。</p></details>
+  <details><summary>為什麼 Android 要「附近的裝置」權限（舊版 Android 要位置權限）？</summary>
+    <p>ATA 需要藍牙才能找到你的 Mac。Android 12 以上是「附近的裝置」權限，ATA 已宣告不用於判斷位置；Android 9 到 11 的系統規定任何藍牙掃描都需要位置權限。ATA 不會讀取或使用你的位置。</p></details>
+  <details><summary>為什麼 ATA 要相機權限？</summary>
+    <p>只用來掃描配對用的 QR code，而且只在你點選掃描時才會詢問。QR code 由 app 內建的開源解碼器在手機上解讀，相機畫面不會儲存，也不會傳到任何地方。不想開放相機的話，可以選「<strong>貼上配對連結</strong>」，貼上 Mac 上顯示的連結。</p></details>
+  <details><summary>有開放原始碼嗎？</summary>
+    <p>有。Android app、Mac app 與通訊協定規格（目前是繁體中文）都以 MIT 授權公開在同一個 repo：<a href="https://github.com/magiclin99/ata">github.com/magiclin99/ata</a>。</p></details>
+  <details><summary>我可以自己驗證這些隱私說法嗎？</summary>
+    <p>可以。兩個 app 都開放原始碼，你可以直接讀到它們傳了什麼、傳到哪裡：藍牙握手、區網傳輸、使用兩台 STUN 伺服器的 P2P 連線建立，以及程式裡沒有任何分析追蹤或開發者伺服器。你也可以用同一個 repo 自己編譯這兩個 app。</p></details>
+</section>
+
+<section aria-labelledby="money">
+  <h2 id="money">費用</h2>
+  <details><summary>真的免費嗎？</summary>
+    <p>是的。兩個 app 都完全免費：沒有內購、沒有傳送次數限制、沒有廣告，也不是訂閱制。沒有任何功能需要付費才能使用。</p></details>
+</section>
+
+<section aria-labelledby="compare">
+  <h2 id="compare">跟其他方法比較</h2>
+  <details><summary>這跟 AirDrop 一樣嗎？</summary>
+    <p>不一樣。AirDrop 是 Apple 在 Apple 裝置之間的功能，ATA 不使用、也不連接 AirDrop。ATA 是另外一組 app，從 Android 手機傳到 Mac。</p></details>
+  <details><summary>為什麼不直接用雲端硬碟或通訊軟體？</summary>
+    <p>那些方式是先把檔案上傳到某家公司的伺服器再下載回來，伺服器上通常會留一份副本。ATA 在你的兩台裝置之間直接傳送，除了收件的 Mac 之外不會留下任何副本。代價是兩台裝置必須在附近。</p></details>
+</section>
+
+<section aria-labelledby="mac">
+  <h2 id="mac">Mac 版</h2>
+  <details><summary>為什麼打開 Mac 版時 macOS 會警告？</summary>
+    <p>Mac 版沒有經過 Apple 公證（公證需要付費加入 Apple 開發者計畫）。照著<a href="../install/#manual">「強制打開」步驟</a>做一次即可，或改用一行指令安裝，就不會出現警告。</p></details>
+  <details><summary>支援哪些 Mac？</summary>
+    <p>macOS 14 以上、有藍牙的 Mac。App 是通用版本，Apple 晶片與 Intel 的 Mac 都原生支援。</p></details>
+  <details><summary>遇到其他問題？</summary>
+    <p>寄信到 <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>；Mac 版的問題也可以到 <a href="https://github.com/magiclin99/ata/issues">GitHub</a> 開 issue。</p></details>
+</section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <nav aria-label="頁尾">
+    <a href="../">首頁</a><a href="../install/">Mac 安裝</a><a href="../../privacy/#zh-tw">隱私權政策</a>
+    <a href="https://github.com/magiclin99/ata">原始碼</a>
+    <a href="mailto:magiclin99@gmail.com">聯絡：magiclin99@gmail.com</a>
+  </nav>
+  <p>Android 是 Google LLC 的商標。Mac 是 Apple Inc. 在美國及其他國家和地區註冊的商標。AirDrop 是 Apple Inc. 的商標。ATA 與 Apple 或 Google 沒有關聯，也未獲其背書。</p>
+</div></footer>
+</body>
+</html>

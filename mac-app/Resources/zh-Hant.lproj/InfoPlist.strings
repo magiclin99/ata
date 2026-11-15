@@ -1,0 +1,4 @@
+/* Usage descriptions shown in the macOS permission prompts. */
+"NSBluetoothAlwaysUsageDescription" = "ATA 使用藍牙，讓已配對的 Android 手機找到這台 Mac 並開始傳送檔案。";
+"NSLocalNetworkUsageDescription" = "ATA 透過區域網路接收手機傳來的檔案。";
+"NSHumanReadableCopyright" = "© 2026 magiclin99。以 MIT 授權發布。";

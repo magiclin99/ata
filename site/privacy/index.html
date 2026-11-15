@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATA Privacy Policy · 隱私權政策</title>
+<meta name="description" content="ATA privacy policy in English and Traditional Chinese. Neither app collects data or sends it to the developer or third parties.">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/touch-icon-180.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/favicon.svg" alt="" width="34" height="34">ATA</a>
+  <nav class="main" aria-label="Main">
+    <a href="../">Home</a>
+    <a href="../install/">Mac setup</a>
+    <a href="../faq/">FAQ</a>
+    <a href="../support/">Help</a>
+    <a href="./" aria-current="page">Privacy</a>
+    <a class="lang" href="#zh-tw" lang="zh-Hant-TW">繁體中文</a>
+  </nav>
+</div></header>
+
+<main id="main" class="wrap">
+
+<!-- ============================== ENGLISH ============================== -->
+<article id="en" lang="en">
+<section class="hero">
+  <h1>Privacy Policy</h1>
+  <p class="lede">Short version: ATA collects no data about you. Neither app sends any data to the developer or to third parties. Your files go directly from your phone to your own Mac. The only outside contact: when a direct peer-to-peer connection is needed, two public STUN servers see your IP address (section 3).</p>
+  <p class="fine">Applies to: the ATA Android app (<code>io.github.magiclin99.ata</code>) and the ATA Mac app. Effective date: November 15, 2026.
+    Developer: magiclin99, contact <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>. <a href="#zh-tw" lang="zh-Hant-TW">中文版在下方</a>.</p>
+</section>
+
+<section>
+  <h2>1. What the developer collects</h2>
+  <p>Nothing. ATA has no servers, no accounts, no analytics, no advertising, no in-app purchases, and no crash-reporting service. Neither app sends any personal data, usage data, file data, or device identifiers to the developer or to third parties. The only exception is described in section 3: when a peer-to-peer connection is needed, public STUN servers see your devices' IP addresses. Both apps are open source (MIT) at <a href="https://github.com/magiclin99/ata">github.com/magiclin99/ata</a>, so you can check these statements against the code.</p>
+</section>
+
+<section>
+  <h2>2. Data that stays on your devices</h2>
+  <ul class="tight">
+    <li><strong>Pairing information.</strong> When you pair, each device stores a random device ID, the other device's name, and a shared 256-bit pairing key. On Android, the key is encrypted with a key held in the Android Keystore, and app backups are turned off. On the Mac, it's stored in a file in ATA's Application Support folder that only your macOS user account can read. This information never leaves your two devices.</li>
+    <li><strong>Device names.</strong> During pairing and each transfer, your phone sends its device name to your Mac, and the Mac sends its computer name to your phone, so each side can show who it's talking to.</li>
+    <li><strong>Recent transfers.</strong> The Android app keeps a local list of recent transfers (file names, sizes, times, and results) so you can see what you sent. The Mac app remembers where its last 8 received files were saved, for its Recent Files menu, and you can clear that list. Uninstalling the Android app deletes its list.</li>
+    <li><strong>Your files.</strong> Files you choose to share are read on the phone and written to the folder you chose on your Mac (Downloads by default). ATA keeps no other copy.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>3. How a transfer travels</h2>
+  <h3>Bluetooth</h3>
+  <p>The Mac app advertises over Bluetooth Low Energy so your paired phone can find it nearby. The advertisement contains a fixed service identifier and a short name made of "ATA-" and the first 8 characters of the Mac's random device ID. Any nearby Bluetooth scanner can see that name, but it contains no personal information. After the phone connects, the two devices prove they hold the pairing key. Everything after that is encrypted.
+    On Android 12 and later, ATA declares that it doesn't use Bluetooth scans to determine location. On Android 9 to 11, Android requires the Location permission for Bluetooth scanning, and ATA doesn't read or use your location.</p>
+  <h3>Local network</h3>
+  <p>If your phone and Mac are on the same network, the file is sent directly over that network, encrypted with AES-256-GCM using a key derived from your pairing key. Nothing goes to the internet.</p>
+  <h3>Peer-to-peer connection and STUN servers</h3>
+  <p>If the local network doesn't work, the devices try a direct peer-to-peer connection (WebRTC). To find a route, each device sends a small request to public STUN servers operated by <strong>Google</strong> (<code>stun.l.google.com</code>) and <strong>Cloudflare</strong> (<code>stun.cloudflare.com</code>). Those servers see your devices' public IP addresses and ports, as any internet server you contact would. They don't receive file contents, file names, device names, or keys. Their handling of that request is governed by Google's and Cloudflare's own privacy policies.
+    Over this path, your phone and your Mac also learn each other's IP addresses, which is necessary to connect. The connection is encrypted with DTLS, and its fingerprints are exchanged over the already-encrypted Bluetooth channel. ATA never uses a relay (TURN) server, so file data never passes through any server.</p>
+</section>
+
+<section>
+  <h2>4. Camera and Google Play on Android</h2>
+  <ul class="tight">
+    <li><strong>Camera (QR code scanning).</strong> ATA asks for the Camera permission only when you tap scan to pair with a Mac. The QR code is decoded on the phone by an open-source decoder built into the app. Camera frames aren't saved, aren't sent anywhere, and are discarded once the code is read. ATA keeps only the text of the pairing link. You can deny the camera and use <strong>Paste pairing link</strong> instead.</li>
+    <li><strong>Google Play statistics.</strong> Google Play may give developers aggregate install statistics, and crash and performance reports from users who opted in to sharing diagnostics with Google. That's controlled by your Google and Android settings, not by ATA.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>5. Mac app network use</h2>
+  <p>Apart from receiving transfers as described above, the Mac app makes no network requests. <strong>Check for Updates…</strong> opens the GitHub Releases page in your web browser. The one-line installer and release downloads come from GitHub, and this website is hosted on GitHub Pages, so GitHub may log your IP address under <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's Privacy Statement</a>. This site uses no cookies, analytics, or third-party scripts.</p>
+</section>
+
+<section>
+  <h2>6. Permissions</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>App</th><th>Permission</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>Android</td><td>Nearby devices (Bluetooth); Location on Android 9–11 only</td><td>Finding and connecting to your Mac. Location isn't used.</td></tr>
+      <tr><td>Android</td><td>Internet, network state</td><td>Local network and peer-to-peer transfer, and STUN requests.</td></tr>
+      <tr><td>Android</td><td>Camera (only when you tap scan)</td><td>Reading the pairing QR code on the phone. Frames aren't stored or sent. Optional, because you can paste the pairing link instead.</td></tr>
+      <tr><td>Android</td><td>Notifications, foreground service</td><td>Showing progress and keeping a transfer running when you leave the app.</td></tr>
+      <tr><td>Mac</td><td>Bluetooth, Local Network, incoming connections</td><td>Being found by your phone and receiving files.</td></tr>
+      <tr><td>Mac</td><td>Notifications, Login Items</td><td>Telling you a file arrived, and optionally starting at login.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>7. Your choices and deleting data</h2>
+  <p>Because the developer holds no data about you, there's nothing to request, export, or delete from the developer. To remove everything ATA stores, use <strong>Remove pairing</strong> in either app, then uninstall the app. On the Mac, you can also delete ATA's folder in <code>~/Library/Application Support/</code>. Received files are ordinary files in your chosen folder.</p>
+</section>
+
+<section>
+  <h2>8. Children</h2>
+  <p>ATA isn't directed at children and collects no data from anyone, including children.</p>
+</section>
+
+<section>
+  <h2>9. Changes</h2>
+  <p>If this policy changes, the new version will be published at this address with a new effective date. Material changes will also be noted in the app's release notes. The history of this page is public in the <a href="https://github.com/magiclin99/ata">GitHub repository</a>.</p>
+</section>
+
+<section>
+  <h2>10. Contact</h2>
+  <p><a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a></p>
+</section>
+</article>
+
+<!-- ============================== 繁體中文 ============================== -->
+<article id="zh-tw" lang="zh-Hant-TW">
+<section class="hero">
+  <h1>隱私權政策</h1>
+  <p class="lede">簡單說：ATA 不收集任何關於你的資料，兩個 app 都不會傳任何資料給開發者或第三方。你的檔案直接從手機傳到你自己的 Mac。唯一的對外接觸：需要建立 P2P 直連時，兩台公開的 STUN 伺服器會看到你的 IP 位址（見第 3 節）。</p>
+  <p class="fine">適用範圍：ATA Android app（<code>io.github.magiclin99.ata</code>）與 ATA Mac app。生效日期：2026 年 11 月 15 日。開發者：magiclin99，聯絡信箱 <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>。<a href="#en" lang="en">English version above</a>.</p>
+</section>
+
+<section>
+  <h2>1. 開發者收集的資料</h2>
+  <p>沒有。ATA 沒有伺服器、沒有帳號、沒有分析追蹤、沒有廣告、沒有內購，也沒有當機回報服務。兩個 app 都不會把任何個人資料、使用資料、檔案資料或裝置識別碼傳給開發者或第三方。唯一的例外見第 3 節：需要建立 P2P 直連時，公開的 STUN 伺服器會看到你裝置的 IP 位址。兩個 app 都以 MIT 授權開放原始碼（<a href="https://github.com/magiclin99/ata">github.com/magiclin99/ata</a>），你可以對照程式碼檢查這些說法。</p>
+</section>
+
+<section>
+  <h2>2. 只存在你裝置上的資料</h2>
+  <ul class="tight">
+    <li><strong>配對資訊。</strong>配對時，每台裝置會儲存一個隨機的裝置 ID、對方的裝置名稱，以及一把共用的 256 位元配對金鑰。Android 上這把金鑰以 Android Keystore 中的金鑰加密後儲存，並關閉 app 備份；Mac 上存放在 ATA 的「Application Support」資料夾中的檔案，以檔案權限保護，只有你的 macOS 使用者帳號能讀取。這些資訊不會離開你的兩台裝置。</li>
+    <li><strong>裝置名稱。</strong>配對與每次傳輸時，手機會把手機名稱傳給你的 Mac，Mac 也會把電腦名稱傳給手機，讓雙方知道在跟誰連線。</li>
+    <li><strong>最近的傳輸。</strong>Android app 會在本機保留最近的傳輸紀錄（檔名、大小、時間、結果），方便你查看；移除 app 時會一併刪除。Mac app 會記住最近收到的 8 個檔案存放位置，顯示在「Recent Files」選單中，可以隨時清除。</li>
+    <li><strong>你的檔案。</strong>你選擇分享的檔案在手機上讀取，寫入你在 Mac 上指定的資料夾（預設「下載項目」）。ATA 不會另外留存副本。</li>
+  </ul>
+</section>
+
+<section>
+  <h2>3. 一次傳輸經過哪些地方</h2>
+  <h3>藍牙</h3>
+  <p>Mac app 會用藍牙低功耗廣播，讓已配對的手機在附近找到它。廣播內容是一個固定的服務識別碼，以及由「ATA-」加上 Mac 隨機裝置 ID 前 8 個字元組成的短名稱。附近的任何藍牙掃描器都看得到這個名稱，但其中不含個人資料。手機連上後，雙方先證明彼此持有配對金鑰，之後的所有內容都經過加密。Android 12 以上，ATA 已宣告不使用藍牙掃描判斷位置；Android 9 到 11 的系統規定藍牙掃描需要位置權限，ATA 不會讀取或使用你的位置。</p>
+  <h3>區域網路</h3>
+  <p>手機和 Mac 在同一個網路時，檔案會直接透過該網路傳送，並使用由配對金鑰衍生的金鑰以 AES-256-GCM 加密，不會連到網際網路。</p>
+  <h3>P2P 直連與 STUN 伺服器</h3>
+  <p>區網無法連線時，兩台裝置會嘗試建立 P2P 直連（WebRTC）。為了找到連線路徑，每台裝置會向 <strong>Google</strong>（<code>stun.l.google.com</code>）與 <strong>Cloudflare</strong>（<code>stun.cloudflare.com</code>）營運的公開 STUN 伺服器送出一個小請求。這些伺服器看得到你裝置的公開 IP 位址與連接埠（就像你連到任何網際網路伺服器一樣），但不會收到檔案內容、檔名、裝置名稱或金鑰；它們如何處理這個請求，依 Google 與 Cloudflare 各自的隱私權政策。走這條路徑時，你的手機和 Mac 也會得知彼此的 IP 位址，這是建立連線所必需的。連線以 DTLS 加密，其指紋透過已加密的藍牙通道交換。ATA 從不使用轉送（TURN）伺服器，因此檔案資料不會經過任何伺服器。</p>
+</section>
+
+<section>
+  <h2>4. Android 上的相機與 Google Play</h2>
+  <ul class="tight">
+    <li><strong>相機（QR code 掃描）。</strong>只有在你點選掃描來配對 Mac 時，ATA 才會要求相機權限。QR code 由 app 內建的開源解碼器在手機上解讀；相機畫面不會儲存、不會傳到任何地方，讀到 QR code 後即丟棄，ATA 只保留配對連結的文字。你也可以拒絕相機權限，改用「<strong>貼上配對連結</strong>」。</li>
+    <li><strong>Google Play 統計。</strong>Google Play 可能會提供開發者彙總的安裝統計，以及選擇與 Google 分享診斷資料的使用者的當機與效能報告。這由你的 Google 與 Android 設定控制，與 ATA 無關。</li>
+  </ul>
+</section>
+
+<section>
+  <h2>5. Mac app 的網路使用</h2>
+  <p>除了上述的接收傳輸之外，Mac app 不會發出任何網路請求。「Check for Updates…」會在你的瀏覽器開啟 GitHub Releases 頁面。一行安裝指令與版本下載來自 GitHub，本網站也架設在 GitHub Pages 上，因此 GitHub 可能依 <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub 隱私權聲明</a>記錄你的 IP 位址。本網站不使用 cookie、分析工具或第三方指令碼。</p>
+</section>
+
+<section>
+  <h2>6. 權限</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>App</th><th>權限</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td>Android</td><td>附近的裝置（藍牙）；僅 Android 9–11 需要位置</td><td>找到並連線到你的 Mac；不使用位置</td></tr>
+      <tr><td>Android</td><td>網際網路、網路狀態</td><td>區網與 P2P 傳輸、STUN 請求</td></tr>
+      <tr><td>Android</td><td>相機（只在你點選掃描時）</td><td>在手機上讀取配對 QR code；畫面不儲存也不傳送。可略過，改用貼上配對連結</td></tr>
+      <tr><td>Android</td><td>通知、前景服務</td><td>顯示進度，離開 app 時讓傳輸繼續</td></tr>
+      <tr><td>Mac</td><td>藍牙、區域網路、接受傳入連線</td><td>讓手機找到並接收檔案</td></tr>
+      <tr><td>Mac</td><td>通知、登入項目</td><td>通知檔案送達、可選的登入時啟動</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>7. 你的選擇與刪除資料</h2>
+  <p>開發者沒有持有任何關於你的資料，所以沒有需要向開發者申請查閱、匯出或刪除的資料。若要刪除 ATA 儲存的所有內容，在任一 app 中「移除配對」後移除 app 即可；Mac 上也可以刪除 <code>~/Library/Application Support/</code> 裡 ATA 的資料夾。收到的檔案是你指定資料夾中的一般檔案。</p>
+</section>
+
+<section>
+  <h2>8. 兒童</h2>
+  <p>ATA 並非以兒童為對象，也不向任何人（包括兒童）收集資料。</p>
+</section>
+
+<section>
+  <h2>9. 政策變更</h2>
+  <p>本政策如有變更，新版本會發布在這個網址並更新生效日期；重大變更也會寫在 app 的版本說明中。本頁的修改紀錄公開在 <a href="https://github.com/magiclin99/ata">GitHub repo</a>。</p>
+</section>
+
+<section>
+  <h2>10. 聯絡方式</h2>
+  <p><a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a></p>
+</section>
+</article>
+</main>
+
+<footer class="site"><div class="wrap">
+  <nav aria-label="Footer">
+    <a href="../">Home</a><a href="../zh-tw/">首頁</a><a href="../faq/">FAQ</a><a href="../zh-tw/faq/">常見問題</a><a href="../support/">Help</a><a href="../zh-tw/support/">說明</a>
+    <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>
+  </nav>
+  <p>Android is a trademark of Google LLC. Mac is a trademark of Apple Inc., registered in the U.S. and other countries and regions. ATA is not affiliated with or endorsed by Apple or Google.</p>
+  <p lang="zh-Hant-TW">Android 是 Google LLC 的商標。Mac 是 Apple Inc. 在美國及其他國家和地區註冊的商標。ATA 與 Apple 或 Google 沒有關聯，也未獲其背書。</p>
+</div></footer>
+</body>
+</html>

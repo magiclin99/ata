@@ -1,0 +1,7 @@
+.build/
+build/
+.swiftpm/
+dist/
+# Signing secrets live in ~/ata-secrets, never here.
+*.p12
+*.keychain-db

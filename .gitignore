@@ -1,0 +1,41 @@
+# --- Not part of the public repository ---
+# Internal material (release decisions, store listing, launch drafts, Play Console notes):
+# private repository magiclin99/ata-internal, checked out here as its own git root.
+/internal/
+# Old locations of that material, in case a copy reappears.
+/marketing/
+/RELEASE.md
+/android-app/PLAY_CONSOLE_NOTES.md
+/android-app/docs/
+/android-app/marketing/
+/android-app/spec/
+# Lab prototypes.
+/mac/
+/android/
+/PROTOCOL.md
+
+# --- Build outputs ---
+.build/
+build/
+dist/
+.swiftpm/
+.gradle/
+.kotlin/
+local.properties
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+# --- Signing material lives in ~/ata-secrets, never here ---
+*.p12
+*.jks
+*.keystore
+*.keychain-db
+*.key
+signing.properties
+
+# --- Editor / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~

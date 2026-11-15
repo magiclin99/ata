@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATA FAQ</title>
+<meta name="description" content="Answers about ATA: range, networks, speed, privacy, pricing, and what it does not do.">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/touch-icon-180.png">
+<link rel="alternate" hreflang="zh-Hant-TW" href="https://magiclin99.github.io/ata/zh-tw/faq/">
+<link rel="alternate" hreflang="en" href="https://magiclin99.github.io/ata/faq/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/favicon.svg" alt="" width="34" height="34">ATA</a>
+  <nav class="main" aria-label="Main">
+    <a href="../">Home</a>
+    <a href="../install/">Mac setup</a>
+    <a href="./" aria-current="page">FAQ</a>
+    <a href="../support/">Help</a>
+    <a href="../privacy/">Privacy</a>
+    <a class="lang" href="../zh-tw/faq/" hreflang="zh-Hant-TW" lang="zh-Hant-TW">繁體中文</a>
+  </nav>
+</div></header>
+
+<main id="main" class="wrap">
+<section class="hero">
+  <h1>Frequently asked questions</h1>
+</section>
+
+<section aria-labelledby="basics">
+  <h2 id="basics">What it does and doesn't do</h2>
+  <details><summary>Does it work with iPhone, iPad, or from the Mac to my phone?</summary>
+    <p>No. ATA sends in one direction: from an Android phone (Android 9 or later, with Bluetooth LE) to a Mac computer (macOS 14 or later).</p></details>
+  <details><summary>How close do the phone and the Mac need to be?</summary>
+    <p>About the same room. ATA uses Bluetooth to find the Mac and start each transfer, so it can't reach a Mac that's out of Bluetooth range. There's no remote sending.</p></details>
+  <details><summary>Do they need to be on the same Wi-Fi?</summary>
+    <p>No, but it's much faster when they are. ATA tries the local network first. If the phone and the Mac aren't on the same network
+      (for example, the phone is on mobile data), it tries a direct peer-to-peer connection over the internet.
+      That path is slower, around 1 MB/s on mobile data in our tests, and it uses your mobile data.</p></details>
+  <details><summary>How fast is it?</summary>
+    <p>On the same Wi-Fi, about 60 MB took around 6 seconds in our tests, including connection setup. Your speed depends on your Wi-Fi.
+      Across different networks, expect much slower speeds, roughly 1 MB/s on mobile data.</p></details>
+  <details><summary>The app says "no direct path". What now?</summary>
+    <p>Neither the local network nor a peer-to-peer connection could be set up. This happens on some strict networks (some offices, schools, hotels, and public Wi-Fi)
+      that block direct connections between devices. ATA deliberately has no relay server to fall back on. Connect the phone to the same Wi-Fi as the Mac and try again.</p></details>
+  <details><summary>What kinds of files can I send, and how big?</summary>
+    <p>Any file you can share from an app, and several at once. ATA doesn't set a size limit. The Mac declines a transfer if its save folder doesn't have enough free space.</p></details>
+  <details><summary>Where do the files go?</summary>
+    <p>Into the Mac's Downloads folder by default. Change it in ATA on the Mac (<strong>Save to "…"…</strong>). If a file with the same name already exists, ATA adds a number instead of overwriting it.</p></details>
+  <details><summary>What if a transfer is interrupted?</summary>
+    <p>Files that finished arriving stay on the Mac. A file that was only partly received is deleted, and you can send it again. Each file is checked with a checksum before it's saved. There's no resume yet.</p></details>
+  <details><summary>Can I pair more than one Mac, or more than one phone?</summary>
+    <p>Yes. The phone shows every paired Mac and marks which ones are nearby, and you pick one each time. A Mac can be paired with several phones but receives from one at a time.</p></details>
+  <details><summary>Does the ATA app need to stay open on the phone?</summary>
+    <p>No. Once a transfer starts, it continues in the background, with progress and a cancel button in the notification shade. The Mac app must be running (it lives in the menu bar).</p></details>
+</section>
+
+<section aria-labelledby="privacy">
+  <h2 id="privacy">Privacy and security</h2>
+  <details><summary>Do my files go through a server?</summary>
+    <p>No. On the same network, files go directly over your Wi-Fi. Otherwise they go over a direct peer-to-peer connection. ATA has no relay server and no cloud storage.</p></details>
+  <details><summary>Then what are the "STUN servers"?</summary>
+    <p>To set up a peer-to-peer connection across networks, each device asks a public STUN server what its own public IP address is. ATA uses Google's and Cloudflare's public STUN servers.
+      They see the devices' IP addresses, which is unavoidable for any internet connection. They never see your files, file names, or anything else. Same-Wi-Fi transfers don't use them.</p></details>
+  <details><summary>How is it encrypted?</summary>
+    <p>Pairing (by QR code) creates a random 256-bit key shared only by your phone and your Mac. Every session is authenticated with it, and the connection details and files are encrypted (AES-256-GCM on the local network; DTLS on the peer-to-peer path, with fingerprints exchanged over the encrypted Bluetooth channel). The full protocol is published in the <a href="https://github.com/magiclin99/ata">public repository</a>.</p></details>
+  <details><summary>Does ATA collect any data?</summary>
+    <p>No. There are no accounts and no servers, and no ads, analytics, or crash-reporting SDKs. Neither app sends any data to the developer or to third parties. The only outside contact is the one in the STUN question above: when a peer-to-peer connection is needed, two public STUN servers see your IP address. Details are in the <a href="../privacy/">privacy policy</a>.</p></details>
+  <details><summary>Why does Android ask for "Nearby devices" (or Location on older Android)?</summary>
+    <p>ATA needs Bluetooth to find your Mac. On Android 12 and later, that's the Nearby devices permission, which ATA declares as not used for location.
+      On Android 9 to 11, Android itself requires the Location permission for any Bluetooth scanning. ATA doesn't read or use your location.</p></details>
+  <details><summary>Why does ATA ask for the camera?</summary>
+    <p>Only to scan the pairing QR code, and only when you tap scan. The code is decoded on the phone by an open-source decoder built into the app. Camera frames are never saved or sent anywhere. If you'd rather not allow the camera, choose <strong>Paste pairing link</strong> and paste the link shown on the Mac instead.</p></details>
+  <details><summary>Is it open source?</summary>
+    <p>Yes. The Android app, the Mac app, and the protocol specification (currently written in Traditional Chinese) are all open source under the MIT licence, in one repository: <a href="https://github.com/magiclin99/ata">github.com/magiclin99/ata</a>.</p></details>
+  <details><summary>Can I verify the privacy claims?</summary>
+    <p>Yes. Both apps are open source, so you can read exactly what they send and where: the Bluetooth handshake, the local-network transfer, the peer-to-peer setup with the two STUN servers, and the absence of any analytics or developer server. You can also build the apps yourself from the same repository.</p></details>
+</section>
+
+<section aria-labelledby="money">
+  <h2 id="money">Cost</h2>
+  <details><summary>Is it really free?</summary>
+    <p>Yes. Both apps are completely free: no in-app purchases, no limit on transfers, no ads, no subscription. Nothing is locked behind a payment.</p></details>
+</section>
+
+<section aria-labelledby="compare">
+  <h2 id="compare">Compared with other options</h2>
+  <details><summary>Is this the same as AirDrop?</summary>
+    <p>No. AirDrop is Apple's feature for Apple devices. ATA doesn't use or connect to AirDrop. It's a separate pair of apps that sends from an Android phone to a Mac.</p></details>
+  <details><summary>Why not just use a cloud drive or a chat app?</summary>
+    <p>Those work by uploading your file to a company's server and downloading it again, and they usually keep a copy there. ATA sends directly between your two devices and keeps no copy anywhere except the Mac you sent to. The trade-off is that ATA only works with the two devices near each other.</p></details>
+</section>
+
+<section aria-labelledby="mac">
+  <h2 id="mac">Mac app</h2>
+  <details><summary>Why does macOS warn me when I open the Mac app?</summary>
+    <p>The Mac app isn't notarized by Apple (that requires a paid membership in Apple's developer program). Follow the <a href="../install/#manual">Open Anyway steps</a> once, or use the one-line install, which doesn't trigger the warning.</p></details>
+  <details><summary>Which Macs are supported?</summary>
+    <p>Any Mac with Bluetooth running macOS 14 or later. The app is universal, so it runs natively on both Apple silicon and Intel Macs.</p></details>
+  <details><summary>Something else is wrong.</summary>
+    <p>Email <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>, or open an issue on <a href="https://github.com/magiclin99/ata/issues">GitHub</a> for Mac app problems.</p></details>
+</section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <nav aria-label="Footer">
+    <a href="../">Home</a><a href="../install/">Mac setup</a><a href="../support/">Help</a><a href="../privacy/">Privacy policy</a>
+    <a href="https://github.com/magiclin99/ata">Source code</a>
+    <a href="mailto:magiclin99@gmail.com">Contact: magiclin99@gmail.com</a>
+  </nav>
+  <p>Android is a trademark of Google LLC. Mac is a trademark of Apple Inc., registered in the U.S. and other countries and regions.
+    AirDrop is a trademark of Apple Inc. ATA is not affiliated with or endorsed by Apple or Google.</p>
+</div></footer>
+</body>
+</html>

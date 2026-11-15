@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATA: send files from your Android phone to your Mac</title>
+<meta name="description" content="Share from any app on your Android phone and the file lands in your Mac's Downloads folder. Direct connection, encrypted end to end, no account, no cloud.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/touch-icon-180.png">
+<link rel="alternate" hreflang="zh-Hant-TW" href="https://magiclin99.github.io/ata/zh-tw/">
+<link rel="alternate" hreflang="en" href="https://magiclin99.github.io/ata/">
+<meta property="og:title" content="ATA: send files from your Android phone to your Mac">
+<meta property="og:description" content="Share, pick your Mac, done. Direct and encrypted, with no server in between.">
+<meta property="og:image" content="https://magiclin99.github.io/ata/assets/og-image.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site"><div class="wrap">
+  <a class="brand" href="./"><img src="assets/favicon.svg" alt="" width="34" height="34">ATA</a>
+  <nav class="main" aria-label="Main">
+    <a href="./" aria-current="page">Home</a>
+    <a href="install/">Mac setup</a>
+    <a href="faq/">FAQ</a>
+    <a href="support/">Help</a>
+    <a href="privacy/">Privacy</a>
+    <a class="lang" href="zh-tw/" hreflang="zh-Hant-TW" lang="zh-Hant-TW">繁體中文</a>
+  </nav>
+</div></header>
+
+<main id="main" class="wrap">
+<section class="hero">
+  <h1>Send files from your Android phone to your Mac computer.</h1>
+  <p class="lede">Tap Share in any app, pick your Mac, and the file lands in its Downloads folder. The two devices
+    connect directly and encrypt everything end to end. There's no account and no cloud.</p>
+  <div class="cta">
+    <a class="btn primary" href="install/">Install the free Mac app</a>
+    <!-- PLAY LAUNCH SLOT (hidden): at Android launch, delete `hidden` here and delete the "coming soon" paragraph below. See site/README.md. -->
+    <a class="btn" id="play-cta" href="https://play.google.com/store/apps/details?id=io.github.magiclin99.ata" hidden>Get it on Google Play</a>
+  </div>
+  <p id="android-soon"><strong>Android app: coming soon to Google Play.</strong> It's currently in closed testing.
+    To join the test, email <a href="mailto:magiclin99@gmail.com?subject=ATA%20closed%20test">magiclin99@gmail.com</a> and include the Google account address you use on your phone.</p>
+  <p class="fine">Free, with no in-app purchases, no limits, and no ads. Both apps are open source.</p>
+</section>
+
+<!-- DEMO SLOT (hidden): when the 15-second demo exists (real screen recording / real Mac footage only), add the video below and delete `hidden`. See site/README.md.
+     <video controls playsinline preload="metadata" poster="assets/demo-poster.jpg" src="assets/demo.mp4"></video> -->
+<section aria-labelledby="demo" id="demo-slot" hidden>
+  <h2 id="demo">See it work</h2>
+</section>
+
+<section aria-labelledby="how">
+  <h2 id="how">How it works</h2>
+  <ol class="steps">
+    <li><h3>Install both apps</h3><p>ATA on your phone (Google Play, coming soon), and the free ATA app on your Mac. It lives in the menu bar.</p></li>
+    <li><h3>Pair once</h3><p>Open ATA on the Mac and choose <strong>Pair New Device…</strong>. Then open ATA on your phone, tap <strong>Pair New Device…</strong>, and scan the QR code.</p></li>
+    <li><h3>Share</h3><p>In any app, tap Share, then <strong>Send to Mac</strong>, then pick your Mac. The file goes to Downloads, or to a folder you choose.</p></li>
+  </ol>
+</section>
+
+<section aria-labelledby="why">
+  <h2 id="why">What's different about it</h2>
+  <div class="grid2">
+    <div class="card"><h3>No server in the middle</h3><p>Files go straight from the phone to the Mac, over your Wi-Fi when you can, or over a direct peer-to-peer link when you can't. ATA has no relay server, so your files never pass through one.</p></div>
+    <div class="card"><h3>Encrypted end to end</h3><p>Pairing creates a key that lives only on your two devices. Every transfer is authenticated and encrypted with it.</p></div>
+    <div class="card"><h3>Nothing to sign up for</h3><p>No account, no cloud storage, no ads, no analytics. Neither app sends any data to the developer or to third parties.</p></div>
+    <div class="card"><h3>Open source, both apps</h3><p>The Android app, the Mac app, and the protocol specification are open source (MIT) on <a href="https://github.com/magiclin99/ata">GitHub</a>. You can read the code and check every claim on this page.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="limits">
+  <h2 id="limits">Honest limits</h2>
+  <ul class="tight">
+    <li><strong>Nearby only.</strong> ATA finds your Mac over Bluetooth, so the phone and the Mac need to be close, about the same room. It can't send to a Mac somewhere else.</li>
+    <li><strong>One direction.</strong> Android phone to Mac only. Not Mac to phone, and not from an iPhone or iPad.</li>
+    <li><strong>Same Wi-Fi is the fast path.</strong> In our tests, about 60 MB arrived in around 6 seconds on the same Wi-Fi, including connection setup.
+      When the devices are on different networks, the peer-to-peer path is slower (around 1 MB/s on mobile data in our tests) and uses your mobile data.</li>
+    <li><strong>Most networks, not all.</strong> Some strict networks (some offices, schools, and public Wi-Fi) block direct connections. Because ATA never relays through a server, it then says that no direct path was found. Joining the same Wi-Fi fixes it.</li>
+    <li><strong>Mac app must be running</strong> (menu bar), with Bluetooth on. macOS 14 or later. Android 9 or later with Bluetooth LE.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="pricing">
+  <h2 id="pricing">Free</h2>
+  <p>Both apps are completely free. There are no in-app purchases, no transfer limits, no ads, no subscription, and no account.
+    Both apps are also open source (MIT).</p>
+</section>
+
+<!-- SUPPORT SLOT (disabled). Voluntary support via Recur. Keep the `hidden` attribute until [[SUPPORT_URL]] is set.
+     To enable: replace [[SUPPORT_URL]] with the real link and delete the word `hidden`. See site/README.md. -->
+<section aria-labelledby="support" id="support-slot" hidden>
+  <h2 id="support">Support ATA (optional)</h2>
+  <p>ATA is free and stays free. If it saves you time and you'd like to support its development, you can chip in.
+    It's entirely voluntary, and it doesn't unlock anything. Every feature is already available to everyone.</p>
+  <p><a class="btn" href="[[SUPPORT_URL]]" rel="noopener">Support ATA</a></p>
+</section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <nav aria-label="Footer">
+    <a href="install/">Mac setup</a><a href="faq/">FAQ</a><a href="support/">Help</a><a href="privacy/">Privacy policy</a>
+    <a href="https://github.com/magiclin99/ata">Source code</a>
+    <a href="mailto:magiclin99@gmail.com">Contact: magiclin99@gmail.com</a>
+  </nav>
+  <p>Android is a trademark of Google LLC. Mac is a trademark of Apple Inc., registered in the U.S. and other countries and regions.
+    ATA is not affiliated with or endorsed by Apple or Google.</p>
+</div></footer>
+</body>
+</html>

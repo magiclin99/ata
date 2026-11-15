@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install ATA on your Mac</title>
+<meta name="description" content="Install the free, open-source ATA app on your Mac: one-line install, or manual download with the macOS Open Anyway steps, plus what each permission is for.">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/touch-icon-180.png">
+<link rel="alternate" hreflang="zh-Hant-TW" href="https://magiclin99.github.io/ata/zh-tw/install/">
+<link rel="alternate" hreflang="en" href="https://magiclin99.github.io/ata/install/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/favicon.svg" alt="" width="34" height="34">ATA</a>
+  <nav class="main" aria-label="Main">
+    <a href="../">Home</a>
+    <a href="./" aria-current="page">Mac setup</a>
+    <a href="../faq/">FAQ</a>
+    <a href="../support/">Help</a>
+    <a href="../privacy/">Privacy</a>
+    <a class="lang" href="../zh-tw/install/" hreflang="zh-Hant-TW" lang="zh-Hant-TW">繁體中文</a>
+  </nav>
+</div></header>
+
+<main id="main" class="wrap">
+<section class="hero">
+  <h1>Install ATA on your Mac</h1>
+  <p class="lede">The Mac app is free and open source. It runs in the menu bar and receives the files your Android phone sends.
+    It needs macOS 14 or later and runs natively on both Apple silicon and Intel Macs.</p>
+  <p class="fine">The Mac app is distributed through <a href="https://github.com/magiclin99/ata/releases">GitHub Releases</a>, not the Mac App Store,
+    and it isn't notarized by Apple. That's why a browser download needs one extra "Open Anyway" step. The one-line install below avoids it.</p>
+</section>
+
+<section aria-labelledby="oneline">
+  <h2 id="oneline">Option 1: one-line install (recommended)</h2>
+  <p>Open <strong>Terminal</strong> (Applications → Utilities → Terminal), paste this line, and press <kbd>Return</kbd>:</p>
+  <pre><code>curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh</code></pre>
+  <p>The script finds the latest release on GitHub and downloads it with its SHA-256 checksum. It checks both the checksum and the app's
+    code signature, and if either check fails it stops without installing anything. If ATA is already running, it quits it. Then it replaces
+    <code>/Applications/ATA.app</code>, opens ATA, and prints each step as it goes. It asks for your password (sudo) only if your account can't
+    write to /Applications. On a normal admin account it doesn't ask.</p>
+  <p>Files downloaded by <code>curl</code> aren't marked as "downloaded from the internet", so macOS doesn't show the warning described in option 2.
+    Running the same line again later is also how you update.</p>
+  <p class="fine">To see what it would do without changing anything: <code>curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh -s -- --dry-run</code></p>
+  <p class="fine">Prefer to read a script before running it? You should. Download it, look, then run it:</p>
+  <pre><code>curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh -o ata-install.sh
+less ata-install.sh
+sh ata-install.sh</code></pre>
+</section>
+
+<section aria-labelledby="manual">
+  <h2 id="manual">Option 2: download in your browser</h2>
+  <ol class="howto">
+    <li>Go to <a href="https://github.com/magiclin99/ata/releases/latest">the latest release</a> and download the <code>.dmg</code> (or the <code>ATA-&lt;version&gt;.zip</code>).</li>
+    <li>Open the <code>.dmg</code> and drag <strong>ATA</strong> into <strong>Applications</strong> (or unzip the <code>.zip</code> and move <code>ATA.app</code> to Applications).</li>
+    <li>Open ATA for the first time. The way to do it depends on your macOS version:</li>
+  </ol>
+  <h3>macOS 15 or later</h3>
+  <ol class="howto">
+    <li>Double-click <strong>ATA</strong> in Applications. macOS says it can't verify ATA and won't open it. Click <strong>Done</strong>, not Move to Trash.</li>
+    <li>Open <strong>System Settings</strong> → <strong>Privacy &amp; Security</strong> and scroll down to the <strong>Security</strong> section.
+      You'll see a message that "ATA" was blocked. Click <strong>Open Anyway</strong>.</li>
+    <li>macOS asks once more. Click <strong>Open Anyway</strong> and confirm with your password or Touch ID.</li>
+  </ol>
+  <p class="fine">The <strong>Open Anyway</strong> button appears only for about an hour after the blocked attempt. If it's missing, double-click ATA again, then go back to Privacy &amp; Security.</p>
+  <h3>macOS 14</h3>
+  <ol class="howto">
+    <li>In Applications, <strong>Control-click</strong> (or right-click) <strong>ATA</strong> and choose <strong>Open</strong>.</li>
+    <li>In the warning that appears, click <strong>Open</strong>.</li>
+  </ol>
+  <p>You only do this once. After that, ATA opens normally.</p>
+  <div class="note">
+    <p><strong>Why the warning?</strong> Apple shows it for any app that isn't notarized through Apple's paid developer program.
+      ATA's Mac app is a free, open-source project distributed outside the Mac App Store, so it isn't notarized.
+      You can read or build the source yourself at <a href="https://github.com/magiclin99/ata">github.com/magiclin99/ata</a>.</p>
+  </div>
+</section>
+
+<section aria-labelledby="first">
+  <h2 id="first">First run</h2>
+  <ol class="howto">
+    <li>Open ATA. Its window appears, and an ATA icon is added to the menu bar at the top of the screen. If you close the window, ATA keeps running in the menu bar. Open ATA again to bring the window back.</li>
+    <li>Allow Bluetooth when macOS asks (see below).</li>
+    <li>In ATA on the Mac, choose <strong>Pair New Device…</strong>. A QR code appears. It's valid for 5 minutes.</li>
+    <li>On your Android phone, open ATA, tap <strong>Pair New Device…</strong>, and scan the code. The phone asks for camera access the first time you scan. If you'd rather not allow it, use <strong>Paste pairing link</strong> instead.</li>
+    <li>Optional: turn on <strong>Launch at Login</strong> in ATA so it's always ready.</li>
+  </ol>
+</section>
+
+<section aria-labelledby="perms">
+  <h2 id="perms">Permissions the Mac app asks for, and why</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Permission</th><th>When</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Bluetooth</strong> (required)</td><td>First launch</td><td>Lets your paired phone find this Mac nearby and exchange encrypted connection details. Without it, nothing works.
+        If you clicked Don't Allow, use <strong>Open Bluetooth Privacy Settings…</strong> in the ATA menu.</td></tr>
+      <tr><td><strong>Local Network</strong></td><td>First transfer (on macOS versions that ask)</td><td>Receives files over your Wi-Fi, the fast path. If you deny it, transfers on the same Wi-Fi can't use the local network.</td></tr>
+      <tr><td><strong>Accept incoming connections</strong></td><td>Only if the macOS firewall is on</td><td>The phone connects to the Mac to deliver files. Click Allow.</td></tr>
+            <tr><td><strong>Notifications</strong> (optional)</td><td>After the first completed transfer</td><td>Tells you when a file has arrived. Deny it and everything else still works.</td></tr>
+      <tr><td><strong>Login Items</strong> (optional)</td><td>When you turn on Launch at Login</td><td>Starts ATA when you log in. You can remove it in System Settings → General → Login Items.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="fine">The Mac app doesn't ask for Camera, Microphone, Location, Contacts, Full Disk Access, or Accessibility. It writes only to the save folder you choose (Downloads by default).</p>
+</section>
+
+<section aria-labelledby="update">
+  <h2 id="update">Updating and uninstalling</h2>
+  <ul class="tight">
+    <li><strong>Update:</strong> run the one-line install again (it quits ATA, replaces it, and reopens it), or download the new release and replace <code>ATA.app</code>. <strong>Check for Updates…</strong> in the ATA menu opens the Releases page. ATA doesn't update itself or check in the background.</li>
+    <li><strong>Uninstall:</strong> choose <strong>Quit ATA</strong> in the menu, then move <code>ATA.app</code> from Applications to the Trash.
+      To remove the pairing keys too, choose <strong>Remove</strong> for each paired device in ATA before you quit it, or delete ATA's folder in <code>~/Library/Application Support/</code>. Then remove the Mac on your phone as well.</li>
+  </ul>
+</section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <nav aria-label="Footer">
+    <a href="../">Home</a><a href="../faq/">FAQ</a><a href="../support/">Help</a><a href="../privacy/">Privacy policy</a>
+    <a href="https://github.com/magiclin99/ata">Source code</a>
+    <a href="mailto:magiclin99@gmail.com">Contact: magiclin99@gmail.com</a>
+  </nav>
+  <p>Android is a trademark of Google LLC. Mac is a trademark of Apple Inc., registered in the U.S. and other countries and regions.
+    ATA is not affiliated with or endorsed by Apple or Google.</p>
+</div></footer>
+</body>
+</html>

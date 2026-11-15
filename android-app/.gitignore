@@ -1,0 +1,23 @@
+# Build outputs
+/build
+*/build
+/.gradle
+/.kotlin
+/captures
+.externalNativeBuild/
+.cxx/
+
+# Local machine config (sdk.dir)
+/local.properties
+
+# Signing material lives in ~/ata-secrets, never here
+*.jks
+*.keystore
+*.p12
+*.pem
+signing.properties
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store

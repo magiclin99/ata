@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hant</string>
+    </array>
+    <key>CFBundleIdentifier</key>
+    <string>io.github.magiclin99.ata.mac</string>
+    <key>CFBundleName</key>
+    <string>ATA</string>
+    <key>CFBundleDisplayName</key>
+    <string>ATA</string>
+    <key>CFBundleExecutable</key>
+    <string>ATA</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2026 magiclin99. Released under the MIT License.</string>
+    <!-- Voluntary-support link. Empty = no "Support ATA…" item. Only an https URL enables it. -->
+    <key>ATASupportURL</key>
+    <string></string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>ATA uses Bluetooth to let your paired Android phone find this Mac and start a file transfer.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>ATA receives files from your phone over the local network.</string>
+</dict>
+</plist>

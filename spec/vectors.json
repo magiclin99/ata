@@ -1,0 +1,44 @@
+{
+  "ble_m2p" : {
+    "counter0_wire" : "9a51c5b3b3a8be8b4716e705d2679e6f2bd2093b65ce5e765fdcc768dbf01c9afe369fc82f0159a6af6844cdc5070b7fe23d8705de7d97227ea15f2e525748a8e7776b0d",
+    "plaintext_utf8" : "{\"t\":\"accept\",\"tcpPort\":47800,\"lan\":[\"192.168.1.2\"]}"
+  },
+  "ble_p2m" : {
+    "counter0_wire" : "b9e53ff643839c3377aba8015fa7f0d6468f2924dc96be800f5be662c4c801514cfe9f4c80d8f109c04ea25f903a8b65266ed25fd96b343976d1b9670768bdd847abdf993d5f3ae49b9c",
+    "counter1_wire" : "7c43180b4805508fba4f54da36d6d95923d2897dd3e81bc761883bef2613aa096ecdc72f2822b6200aecd3226bd0060c8821261782837922e4cf1064d43cb50ca81b8dadd7aa8f811d44",
+    "plaintext_utf8" : "{\"t\":\"send\",\"files\":[{\"name\":\"a.jpg\",\"size\":3}],\"total\":3}"
+  },
+  "comment" : "All values lowercase hex unless suffixed _utf8/_b64. Inputs are byte ramps: K=00..1f, macId=a0..af, phoneId=b0..bf, nonceM=10..1f, nonceP=20..2f.",
+  "handshake" : {
+    "auth_mac_mac" : "966f005be76668717855dc34376a075ad04fa3ba6c801c28c3b4d7ccd28cbc7f",
+    "auth_mac_mac_b64" : "lm8AW+dmaHF4Vdw0N2oHWtBPo7psgBwow7TXzNKMvH8=",
+    "auth_phone_mac" : "c62946a46bd7e85d6837e45b7a6999d0deb928b7157c682e6ab6059251a35384",
+    "auth_phone_mac_b64" : "xilGpGvX6F1oN+RbemmZ0N65KLcVfGguarYFklGjU4Q="
+  },
+  "inputs" : {
+    "K" : "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "K_b64url" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "macId" : "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+    "nonceM" : "101112131415161718191a1b1c1d1e1f",
+    "nonceP" : "202122232425262728292a2b2c2d2e2f",
+    "phoneId" : "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
+  },
+  "keys" : {
+    "kFile" : "fe9299f0916f3df8467e981ecbdc0459e61d5f7f8ff5fe9030ba9bda4a771467",
+    "kM2P" : "017ce1bb590501a320ca03b545239f464b79bc7f0b59277a538c33bf4b3fee4f",
+    "kP2M" : "636b4151c0e31df93ee264c8ceac73de3f273630ad7bee3e8bb3a68b8e175162",
+    "sid" : "305d3610e488ffbd68fc4990cc5b884d"
+  },
+  "tcp_record_m2p" : {
+    "counter" : 0,
+    "nonce" : "000000020000000000000000",
+    "record_plaintext" : "047b226f6b223a747275657d",
+    "sealed" : "c587efc543fa861a531b3dd70d8c0658d7de3a901e10a72a0bf3b565"
+  },
+  "tcp_record_p2m" : {
+    "counter" : 5,
+    "nonce" : "000000010000000000000005",
+    "record_plaintext" : "02616263",
+    "wire_with_length_prefix" : "0000001467460feed8b753d0ce8f3534644ad499943f163f"
+  }
+}
