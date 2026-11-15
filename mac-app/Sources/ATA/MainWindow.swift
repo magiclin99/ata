@@ -15,7 +15,7 @@ final class MainWindowController: NSObject, NSWindowDelegate {
         AppModel.shared.pruneRecentFiles()
         AppModel.shared.refreshLaunchAtLogin()
         if window == nil {
-            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 700),
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 820),
                              styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
             w.title = "ATA"
             w.isReleasedWhenClosed = false
@@ -26,12 +26,16 @@ final class MainWindowController: NSObject, NSWindowDelegate {
             if !w.setFrameUsingName("ATAMainWindow") { w.center() }
             window = w
         }
+        AppModel.shared.ensureWelcomePairing()
         ActivationPolicy.windowWillShow()
         window?.makeKeyAndOrderFront(nil)
         Log.info("main window shown")
     }
 
     func windowWillClose(_ notification: Notification) {
+        // Don't leave a pairing QR code valid while nobody is looking at it.
+        if !PairingWindowController.shared.isVisible, AppModel.shared.pairing?.phase == .waiting { AppModel.shared.endPairing() }
+        if AppModel.shared.justPairedPhone != nil { AppModel.shared.dismissJustPaired() }
         if let w = window { ActivationPolicy.windowDidClose(w) }
     }
 }
@@ -65,7 +69,9 @@ struct MainView: View {
                 }
             }
 
-            if model.devices.isEmpty {
+            if let name = model.justPairedPhone {
+                justPaired(name)
+            } else if model.devices.isEmpty {
                 welcome
             }
 
@@ -129,7 +135,7 @@ struct MainView: View {
                     }
                     .help(Text(verbatim: model.saveDir.path(percentEncoded: false)))
                 }
-                Toggle("Open at Login", isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
+                Toggle("Open at Login", isOn: Binding(get: { model.launchAtLogin }, set: { model.userSetLaunchAtLogin($0) }))
                 Toggle(isOn: Binding(get: { model.showInDock }, set: { model.showInDock = $0 })) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Show ATA in the Dock")
@@ -161,24 +167,48 @@ struct MainView: View {
         }
     }
 
-    /// First launch: what ATA is, that it keeps running, how to get this window back, and one button.
+    /// First launch (nothing paired): what ATA does, the pairing QR code right away (no button to find), a separate
+    /// QR code for getting the Android app, and how to get this window back.
     private var welcome: some View {
         Section {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Welcome to ATA").font(.title3.weight(.semibold))
-                Text("ATA lets you send photos and files from your Android phone to this Mac.")
-                Text("It keeps running in the background, even after you close this window. To see this window again, open ATA again, or click its icon in the Dock.")
-                    .foregroundStyle(.secondary)
-                HStack {
-                    Spacer()
-                    Button("Pair a Phone…") { PairingWindowController.shared.show() }
-                        .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+            VStack(spacing: 14) {
+                VStack(spacing: 6) {
+                    Text("Welcome to ATA").font(.title2.weight(.semibold))
+                    Text("ATA lets you send photos and files from your Android phone to this Mac.")
+                        .multilineTextAlignment(.center)
                 }
+                Text("On your phone, open ATA, tap “Pair with a Mac”, and scan this QR code.")
+                    .font(.headline).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let p = model.pairing {
+                    PairingQR(p: p, size: 220)
+                    PairingStatus(model: model, p: p)
+                } else {
+                    ProgressView().frame(height: 220)
+                }
+                GetAndroidAppBox(model: model)
+                Text("ATA keeps running in the background, even after you close this window. To see this window again, open ATA again, or click its icon in the Dock.")
+                    .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .onAppear { model.ensureWelcomePairing() }
+        }
+    }
+
+    /// Right after the first pairing from the welcome: the result and the next steps, until "Done".
+    private func justPaired(_ name: String) -> some View {
+        Section {
+            VStack(spacing: 12) {
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 48)).foregroundStyle(.green)
+                PairedNextSteps(model: model, name: name)
+                Button("Done") { model.dismissJustPaired() }
+                    .buttonStyle(.borderedProminent).controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
         }
     }
 

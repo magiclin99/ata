@@ -4,7 +4,8 @@
 #   scripts/release.sh
 #
 # Output in dist/ (VERSION from Resources/Info.plist):
-#   ATA-VERSION.zip  ATA-VERSION.dmg  ATA-VERSION.zip.sha256  ATA-VERSION.dmg.sha256  SHA256SUMS.txt  install.sh
+#   ATA-VERSION.zip  ATA-VERSION.dmg  ATA.dmg (same file, fixed name for the website)  *.sha256  SHA256SUMS.txt
+#   install.sh (unchanged installer; it uses the versioned zip)
 #
 # Signing identity: the self-signed certificate in signing/ata-signing-cert.pem (public part, in the repo). The
 # script refuses to publish anything signed by a different certificate, because a different certificate means a
@@ -68,11 +69,17 @@ DMG="ATA-$VERSION.dmg"
 ditto -c -k --norsrc --noextattr --noqtn --keepParent "$APP" "$DIST/$ZIP"
 if unzip -Z1 "$DIST/$ZIP" | grep -q '^__MACOSX/'; then echo "$ZIP contains __MACOSX entries" >&2; exit 1; fi
 
+# Disk image with a background (arrow from ATA to Applications) and fixed icon positions. The Finder layout is a
+# stored file (Resources/dmg/DS_Store, made by scripts/make-dmg-layout.sh) that expects the volume name "ATA" and the
+# background at /.background.tiff, so plain `hdiutil create` is enough (no writable mount, no Finder scripting).
 DMGROOT="$STAGE/dmg"
 mkdir -p "$DMGROOT"
 ditto "$APP" "$DMGROOT/ATA.app"
 ln -s /Applications "$DMGROOT/Applications"
-hdiutil create -quiet -volname "ATA $VERSION" -srcfolder "$DMGROOT" -fs HFS+ -format UDZO -imagekey zlib-level=9 -ov "$DIST/$DMG"
+cp "$ROOT/Resources/dmg/DS_Store" "$DMGROOT/.DS_Store"
+cp "$ROOT/Resources/dmg/background.tiff" "$DMGROOT/.background.tiff"
+chflags hidden "$DMGROOT/.background.tiff"
+hdiutil create -quiet -volname "ATA" -srcfolder "$DMGROOT" -fs HFS+ -format UDZO -imagekey zlib-level=9 -ov "$DIST/$DMG"
 # Sign the disk image too (same identity), so its origin can be checked with `codesign -dv`.
 KC="$ATA_SIGN_KEYCHAIN"
 KC_PASSWORD_FILE="${ATA_SIGN_KEYCHAIN_PASSWORD_FILE:-}"
@@ -81,11 +88,15 @@ signing_keychain_open
 codesign --force --sign "$CERT_SHA1" --keychain "$KC" --timestamp=none --identifier "$BUNDLE_ID.dmg" "$DIST/$DMG"
 signing_keychain_close
 
+# Same disk image under a fixed name, so the website can always link releases/latest/download/ATA.dmg.
+cp "$DIST/$DMG" "$DIST/ATA.dmg"
+cmp -s "$DIST/$DMG" "$DIST/ATA.dmg"
+
 cp "$ROOT/install.sh" "$DIST/install.sh"
 (
     cd "$DIST"
-    for f in "$ZIP" "$DMG" install.sh; do shasum -a 256 "$f" > "$f.sha256"; done
-    shasum -a 256 "$ZIP" "$DMG" install.sh > SHA256SUMS.txt
+    for f in "$ZIP" "$DMG" ATA.dmg install.sh; do shasum -a 256 "$f" > "$f.sha256"; done
+    shasum -a 256 "$ZIP" "$DMG" ATA.dmg install.sh > SHA256SUMS.txt
 )
 
 echo "== verify dmg"
@@ -94,6 +105,8 @@ hdiutil attach -quiet -nobrowse -readonly -mountpoint "$MNT" "$DIST/$DMG"
 trap 'hdiutil detach -quiet "$MNT" 2>/dev/null || true' EXIT
 codesign --verify --deep --strict "$MNT/ATA.app"
 [ "$(codesign -d -r- "$MNT/ATA.app" 2>&1 | sed -n 's/^designated => //p')" = "$WANT" ]
+[ -L "$MNT/Applications" ] && [ -f "$MNT/.DS_Store" ] && [ -f "$MNT/.background.tiff" ] \
+    || { echo "disk image is missing its Applications link, window layout or background" >&2; exit 1; }
 hdiutil detach -quiet "$MNT"; trap - EXIT
 echo "dmg mounts; ATA.app inside verifies"
 

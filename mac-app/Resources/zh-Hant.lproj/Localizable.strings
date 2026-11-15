@@ -33,12 +33,17 @@
 "Show a new QR code and scan it again with your phone." = "請產生新的 QR code，再用手機掃一次。";
 "Show a New QR Code" = "產生新的 QR code";
 "Done" = "完成";
+"No ATA on your phone yet?" = "手機還沒有 ATA？";
+"Scan this with your phone's camera to get it, or open %@ on your phone." = "用手機相機掃這個 QR code 下載，或在手機上打開 %@。";
+"QR code to get the Android app" = "下載 Android app 用的 QR code";
+"ATA will now open by itself when you start your Mac, so your phone can always find it." = "之後 Mac 開機時，ATA 會自己打開，手機就隨時找得到這台 Mac。";
+"If your Mac asks whether ATA may “find devices on your local network”, click “Allow” so sending works smoothly on the same Wi-Fi." = "如果 Mac 詢問是否讓 ATA「尋找區域網路上的裝置」，請按「允許」，在同一個 Wi-Fi 上才能順利傳送。";
 "Cancel" = "取消";
 
 /* Main window */
 "Welcome to ATA" = "歡迎使用 ATA";
 "ATA lets you send photos and files from your Android phone to this Mac." = "ATA 讓你把 Android 手機上的照片和檔案傳到這台 Mac。";
-"It keeps running in the background, even after you close this window. To see this window again, open ATA again, or click its icon in the Dock." = "關掉這個視窗後，ATA 會繼續在背景執行。想再看到這個視窗，再打開一次 ATA，或按 Dock 上的 ATA 圖像就可以。";
+"ATA keeps running in the background, even after you close this window. To see this window again, open ATA again, or click its icon in the Dock." = "關掉這個視窗後，ATA 會繼續在背景執行。想再看到這個視窗，再打開一次 ATA，或按 Dock 上的 ATA 圖像就可以。";
 "Your Mac will ask whether ATA can use Bluetooth. Click “Allow” so your phone can find this Mac. Without it, ATA can't receive files." = "Mac 會詢問 ATA 能不能使用藍牙。請按「允許」，手機才能找到這台 Mac；不允許的話，ATA 就收不到檔案。";
 "To receive files, ATA needs Bluetooth. Open System Settings → Privacy & Security → Bluetooth, and turn on ATA." = "ATA 需要藍牙才能接收檔案。請打開「系統設定」→「隱私權與安全性」→「藍牙」，把 ATA 打開。";
 "Open Bluetooth Permissions…" = "打開藍牙權限設定…";

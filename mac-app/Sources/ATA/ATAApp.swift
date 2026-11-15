@@ -133,7 +133,7 @@ struct MenuContent: View {
 
         Button("Save to “\(model.saveDirName)”…") { model.chooseSaveFolder() }
         Button("Open Save Folder") { model.openSaveFolder() }
-        Toggle("Open at Login", isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
+        Toggle("Open at Login", isOn: Binding(get: { model.launchAtLogin }, set: { model.userSetLaunchAtLogin($0) }))
 
         Divider()
 
@@ -210,12 +210,13 @@ enum ActivationPolicy {
 final class PairingWindowController: NSObject, NSWindowDelegate {
     static let shared = PairingWindowController()
     private var window: NSWindow?
+    var isVisible: Bool { window?.isVisible ?? false }
 
     func show() {
         let model = AppModel.shared
         if model.pairing == nil || model.pairing?.phase != .waiting { model.beginPairing() }
         if window == nil {
-            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 380, height: 520),
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 640),
                              styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
             w.title = String(localized: "Pair a Phone")
             w.titlebarAppearsTransparent = true
@@ -232,6 +233,8 @@ final class PairingWindowController: NSObject, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         AppModel.shared.endPairing()
+        // The welcome in the main window shows its own live QR code while nothing is paired.
+        if MainWindowController.shared.isVisible { AppModel.shared.ensureWelcomePairing() }
         if let w = window { ActivationPolicy.windowDidClose(w) }
     }
 }
@@ -241,11 +244,27 @@ struct PairingView: View {
     var close: () -> Void
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 16) {
             if let p = model.pairing {
-                header(p)
-                qr(p)
-                footer(p)
+                Text("Pair a Phone").font(.title2.weight(.semibold))
+                if case .success(let name) = p.phase {
+                    PairingQR(p: p, size: 160)
+                    PairedNextSteps(model: model, name: name)
+                } else {
+                    Text("On your phone, open ATA, tap “Pair with a Mac”, and scan this QR code.")
+                        .font(.callout).foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    PairingQR(p: p)
+                    PairingStatus(model: model, p: p)
+                    GetAndroidAppBox(model: model)
+                }
+                HStack {
+                    Spacer()
+                    Button(isSuccess(p.phase) ? "Done" : "Cancel") { close() }
+                        .keyboardShortcut(isSuccess(p.phase) ? .defaultAction : .cancelAction)
+                }
+                .controlSize(.large)
             } else {
                 ProgressView().frame(height: 300)
             }
@@ -253,109 +272,8 @@ struct PairingView: View {
         .padding(.horizontal, 28)
         .padding(.top, 34)
         .padding(.bottom, 22)
-        .frame(width: 380)
+        .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
-    }
-
-    @ViewBuilder private func header(_ p: PairingUIState) -> some View {
-        VStack(spacing: 6) {
-            Text("Pair a Phone").font(.title2.weight(.semibold))
-            if case .success = p.phase {
-                EmptyView()
-            } else {
-                Text("On your phone, open ATA, tap “Pair with a Mac”, and scan this QR code.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    @ViewBuilder private func qr(_ p: PairingUIState) -> some View {
-        let dimmed = p.phase != .waiting
-        ZStack {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
-            if let img = QRCode.image(for: p.uri) {
-                Image(nsImage: img)
-                    .interpolation(.none)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(14)
-                    .opacity(dimmed ? 0.12 : 1)
-                    .accessibilityLabel(Text("Pairing QR code"))
-            }
-            overlay(p.phase)
-        }
-        .frame(width: 236, height: 236)
-        .animation(.easeInOut(duration: 0.2), value: p.phase)
-    }
-
-    @ViewBuilder private func overlay(_ phase: PairingUIState.Phase) -> some View {
-        switch phase {
-        case .waiting: EmptyView()
-        case .success:
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 72)).foregroundStyle(.green)
-        case .failed:
-            Image(systemName: "xmark.octagon.fill").font(.system(size: 64)).foregroundStyle(.red)
-        case .expired:
-            Image(systemName: "clock.badge.exclamationmark").font(.system(size: 60)).foregroundStyle(.orange)
-        }
-    }
-
-    @ViewBuilder private func footer(_ p: PairingUIState) -> some View {
-        VStack(spacing: 14) {
-            switch p.phase {
-            case .waiting:
-                TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                    let left = max(0, Int(p.expiresAt.timeIntervalSince(ctx.date).rounded(.up)))
-                    HStack(spacing: 8) {
-                        ProgressView().controlSize(.small)
-                        Text("Waiting for your phone… This QR code works for \(left / 60):\(String(format: "%02d", left % 60)) more.")
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    }
-                    .font(.callout)
-                }
-            case .success(let name):
-                VStack(spacing: 8) {
-                    Text("Paired with “\(name)”").font(.headline)
-                    Text("Now share photos or files on your phone and choose ATA. They'll arrive on this Mac.")
-                        .font(.callout).multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if model.showFirewallTip {
-                        Text("If your Mac asks whether ATA may accept incoming network connections, click “Allow” so your phone can deliver files.")
-                            .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            case .failed:
-                VStack(spacing: 4) {
-                    Text("Pairing didn't work").font(.headline)
-                    Text("Show a new QR code and scan it again with your phone.")
-                        .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                }
-            case .expired:
-                VStack(spacing: 4) {
-                    Text("This QR code no longer works").font(.headline)
-                    Text("Show a new QR code and scan it again with your phone.")
-                        .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                }
-            }
-            HStack {
-                if p.phase != .waiting, !isSuccess(p.phase) {
-                    Button("Show a New QR Code") { model.beginPairing() }
-                        .keyboardShortcut(.defaultAction)
-                }
-                Spacer()
-                Button(isSuccess(p.phase) ? "Done" : "Cancel") { close() }
-                    .keyboardShortcut(isSuccess(p.phase) ? .defaultAction : .cancelAction)
-            }
-            .controlSize(.large)
-        }
-        .frame(minHeight: 84, alignment: .top)
     }
 
     private func isSuccess(_ p: PairingUIState.Phase) -> Bool { if case .success = p { return true }; return false }

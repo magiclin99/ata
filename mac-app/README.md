@@ -48,8 +48,16 @@ settings: delete `~/Library/Application Support/io.github.magiclin99.ata.mac` an
 
 ## Using ATA
 
-1. Open ATA. The first time, a welcome window explains what ATA does; click **Pair a Phone…**. On your phone, open
-   ATA, tap **Pair with a Mac**, and scan the QR code. The window then shows the phone's name and what to do next.
+1. Open ATA. The first time, the window shows a short welcome and the pairing QR code right away. On your phone,
+   open ATA, tap **Pair with a Mac**, and scan it. If the phone doesn't have ATA yet, a second, separate QR code in
+   the same window opens the page to get it (one constant, `Links.getAndroidApp`, to switch to the Play Store at
+   launch). After pairing, the window shows the phone's name and what to do next.
+   - The first pairing turns on **Open at Login** (only for the copy in /Applications, and never if you already set
+     it yourself), and says so in one sentence with the switch right there. If you turn it off, ATA never turns it
+     back on. Without it, after a restart ATA isn't running and the phone can't find the Mac.
+   - If the macOS firewall is on, ATA explains the "accept incoming network connections" question and then makes
+     macOS ask it right away (it listens for a moment), instead of in the middle of the first transfer. On
+     macOS 15 and later it does the same for the "find devices on your local network" question (see Permissions).
 2. On your phone, share photos or files and choose ATA. They arrive in your Downloads folder (you can change that in
    the window). A notification says where they were saved; click it to see the file in Finder. The window also lists
    the latest files with a **Show in Finder** button.
@@ -81,6 +89,11 @@ macOS asks for these the first time they are needed. ATA explains each one in pl
   slower." with a **How to Fix…** link to the [FAQ entry](https://magiclin99.github.io/ata/faq/#firewall): allow ATA
   in System Settings → Network → Firewall → Options, remove duplicate ATA entries left by older versions, then quit
   and reopen ATA. ATA never changes firewall settings itself.
+- **Local network** (macOS 15 and later) — files arriving over the same Wi-Fi are incoming connections, which
+  macOS doesn't ask about (Apple TN3179). macOS does ask when ATA has to fall back to the internet path while the
+  phone is on the same Wi-Fi, because that sends to the phone's local address. ATA brings that question forward to
+  just after the first pairing (TN3179's method: connect a UDP socket to a local address; nothing is sent). This
+  couldn't be tested here: the development Mac runs macOS 14, which has no such question.
 - **Notifications** — asked after the first transfer; optional.
 - **Open at Login** works best when ATA is in /Applications.
 
@@ -158,14 +171,19 @@ or logo.
 ### Release
 
 ```sh
-scripts/release.sh     # → dist/ATA-<v>.zip, ATA-<v>.dmg, *.sha256, SHA256SUMS.txt, install.sh
+scripts/release.sh     # → dist/ATA-<v>.zip, ATA-<v>.dmg, ATA.dmg, *.sha256, SHA256SUMS.txt, install.sh
 ```
 
 Builds a universal (arm64 + x86_64) release with the debug hooks compiled out, signs it with the release certificate,
 and refuses to continue unless the designated requirement is exactly
 `identifier "io.github.magiclin99.ata.mac" and certificate leaf = H"<SHA-1 of signing/ata-signing-cert.pem>"`, the
 framework is signed with the same certificate, and the binary contains no debug hooks. It then builds the zip and
-dmg, signs the dmg, writes checksums, mounts the dmg and verifies the app inside. The zip carries no resource forks or
+dmg, signs the dmg, writes checksums, mounts the dmg and verifies the app inside. The dmg window has a background with an
+arrow from ATA to Applications (`scripts/make-dmg-background.swift` → `Resources/dmg/background.tiff`). The Finder
+layout is a stored file, `Resources/dmg/DS_Store`, made once by `scripts/make-dmg-layout.sh` (dmgbuild from a throwaway
+venv, hash-pinned in `scripts/requirements-dmg.txt`, settings in `scripts/dmg-settings.py`). Releases then need only
+`hdiutil create`. That avoids copying the app onto a writable mounted image, which a security scanner can keep busy.
+`ATA.dmg` is the same file under a fixed name, so the website can link `releases/latest/download/ATA.dmg`. The zip carries no resource forks or
 `__MACOSX/` entries. The signing keychain is locked again as soon as signing is done.
 
 `scripts/test-install.sh` checks the installer's authenticity check with `--dry-run` against local fake releases.

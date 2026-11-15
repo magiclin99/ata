@@ -2,7 +2,19 @@ import Foundation
 import AppKit
 import ServiceManagement
 import CoreBluetooth
+import Network
 import ATACore
+
+/// Web addresses the app links to, in one place.
+enum Links {
+    /// Where to get the Android app. Before the Google Play launch this is the closed-test page; at launch, switch both
+    /// to the Play Store listing (https://play.google.com/store/apps/details?id=io.github.magiclin99.ata).
+    static let getAndroidAppEnglish = URL(string: "https://magiclin99.github.io/ata/beta/")!
+    static let getAndroidAppChinese = URL(string: "https://magiclin99.github.io/ata/zh-tw/beta/")!
+
+    static var prefersChinese: Bool { Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true }
+    static var getAndroidApp: URL { prefersChinese ? getAndroidAppChinese : getAndroidAppEnglish }
+}
 
 /// SPEC §9 debug automation flags (debug builds only).
 struct LaunchOptions {
@@ -14,6 +26,11 @@ struct LaunchOptions {
     /// Debug only: don't start Bluetooth at all (screenshots / UI checks next to a running ATA without a second
     /// advertising Mac and without a permission question).
     var noBluetooth = false
+    /// Debug only: act as if ATA ran from /Applications for the "open at login after the first pairing" step, but
+    /// don't actually register a login item (screenshots of a test copy).
+    var fakeLoginItem = false
+    /// Debug only: show the setup line about the firewall question but don't actually listen (repeat UI runs).
+    var noSetupProbes = false
 
     static func parse(_ args: [String] = CommandLine.arguments) -> LaunchOptions {
         var o = LaunchOptions()
@@ -31,6 +48,8 @@ struct LaunchOptions {
         o.signalPort = value("--debug-signal-port").flatMap { UInt16($0) }
         o.showPairingWindow = args.contains("--debug-show-pairing")
         o.noBluetooth = args.contains("--debug-no-bluetooth")
+        o.fakeLoginItem = args.contains("--debug-fake-login-item")
+        o.noSetupProbes = args.contains("--debug-no-setup-probes")
         #else
         if args.contains(where: { $0.hasPrefix("--pairing-uri-file") || $0.hasPrefix("--log-file") || $0.hasPrefix("--save-dir") || $0.hasPrefix("--debug-signal-port") }) {
             Log.info("debug flags ignored: this is a release build")
@@ -72,6 +91,14 @@ final class AppModel: ObservableObject {
     @Published private(set) var bluetoothNotAskedYet = CBManager.authorization == .notDetermined
     /// A transfer has arrived over the same Wi-Fi at least once (so the firewall question was answered "Allow").
     @Published private(set) var hadWiFiTransfer = UserDefaults.standard.bool(forKey: "hadWiFiTransfer")
+    /// Name of the phone just paired from the welcome window; the window shows the next steps until "Done".
+    @Published private(set) var justPairedPhone: String?
+    /// "Open at Login" was switched on automatically by the first pairing: say so, with the switch right there.
+    @Published private(set) var openAtLoginTurnedOnForYou = false
+    /// The firewall question is about to be (or was just) brought forward during setup: show the one-line reason.
+    @Published private(set) var firewallQuestionComing = false
+    /// macOS 15+: the "find devices on your local network" question is about to be asked during setup.
+    @Published private(set) var localNetworkQuestionComing = false
 
     private let options = LaunchOptions.parse()
     private let defaults = UserDefaults.standard
@@ -190,7 +217,14 @@ final class AppModel: ObservableObject {
         case .pairingExpired:
             if var p = pairing, p.phase == .waiting { p.phase = .expired; pairing = p }
         case .paired(let d):
+            let first = devices.isEmpty
             if var p = pairing { p.phase = .success(d.name); pairing = p }
+            if first {
+                justPairedPhone = d.name
+                turnOnOpenAtLoginAfterFirstPairing()
+                bringFirewallQuestionForward()
+                bringLocalNetworkQuestionForward()
+            }
         case .pairingFailed(let reason):
             if var p = pairing, p.phase == .waiting { p.phase = .failed(reason); pairing = p }
         case .devicesChanged:
@@ -337,6 +371,14 @@ final class AppModel: ObservableObject {
         set { objectWillChange.send(); ActivationPolicy.setShowInDock(newValue) }
     }
 
+    /// The welcome window shows a live pairing QR code while nothing is paired.
+    func ensureWelcomePairing() {
+        guard devices.isEmpty, engine != nil else { return }
+        if pairing == nil { beginPairing() }
+    }
+
+    func openGetAndroidApp() { NSWorkspace.shared.open(Links.getAndroidApp) }
+
     func beginPairing() {
         let (uri, expires) = engine.startPairing()
         pairing = PairingUIState(uri: uri, expiresAt: expires, phase: .waiting)
@@ -384,7 +426,102 @@ final class AppModel: ObservableObject {
     func openSaveFolder() { NSWorkspace.shared.open(saveDir) }
 
     func refreshLaunchAtLogin() {
+        if options.fakeLoginItem { return }
         launchAtLogin = SMAppService.mainApp.status == .enabled
+    }
+
+    /// Called from the switch: remember that the person decided, so ATA never turns it back on by itself.
+    func userSetLaunchAtLogin(_ on: Bool) {
+        defaults.set(on, forKey: "openAtLoginUserChoice")
+        if options.fakeLoginItem { launchAtLogin = on; return }
+        setLaunchAtLogin(on)
+    }
+
+    /// JOURNEY: after a restart ATA must be running, or the phone "can't find the Mac". So the first successful
+    /// pairing turns on Open at Login, and the success view says so with the switch visible. Never when the person
+    /// already chose (on or off), and only for the copy in /Applications (a login item for a copy in Downloads or a
+    /// disk image would break when that copy moves).
+    private func turnOnOpenAtLoginAfterFirstPairing() {
+        guard defaults.object(forKey: "openAtLoginUserChoice") == nil else { return }
+        let inApplications = Bundle.main.bundlePath.hasPrefix("/Applications/")
+        if options.fakeLoginItem {
+            launchAtLogin = true; openAtLoginTurnedOnForYou = true; return
+        }
+        guard inApplications, SMAppService.mainApp.status != .enabled else { return }
+        setLaunchAtLogin(true)
+        if launchAtLogin {
+            openAtLoginTurnedOnForYou = true
+            Log.info("open at login turned on after the first pairing")
+        }
+    }
+
+    func dismissJustPaired() {
+        justPairedPhone = nil
+        openAtLoginTurnedOnForYou = false
+        endPairing()
+    }
+
+    /// The macOS firewall asks "accept incoming network connections?" the first time ATA listens. Left alone, that
+    /// happens in the middle of the first transfer, and while it waits the phone falls back to the slow path. So,
+    /// right after the first pairing, while the person is looking at the Mac, ATA shows one line about the question
+    /// and then listens briefly (nothing connects to it), which makes macOS ask now. The per-transfer listener and
+    /// the "firewall is blocking your phone" hint stay as they are.
+    func bringFirewallQuestionForward() {
+        guard !hadWiFiTransfer, Firewall.isEnabled(), !Firewall.isAllowed(Bundle.main.bundlePath) else { return }
+        firewallQuestionComing = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.openProbeListener() }
+    }
+
+    private var probe: NWListener?
+    private func openProbeListener() {
+        if options.noSetupProbes { Log.info("DEBUG setup listener skipped"); return }
+        guard probe == nil, let l = try? NWListener(using: .tcp, on: .any) else { return }
+        l.newConnectionHandler = { $0.cancel() }
+        l.stateUpdateHandler = { st in Log.info("setup listener: \(st)") }
+        l.start(queue: .main)
+        probe = l
+        Log.info("setup: listening briefly so macOS asks the firewall question now")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+            self?.probe?.cancel(); self?.probe = nil
+        }
+    }
+
+    /// macOS 15+ (Apple TN3179): files arriving over the same Wi-Fi are incoming connections, which need no Local
+    /// Network permission, but when ATA has to fall back to the internet path while the phone is on the same Wi-Fi
+    /// it sends to the phone's local address, which does. macOS would ask then, mid-transfer. TN3179's recommended
+    /// way to ask at a chosen moment: connect a UDP socket to a local network address (no traffic is sent). Done
+    /// right after the first pairing, after one line explaining the question. Not verifiable on macOS 14.
+    func bringLocalNetworkQuestionForward() {
+        guard #available(macOS 15, *) else { return }
+        guard defaults.object(forKey: "localNetworkAsked") == nil else { return }
+        localNetworkQuestionComing = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.connectLocalUDP() }
+    }
+
+    private var localProbeFD: Int32 = -1
+    private func connectLocalUDP() {
+        if options.noSetupProbes { return }
+        // Any address on our own Wi-Fi/Ethernet network other than ours: ".1" (or ".2" if we are ".1").
+        guard let me = lanIPv4Addresses().first?.ip else { return }
+        var parts = me.split(separator: ".").map(String.init)
+        guard parts.count == 4 else { return }
+        parts[3] = parts[3] == "1" ? "2" : "1"
+        var sa = sockaddr_in()
+        sa.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        sa.sin_family = sa_family_t(AF_INET)
+        sa.sin_port = in_port_t(9).bigEndian
+        guard inet_pton(AF_INET, parts.joined(separator: "."), &sa.sin_addr) == 1 else { return }
+        let fd = socket(AF_INET, SOCK_DGRAM, 0)
+        guard fd >= 0 else { return }
+        let r = withUnsafePointer(to: &sa) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) } }
+        Log.info("setup: local network check (connect UDP) result \(r == 0 ? "ok" : String(cString: strerror(errno)))")
+        defaults.set(true, forKey: "localNetworkAsked")
+        localProbeFD = fd
+        // Keep it open for a while: macOS may not show the question for a socket that disappears at once.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+            guard let self, self.localProbeFD >= 0 else { return }
+            close(self.localProbeFD); self.localProbeFD = -1
+        }
     }
 
     func setLaunchAtLogin(_ on: Bool) {

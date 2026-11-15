@@ -109,7 +109,13 @@ def zh_table():
     return d
 
 
+# System dialog wording quoted exactly so people can recognise the dialog (TERMS.md principle 5).
+SYSTEM_PHRASES = ["find devices on your local network", "尋找區域網路上的裝置"]
+
+
 def jargon(text: str):
+    for p in SYSTEM_PHRASES:
+        text = text.replace(p, "")
     hits = []
     for w in NEVER_LATIN:
         # Acronyms (LAN, TURN, ICE, …) only as acronyms; "turn on" and "ice" are fine.
