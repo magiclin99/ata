@@ -16,7 +16,9 @@ curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh
 ```
 
 The script downloads the latest `ATA-<version>.zip` from
-[GitHub Releases](https://github.com/magiclin99/ata/releases), checks its SHA-256 checksum and code signature,
+[GitHub Releases](https://github.com/magiclin99/ata/releases) and checks its SHA-256 checksum. It then checks that the
+app is intact and signed with ATA's own certificate: the requirement pinned in the script is the bundle id plus the
+certificate's SHA-1, `3DA39545…E65E` (see "Signing"). Anything else is refused, and nothing is installed. Then it
 quits ATA if it is running, replaces `/Applications/ATA.app` and opens it. Read it first if you like
 ([`install.sh`](install.sh)); it is safe to run again, which is also how you update. Add `-s -- --dry-run` after
 `sh` to only download and verify. Because Terminal downloads are not marked as "downloaded from the internet", macOS
@@ -33,7 +35,11 @@ time like this (ATA is signed with its own certificate, not by an Apple Develope
   in the dialog.
 
 This is needed once per download. To check what you downloaded, compare `shasum -a 256 ATA-<version>.dmg` with
-`SHA256SUMS.txt` on the release page.
+`SHA256SUMS.txt` on the release page. To check who signed the app:
+
+```sh
+codesign --verify --deep --strict -R='identifier "io.github.magiclin99.ata.mac" and certificate leaf = H"3da39545619d4949fa758c6becc77f9e2e3ce65e"' /Applications/ATA.app && echo "signed by ATA"
+```
 
 **Uninstall:** quit ATA (menu or window → Quit ATA), delete `/Applications/ATA.app`. To also remove pairings and
 settings: delete `~/Library/Application Support/io.github.magiclin99.ata.mac` and run
@@ -74,7 +80,9 @@ ATA does not use the Keychain, so there is no Keychain password prompt, also not
 
 Each paired phone has a 32-byte key. ATA keeps these keys in
 `~/Library/Application Support/io.github.magiclin99.ata.mac/pairings.json`. The folder is readable only by your user
-account (permissions 700) and so is the file (600). Writes are atomic, and keys never appear in logs.
+account (permissions 700) and so is the file (600). Writes are atomic, and keys never appear in logs. The folder is
+marked "excluded from backup" (when it is created and again at every launch), so Time Machine doesn't copy the keys;
+after a restore, pair the phone again.
 
 The trade-off, honestly: the keys are protected by file permissions for your user account, not by the Keychain.
 Programs running as your user, and anyone with your account or an unencrypted backup of it, could read them. What a
@@ -100,7 +108,7 @@ paired again.
 | `Sources/ATAFakePhone` | Scripted phone (handshake, encrypted messages, LAN TCP and WebRTC sender, tamper switches). Used by tests and the CLI. |
 | `Sources/ata-fakephone` | CLI around `ATAFakePhone` for regression runs against a running debug app. |
 | `Tests/ATACoreTests` | Vectors (`../spec/vectors.json` read in place), framing, end-to-end engine tests, WebRTC loopback. |
-| `scripts/` | `build-app.sh` (build + bundle + sign), `release.sh` (signed release + zip/dmg/checksums), `make-signing-identity.sh` (one-time certificate), `make-icon.sh`. |
+| `scripts/` | `build-app.sh` (build + bundle + sign), `release.sh` (signed release + zip/dmg/checksums), `make-signing-identity.sh` (one-time certificate), `make-icon.sh`, `test-install.sh` (installer authenticity test). |
 | `signing/ata-signing-cert.pem` | Public half of the release certificate (pinned by `release.sh`). |
 | `install.sh` | The `curl … \| sh` installer (also attached to every release). |
 | `../.github/workflows/release-mac.yml` | (repository root) Tag `v*` → test, sign, publish the release. |
@@ -147,7 +155,13 @@ Builds a universal (arm64 + x86_64) release with the debug hooks compiled out, s
 and refuses to continue unless the designated requirement is exactly
 `identifier "io.github.magiclin99.ata.mac" and certificate leaf = H"<SHA-1 of signing/ata-signing-cert.pem>"`, the
 framework is signed with the same certificate, and the binary contains no debug hooks. It then builds the zip and
-dmg, signs the dmg, writes checksums, mounts the dmg and verifies the app inside.
+dmg, signs the dmg, writes checksums, mounts the dmg and verifies the app inside. The zip carries no resource forks or
+`__MACOSX/` entries. The signing keychain is locked again as soon as signing is done.
+
+`scripts/test-install.sh` checks the installer's authenticity check with `--dry-run` against local fake releases.
+It touches neither /Applications nor a running ATA. The release-signed app must be accepted. These must be refused:
+an ad-hoc re-signed copy, a copy signed by another self-signed certificate with the same name, a modified copy, and a
+bad checksum.
 
 Locally it uses `~/ata-secrets/mac/ata-signing.keychain-db` (created once by `scripts/make-signing-identity.sh`).
 In CI, pushing a tag `v<version>` that matches `CFBundleShortVersionString` runs
@@ -166,7 +180,11 @@ and in the GitHub secret. **If the key is lost, the next release looks like a di
 
 - codesign accepts the untrusted self-signed identity without any trust-settings change, but only finds it when its
   keychain is on the user keychain search list; the scripts add the dedicated keychain for the signing step and put
-  the previous list back on exit. The login keychain is never touched.
+  the previous list back on exit, then lock that keychain again. The login keychain is never touched. In CI the
+  `.p12` is imported with `security -i`, so no password appears in a process argument list.
+- Hardened runtime is not enabled. A self-signed certificate has no Team ID, so library validation would reject the
+  embedded WebRTC.framework unless it were switched off again with an entitlement. That would add little protection
+  in return for new Bluetooth and network entitlement requirements to verify.
 - The resulting designated requirement depends only on the bundle id and the certificate, so it is identical for
   every build (verified across separately built debug and release binaries with different cdhashes).
 - **Bluetooth (TCC)** stores that designated requirement, so the approval is expected to carry over to updates.

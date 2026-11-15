@@ -168,7 +168,7 @@ final class HandshakeTests: EngineTestCase {
         let (p, link) = newPhone()
         try p.awaitHello()
         XCTAssertEqual(try p.authenticate(k: randomBytes(32), pairing: true), .fail(reason: "pairing_expired"))
-        XCTAssertTrue(link.closedByMac)
+        XCTAssertTrue(link.waitClosedByMac())
 
         let (uri, _) = engine.startPairing(lifetime: 0.2)
         Thread.sleep(forTimeInterval: 0.4)
@@ -182,7 +182,7 @@ final class HandshakeTests: EngineTestCase {
         let (p, link) = newPhone()
         try p.awaitHello()
         XCTAssertEqual(try p.authenticate(k: PairingOffer.parse(uri)!.k, pairing: true, corruptMAC: true), .fail(reason: "bad_mac"))
-        XCTAssertTrue(link.closedByMac)
+        XCTAssertTrue(link.waitClosedByMac())
         XCTAssertTrue(store.devices().isEmpty)
         XCTAssertNotNil(events.wait { if case .pairingFailed(let r) = $0 { return r }; return nil })
 
@@ -219,7 +219,7 @@ final class HandshakeTests: EngineTestCase {
         let (p2, l2) = newPhone()
         try p2.awaitHello()
         XCTAssertEqual(try p2.authenticate(k: randomBytes(32), pairing: false), .fail(reason: "busy"))
-        XCTAssertTrue(l2.closedByMac)
+        XCTAssertTrue(l2.waitClosedByMac())
     }
 
     /// SPEC §3: a central that only reads hello (and maybe lingers) does not occupy the session.
@@ -282,7 +282,7 @@ final class HandshakeTests: EngineTestCase {
         let (p, link) = newPhone()
         try p.awaitHello()
         Thread.sleep(forTimeInterval: 2.0)
-        XCTAssertTrue(link.closedByMac)
+        XCTAssertTrue(link.waitClosedByMac())
     }
 
     func testIdleTimeoutFreesTheReceiver() throws {
@@ -300,7 +300,7 @@ final class HandshakeTests: EngineTestCase {
         try p.sendRawCiphertext(randomBytes(40))
         let s = try XCTUnwrap(events.sessionEnded())
         XCTAssertFalse(s.ok)
-        XCTAssertTrue(link.closedByMac)
+        XCTAssertTrue(link.waitClosedByMac())
     }
 
     func testReplayedBLEMessageDropsSession() throws {
@@ -311,7 +311,7 @@ final class HandshakeTests: EngineTestCase {
         try p.sendRawCiphertext(wire)
         try p.sendRawCiphertext(wire)
         XCTAssertNotNil(events.sessionEnded())
-        XCTAssertTrue(link.closedByMac)
+        XCTAssertTrue(link.waitClosedByMac())
     }
 }
 
@@ -374,7 +374,7 @@ final class LANTransferTests: EngineTestCase {
         XCTAssertFalse(s.ok)
         XCTAssertTrue(s.error?.contains("LAN transfer failed") == true, s.error ?? "")
         XCTAssertEqual(dirContents(), [])
-        XCTAssertTrue(link.closedByMac)
+        XCTAssertTrue(link.waitClosedByMac())
     }
 
     func testShaMismatchDeletesOnlyThatFile() throws {

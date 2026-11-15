@@ -130,6 +130,24 @@ public final class FilePairingStore: PairingStore {
     public init(url: URL = FilePairingStore.defaultURL()) {
         self.url = url
         load()
+        // On every launch too, so a folder created by an older build (or restored) gets the flag.
+        if FileManager.default.fileExists(atPath: url.deletingLastPathComponent().path) { excludeFromBackup() }
+    }
+
+    /// Pairing keys are per-Mac secrets: keep the folder out of Time Machine and other backups that honour
+    /// the flag (a restored Mac simply pairs again).
+    private func excludeFromBackup() {
+        var dir = url.deletingLastPathComponent()
+        var v = URLResourceValues()
+        v.isExcludedFromBackup = true
+        do { try dir.setResourceValues(v) } catch { Log.err("pairing store: cannot exclude folder from backup: \(error)") }
+    }
+
+    /// Whether the store's folder carries the "exclude from backup" flag (for tests and diagnostics).
+    public var isExcludedFromBackup: Bool {
+        var dir = url.deletingLastPathComponent()
+        dir.removeAllCachedResourceValues()
+        return (try? dir.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup ?? false) ?? false
     }
 
     /// True when the file already exists (used to run the one-time Keychain import only on first use).
@@ -162,6 +180,7 @@ public final class FilePairingStore: PairingStore {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
         _ = chmod(dir.path, 0o700)
+        excludeFromBackup()
         let f = FileFormat(version: 1, devices: entries.values.sorted { $0.device.pairedAt < $1.device.pairedAt }.map {
             Entry(phoneId: $0.device.phoneId, name: $0.device.name, pairedAt: $0.device.pairedAt.timeIntervalSince1970,
                   key: $0.key.base64EncodedString())

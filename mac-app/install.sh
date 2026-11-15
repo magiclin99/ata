@@ -7,7 +7,9 @@
 #   1. Finds the latest release of github.com/magiclin99/ata (or ATA_VERSION, e.g. 1.0.0).
 #   2. Downloads ATA-<version>.zip and ATA-<version>.zip.sha256 from that release into a temporary folder.
 #   3. Checks the zip's SHA-256 against the published checksum. Stops if they differ.
-#   4. Unpacks it and checks the code signature of ATA.app (codesign --verify --deep --strict).
+#   4. Unpacks it and checks that ATA.app is intact and signed by ATA's publisher: codesign --verify --deep --strict
+#      against the pinned requirement below (bundle id + SHA-1 of ATA's signing certificate, the same certificate
+#      as mac-app/signing/ata-signing-cert.pem in the repository). Anything else is refused.
 #   5. Quits ATA if it is running, replaces /Applications/ATA.app (asks for your password only if /Applications is
 #      not writable for you), and opens the new copy.
 # Safe to re-run: it always ends with exactly one current copy of ATA.app. Nothing runs as root except the copy
@@ -29,6 +31,10 @@ set -eu
 REPO="magiclin99/ata"
 APP_NAME="ATA.app"
 BUNDLE_ID="io.github.magiclin99.ata.mac"
+# Every ATA release is signed with this one certificate. A checksum only proves the zip matches what is on the
+# release page; this requirement proves who signed the app.
+REQUIREMENT='identifier "io.github.magiclin99.ata.mac" and certificate leaf = H"3da39545619d4949fa758c6becc77f9e2e3ce65e"'
+
 
 say() { printf '%s\n' "ATA installer: $*"; }
 die() { printf '%s\n' "ATA installer: error: $*" >&2; exit 1; }
@@ -84,12 +90,23 @@ main() {
     ditto -x -k "$tmp/$zip" "$tmp/unpacked" || die "cannot unpack $zip"
     new="$tmp/unpacked/$APP_NAME"
     [ -d "$new" ] || die "$zip does not contain $APP_NAME"
-    codesign --verify --deep --strict "$new" 2>/dev/null || die "the code signature of $APP_NAME is not valid. Nothing was installed."
+    codesign --verify --deep --strict "$new" 2>/dev/null \
+        || die "the code signature of $APP_NAME is broken or missing. Nothing was installed."
+    codesign --verify --deep --strict -R="$REQUIREMENT" "$new" 2>/dev/null \
+        || die "$APP_NAME is not signed with ATA's certificate (expected: $REQUIREMENT). Nothing was installed."
     id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$new/Contents/Info.plist" 2>/dev/null || true)"
     [ "$id" = "$BUNDLE_ID" ] || die "unexpected bundle id in $zip: $id"
-    say "signature OK"
+    say "signature OK (signed with ATA's certificate)"
 
     target="$dest_dir/$APP_NAME"
+    # Information only: say whether the copy being replaced came from ATA's publisher (e.g. not a local build).
+    if [ -e "$target" ]; then
+        if codesign --verify --deep --strict -R="$REQUIREMENT" "$target" >/dev/null 2>&1; then
+            say "the installed $target is signed with ATA's certificate"
+        else
+            say "note: the installed $target is not signed with ATA's certificate (a local build, damaged or another app); it will be replaced"
+        fi
+    fi
     if [ "$dry_run" = 1 ]; then
         say "dry run: would quit ATA if running, replace $target with ATA $version, and open it. Nothing was changed."
         exit 0

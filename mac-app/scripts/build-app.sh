@@ -11,7 +11,7 @@
 #                            added to the list for the duration of the signing step and the exact previous list is
 #                            restored on exit. The login keychain is not touched.
 #   ATA_SIGN_KEYCHAIN_PASSWORD_FILE   if set, the keychain is unlocked with the password in this file (via stdin,
-#                            never on a command line).
+#                            never on a command line). The keychain is locked again right after signing.
 #   ATA_APP_OUT              output path of the .app (default build/ATA.app)
 #   ATA_UNIVERSAL=1          build arm64 + x86_64 (what releases ship)
 #
@@ -69,7 +69,8 @@ if [ "$SIGN_ID" != "-" ]; then
         SEARCH_BEFORE=()
         while IFS= read -r l; do l="${l#"${l%%[![:space:]]*}"}"; l="${l%\"}"; SEARCH_BEFORE+=("${l#\"}"); done \
             < <(security list-keychains -d user)
-        restore_search_list() { security list-keychains -d user -s "${SEARCH_BEFORE[@]}"; }
+        # Put the search list back and lock the signing keychain again, also when signing fails.
+        restore_search_list() { security list-keychains -d user -s "${SEARCH_BEFORE[@]}"; security lock-keychain "$KC"; }
         trap restore_search_list EXIT
         security list-keychains -d user -s "${SEARCH_BEFORE[@]}" "$KC"
     fi

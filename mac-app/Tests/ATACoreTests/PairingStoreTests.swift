@@ -102,4 +102,28 @@ final class FilePairingStoreTests: XCTestCase {
         XCTAssertEqual(FilePairingStore(url: url).key(for: dev.phoneId), k)
         XCTAssertTrue(text.contains("\"version\" : 1"))
     }
+
+    func testFolderIsExcludedFromBackupOnCreationAndOnLaunch() throws {
+        let s = FilePairingStore(url: url)
+        try s.save(device("Pixel"), key: randomBytes(32))
+        XCTAssertTrue(s.isExcludedFromBackup, "set when the folder is created")
+
+        // A folder left by an older build without the flag gets it when the store opens.
+        var dir = url.deletingLastPathComponent()
+        var v = URLResourceValues(); v.isExcludedFromBackup = false
+        try dir.setResourceValues(v)
+        XCTAssertFalse(FilePairingStoreProbe.flag(dir))
+        let reopened = FilePairingStore(url: url)
+        XCTAssertTrue(reopened.isExcludedFromBackup, "set again on launch")
+        XCTAssertTrue(FilePairingStoreProbe.flag(dir))
+        XCTAssertEqual(reopened.devices().count, 1)
+    }
+}
+
+private enum FilePairingStoreProbe {
+    static func flag(_ u: URL) -> Bool {
+        var u = u
+        u.removeAllCachedResourceValues()
+        return (try? u.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup ?? false) ?? false
+    }
 }

@@ -73,6 +73,15 @@ public final class InMemoryLink: PhoneLink, PhoneChannel {
         cond.broadcast()
     }
 
+    /// The Mac closes a link right *after* sending its last message (e.g. auth_fail), on its own queue, so a test
+    /// that has just received that message must wait for the close instead of reading `closedByMac` at once.
+    public func waitClosedByMac(timeout: TimeInterval = 2) -> Bool {
+        cond.lock(); defer { cond.unlock() }
+        let deadline = Date().addingTimeInterval(timeout)
+        while !closedByMac { if !cond.wait(until: deadline) { return closedByMac } }
+        return true
+    }
+
     // MARK: PhoneChannel (phone → Mac)
     public func send(_ message: Data) throws {
         cond.lock()

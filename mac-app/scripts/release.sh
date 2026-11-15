@@ -64,7 +64,9 @@ rm -rf "$DIST"
 mkdir -p "$DIST"
 ZIP="ATA-$VERSION.zip"
 DMG="ATA-$VERSION.dmg"
-ditto -c -k --sequesterRsrc --keepParent "$APP" "$DIST/$ZIP"
+# No resource forks / extended attributes: the zip holds only the bundle (no __MACOSX/ entries).
+ditto -c -k --norsrc --noextattr --noqtn --keepParent "$APP" "$DIST/$ZIP"
+if unzip -Z1 "$DIST/$ZIP" | grep -q '^__MACOSX/'; then echo "$ZIP contains __MACOSX entries" >&2; exit 1; fi
 
 DMGROOT="$STAGE/dmg"
 mkdir -p "$DMGROOT"
@@ -76,7 +78,10 @@ hdiutil create -quiet -volname "ATA $VERSION" -srcfolder "$DMGROOT" -fs HFS+ -fo
     SEARCH_BEFORE=()
     while IFS= read -r l; do l="${l#"${l%%[![:space:]]*}"}"; l="${l%\"}"; SEARCH_BEFORE+=("${l#\"}"); done \
         < <(security list-keychains -d user)
-    trap 'security list-keychains -d user -s "${SEARCH_BEFORE[@]}"' EXIT
+    trap 'security list-keychains -d user -s "${SEARCH_BEFORE[@]}"; security lock-keychain "$ATA_SIGN_KEYCHAIN"' EXIT
+    if [ -n "${ATA_SIGN_KEYCHAIN_PASSWORD_FILE:-}" ]; then
+        printf 'unlock-keychain -p %s %s\n' "$(cat "$ATA_SIGN_KEYCHAIN_PASSWORD_FILE")" "$ATA_SIGN_KEYCHAIN" | security -i >/dev/null
+    fi
     security list-keychains -d user -s "${SEARCH_BEFORE[@]}" "$ATA_SIGN_KEYCHAIN"
     codesign --force --sign "$CERT_SHA1" --keychain "$ATA_SIGN_KEYCHAIN" --timestamp=none --identifier "$BUNDLE_ID.dmg" "$DIST/$DMG"
 )
@@ -97,6 +102,12 @@ codesign --verify --deep --strict "$MNT/ATA.app"
 hdiutil detach -quiet "$MNT"; trap - EXIT
 echo "dmg mounts; ATA.app inside verifies"
 
+echo "== signing keychain"
+# A locked keychain refuses show-keychain-info (no prompt in a script); success would mean it is still unlocked.
+if security show-keychain-info "$ATA_SIGN_KEYCHAIN" >/dev/null 2>&1; then
+    echo "signing keychain is still unlocked" >&2; exit 1
+fi
+echo "signing keychain is locked again"
 echo "== done"
 ls -l "$DIST"
 cat "$DIST/SHA256SUMS.txt"
