@@ -3,6 +3,10 @@
   Default locale: Traditional Chinese (Taiwan). English lives in values-en.
   Wording follows the shared glossary (internal TERMS.md): plain words for a non-technical reader, no connection-path
   names, no codes or raw system text. An error says what happened, then one thing to try.
+
+  Line breaks: never hard-code them. Words that must not split across lines are joined instead:
+  "QR&#160;code" uses a no-break space, and two-character words such as 自&#8288;己 or 之&#8288;後 use a word joiner
+  (U+2060, invisible and not read aloud). Keep these joins when editing.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="zh-rTW">
     <string name="app_name" translatable="false">ATA</string>
@@ -10,16 +14,18 @@
 
     <!-- Main screen -->
     <string name="paired_macs">已配對的 Mac</string>
-    <string name="empty_install">你的 Mac 裝好 ATA 了嗎？還沒的話，把下載連結傳給自己，用 Mac 打開就能安裝。</string>
-    <string name="empty_pair">裝好了就按「與 Mac 配對」，掃描 Mac 上 ATA 顯示的 QR code（沒看到的話，在 Mac 的 ATA 按「配對手機…」）。</string>
-    <string name="send_install_link">把下載連結傳給自己</string>
+    <!-- Empty state (no Mac paired): pairing is the main action; getting the Mac app is the secondary one. -->
+    <string name="empty_title">先和你的 Mac 配對</string>
+    <string name="empty_pair">在 Mac 上打開 ATA，再按下面的「與 Mac 配對」，掃描 Mac 畫面上的 QR&#160;code。沒看到 QR&#160;code 的&#8288;話，在 Mac 的 ATA 按「配對手&#8288;機…」。</string>
+    <string name="empty_install">Mac 還沒裝 ATA 嗎？把下載連結傳給自&#8288;己，再用 Mac 打開就能安&#8288;裝。</string>
+    <string name="send_install_link">把下載連結傳給自&#8288;己</string>
     <!-- Mac download page in this language; sent with the share sheet so the person can open it on their Mac. -->
     <string name="help_url">https://magiclin99.github.io/ata/zh-tw/support/</string>
     <string name="install_url">https://magiclin99.github.io/ata/zh-tw/install/</string>
     <string name="install_share_text">用 Mac 打開這個連結，就能下載 ATA：%1$s</string>
-    <string name="paired_on">%1$s 配對</string>
+    <string name="paired_on">配對日期：%1$s</string>
     <string name="pair_button">與 Mac 配對</string>
-    <string name="remove_pairing">移除配對</string>
+    <string name="remove_pairing">移除和「%1$s」的配對</string>
     <string name="remove_title">要移除「%1$s」嗎？</string>
     <string name="remove_text">移除後，要再傳檔案給這台 Mac，就要重新配對一次。</string>
     <string name="remove">移除</string>
@@ -29,10 +35,11 @@
     <string name="retry">再試一次</string>
     <string name="recent_transfers">最近傳過的檔案</string>
     <string name="no_transfers">在相簿或任何 app 按「分享」，選「傳到 Mac」，檔案就會傳到你的 Mac。</string>
-    <string name="history_line">%1$s → %2$s</string>
-    <string name="history_ok">已傳送</string>
-    <string name="history_ok_cellular">已傳送 · 用了約 %1$s 行動數據</string>
-    <string name="history_failed">沒有傳送成功 · %1$s</string>
+    <!-- History rows name the Mac by its name only: it may have been unpaired since. -->
+    <string name="history_ok">已傳送到「%1$s」</string>
+    <string name="history_ok_cellular">已傳送到「%1$s」，用了約 %2$s 行動數據</string>
+    <string name="history_failed">沒有傳到「%1$s」：%2$s</string>
+    <string name="just_now">剛剛</string>
     <plurals name="files_count">
         <item quantity="other">%1$d 個檔案</item>
     </plurals>
@@ -42,29 +49,33 @@
 
     <!-- Pairing -->
     <string name="scanner_unavailable_title">相機無法使用</string>
-    <string name="scanner_unavailable_text">現在打不開相機，所以沒辦法掃描 QR code。請關掉其他正在用相機的 app，再試一次。</string>
+    <string name="scanner_unavailable_text">現在打不開相機，所以沒辦法掃描 QR&#160;code。請關掉其他正在用相機的 app，再試一次。</string>
     <!-- Debug builds only: pasting a pairing link (the Mac has no way to show one to users). -->
     <string name="pair_link_label" translatable="false">ata://pair…</string>
     <string name="paste_link">貼上配對連結</string>
     <string name="pair">配對</string>
-    <string name="pairing_title">配對</string>
-    <string name="pairing_searching">正在找附近的「%1$s」…</string>
-    <string name="pairing_connecting">正在和「%1$s」配對…</string>
-    <string name="pairing_done">已經和「%1$s」配對好了。之後在任何 app 按「分享」，選「傳到 Mac」就能傳檔案。</string>
+    <string name="pairing_busy_title">正在配對…</string>
+    <string name="pairing_done_title">配對完成</string>
+    <string name="pairing_searching">正在附近找「%1$s」。請把手機拿到 Mac 旁邊。</string>
+    <string name="pairing_connecting">正在和「%1$s」配&#8288;對，請稍等一下。</string>
+    <string name="pairing_done">已經和「%1$s」配&#8288;對&#8288;好了。之&#8288;後在任何 app 按「分享」，選「傳到 Mac」就能傳檔案。</string>
     <string name="pairing_failed">配對沒有成功</string>
     <string name="try_photo_text">要不要現在傳一張照片到 Mac 試試看？</string>
     <string name="try_photo">傳一張照片試試</string>
     <string name="not_now">先不用</string>
 
-    <!-- Permissions: one plain line before each system prompt -->
-    <string name="perm_ble_title">允許「附近的裝置」</string>
-    <string name="perm_ble_text">接下來請按「允許」。ATA 要用它找到你的 Mac，不會用來定位你。</string>
+    <!--
+      Permissions: one plain line before each system prompt. Name the option to choose exactly as the system dialog
+      shows it (checked against the Android permission dialog strings; see TERMS.md), and say the wording can differ.
+    -->
+    <string name="perm_ble_title">允許「附近的裝&#8288;置」</string>
+    <string name="perm_ble_text">接下來手機會詢問你，請選允許的選項，通常是「允許」（每支手機的字可能稍有不同）。ATA 要用它找到你的 Mac，不會用來定&#8288;位&#8288;你。</string>
     <string name="perm_ble_title_legacy">允許位置權限</string>
-    <string name="perm_ble_text_legacy">接下來請按「允許」。這個版本的 Android 規定找藍牙裝置要開位置權限，ATA 不會用到你的位置。</string>
+    <string name="perm_ble_text_legacy">接下來手機會詢問你，請選允許的選項，例如「允許」或「使用應用程&#8288;式&#8288;時」（每支手機的字可能稍有不同）。這個版本的 Android 規定找藍牙裝置要開位置權限，ATA 不會用到你的位置。</string>
     <string name="perm_denied_text">ATA 要有「附近的裝置」才能找到你的 Mac。請按「開啟設定」，在「權限」裡打開「附近的裝置」。</string>
     <string name="perm_denied_text_legacy">ATA 要有位置權限才能找到你的 Mac。請按「開啟設定」，在「權限」裡打開「位置」。</string>
     <string name="perm_notif_title">顯示傳送進度</string>
-    <string name="perm_notif_text">建議允許，離開畫面也能看到傳到哪裡、隨時取消。</string>
+    <string name="perm_notif_text">建議選允許，通常是「允許」。這樣離開這個畫面，也能在通知裡看到傳送進度，隨時可以取&#8288;消。</string>
     <string name="continue_">繼續</string>
     <string name="skip">不用了</string>
     <string name="open_settings">開啟設定</string>
@@ -76,20 +87,20 @@
     <!-- Send sheet -->
     <string name="send_title">傳到 Mac</string>
     <string name="phase_preparing">正在準備檔案…</string>
-    <string name="phase_searching">正在找你的 Mac「%1$s」…</string>
-    <string name="phase_connecting">正在連線到你的 Mac「%1$s」…</string>
-    <string name="phase_waiting">等待你的 Mac「%1$s」回應…</string>
+    <string name="phase_searching">正在找你的 Mac「%1$s」</string>
+    <string name="phase_connecting">正在連線到你的 Mac「%1$s」</string>
+    <string name="phase_waiting">正在等你的 Mac「%1$s」回應</string>
     <string name="phase_lan">正在連線到你的 Mac…</string>
     <string name="phase_rtc">不在同一個 Wi-Fi，改用網路傳送，可能會比較慢…</string>
-    <string name="phase_sending">正在傳送到你的 Mac「%1$s」…</string>
+    <string name="phase_sending">正在傳送到你的 Mac「%1$s」</string>
     <string name="phase_done">已傳送到你的 Mac「%1$s」</string>
     <string name="phase_done_cellular">已傳送到你的 Mac「%1$s」（用了約 %2$s 行動數據）</string>
     <string name="phase_failed">沒有傳送成功</string>
     <string name="phase_cancelled">已取消傳送</string>
     <string name="progress_bytes">%1$s / %2$s</string>
-    <string name="busy_title">已有傳輸進行中</string>
-    <string name="busy_text">請等現在這次傳完，再分享新的檔案。</string>
-    <string name="file_ok">已送到</string>
+    <string name="busy_title">還有檔案正在傳送</string>
+    <string name="busy_text">請等這次傳完，再分享新的檔案。</string>
+    <string name="file_ok">已傳送</string>
     <string name="file_failed">沒有完整收到</string>
 
     <!-- Notification -->
@@ -108,7 +119,7 @@
     <string name="err_mac_not_found_named">附近找不到「%1$s」。請確認那台 Mac 上的 ATA 有打開，並把手機拿到 Mac 旁邊。</string>
     <string name="err_not_paired">這台 Mac 還沒有和這支手機配對。請按「與 Mac 配對」再配對一次。</string>
     <string name="err_pairing_removed">這台 Mac 已經移除和這支手機的配對。請再配對一次。</string>
-    <string name="err_pairing_expired">這個 QR code 已經失效。請在 Mac 上再按一次「配對手機…」，產生新的 QR code。</string>
+    <string name="err_pairing_expired">這個 QR&#160;code 已經失效。請在 Mac 上再按一次「配對手&#8288;機…」，產生新的 QR&#160;code。</string>
     <string name="err_mac_busy">Mac 正在接收另一支手機的檔案。請等一下再傳。</string>
     <string name="err_bad_version">Mac 上的 ATA 需要更新。請用 Mac 打開 %1$s 下載最新版。</string>
     <string name="err_mac_auth_failed">這台 Mac 的配對資料不符。請在兩邊都移除配對，再重新配對一次。</string>
@@ -116,13 +127,13 @@
     <string name="err_rejected_space">Mac 的空間不夠。清出一些空間後，再傳一次。</string>
     <string name="err_rejected_folder">Mac 上的儲存位置找不到了。請在 Mac 的 ATA 裡重新選一個。</string>
     <string name="err_no_path">連不上你的 Mac。請讓手機和 Mac 連上同一個 Wi-Fi，再試一次。</string>
-    <string name="err_interrupted">傳輸中斷了。已完成的檔案仍保留在 Mac 上。</string>
+    <string name="err_interrupted">傳到一半中斷了。已經傳好的檔案會留在 Mac 上。</string>
     <string name="err_file_failed">有檔案沒有完整收到。請再傳一次。</string>
     <string name="err_file_unreadable">這個檔案打不開，所以沒辦法傳送。請回到原本的 app 再分享一次。</string>
     <string name="err_cancelled">已取消。</string>
     <string name="err_bluetooth_off">藍牙沒有開。請打開藍牙再傳一次。</string>
     <string name="err_permission">ATA 沒有「附近的裝置」權限，所以找不到你的 Mac。請到設定裡打開。</string>
-    <string name="err_bad_pairing_code">這不是 ATA 的配對 QR code。請掃描 Mac 上 ATA 顯示的 QR code。</string>
+    <string name="err_bad_pairing_code">這不是 ATA 的配對 QR&#160;code。請掃描 Mac 上 ATA 顯示的 QR&#160;code。</string>
     <string name="err_connection_lost">和 Mac 的連線斷了。請把手機拿近一點，再傳一次。</string>
     <string name="err_protocol">傳送失敗了，請再傳一次。一直這樣的話，請把兩邊的 ATA 都更新到最新版。</string>
 
@@ -135,7 +146,8 @@
     <string name="status_nearby">在附近</string>
     <string name="status_searching">正在找…</string>
     <string name="status_away">不在附近</string>
-    <string name="send_to">傳到「%1$s」</string>
+    <!-- Screen reader label of a Mac in the picker: "send to <Mac>, <status>". -->
+    <string name="send_to">傳到「%1$s」，%2$s</string>
     <string name="scan_searching">正在找附近的 Mac…</string>
     <string name="scan_none_hint">附近沒有找到你的 Mac。請確認 Mac 上的 ATA 有打開、藍牙也開著，再把手機拿近一點。</string>
     <string name="scan_no_permission">需要允許「附近的裝置」，才能找到你的 Mac。</string>
@@ -144,20 +156,22 @@
     <string name="allow">允許</string>
     <string name="pair_another">再配對一台 Mac</string>
     <string name="pick_pair_title">先和你的 Mac 配對</string>
-    <string name="pick_pair_text">打開 Mac 上的 ATA，按「配對手機…」，再用這支手機掃描 Mac 上的 QR code。Mac 還沒裝 ATA 的話，用 Mac 打開 %1$s 下載。要傳的檔案會留著，配對好就能直接傳。</string>
-    <string name="scan_qr">掃描 QR code</string>
+    <string name="pick_pair_text">打開 Mac 上的 ATA，按「配對手&#8288;機…」，再用這支手機掃描 Mac 上的 QR&#160;code。Mac 還沒裝 ATA 的話，用 Mac 打開 %1$s 下載。要傳的檔案會留著，配對好就能直接傳。</string>
+    <string name="scan_qr">掃描 QR&#160;code</string>
 
     <!-- About -->
     <string name="about_section">關於</string>
     <string name="version_label">版本</string>
     <string name="licenses">使用的第三方軟體</string>
+    <!-- Intro above the third-party notices. The notices themselves stay in English, verbatim (legally required). -->
+    <string name="licenses_intro">ATA 用到了下面這些由其他人開發的免費軟體。依照它們的要求，下面列出英文原文。內容很長，請往下捲動。</string>
     <string name="privacy_policy">隱私權政策</string>
     <string name="support_ata">贊助 ATA</string>
     <string name="support">說明與意見回饋</string>
 
     <!-- Camera (pairing QR code only) -->
-    <string name="cam_title">用相機掃描 QR code</string>
-    <string name="cam_text">接下來請按「允許」。只在你掃 QR code 時用，畫面不會存下來，也不會傳出去。</string>
-    <string name="cam_denied_text">要用相機才能掃描 Mac 上的 QR code。請按「開啟設定」，在「權限」裡打開「相機」。</string>
-    <string name="scan_hint">把 Mac 上的 QR code 放進框裡</string>
+    <string name="cam_title">用相機掃描 QR&#160;code</string>
+    <string name="cam_text">接下來手機會詢問你，請選允許使用相機的選項，例如「使用應用程式時」（每支手機的字可能稍有不同）。相機只在你掃 QR&#160;code 時使&#8288;用，畫面不會存下來，也不會傳出去。</string>
+    <string name="cam_denied_text">要用相機才能掃描 Mac 上的 QR&#160;code。請按「開啟設定」，在「權限」裡打開「相機」。</string>
+    <string name="scan_hint">把 Mac 上的 QR&#160;code 放進框裡</string>
 </resources>

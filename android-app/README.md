@@ -25,6 +25,14 @@ export JAVA_HOME=/path/to/jdk   # JDK 17 or newer
 ./gradlew bundleRelease      # R8-minified AAB signed with the upload key: app/build/outputs/bundle/release/app-release.aab
 ```
 
+Layout screenshots (opt-in; Robolectric downloads an Android runtime the first time): the empty screen, pairing and
+permission dialogs and the scanner hint at 320, 360 and 411 dp wide and font scale 1.0 and 1.3, in both languages,
+saved to `app/build/screenshots/`. Look at them after changing any of that wording.
+
+```sh
+./gradlew :app:testDebugUnitTest -Pata.screenshots --tests '*LayoutScreenshotTest*'
+```
+
 Needs the Android SDK: set `sdk.dir` in `local.properties` (not committed) or `ANDROID_HOME`. The vector test reads
 `../spec/vectors.json` in place, so build from a checkout of the whole repository. A debug build needs no secrets.
 
@@ -98,7 +106,13 @@ happened plus one thing to try (`Texts.kt`, `res/values*/strings.xml`). Specific
   is set. The LAN path is bound to Wi-Fi/Ethernet and never counts. It is payload bytes, so the UI says "about".
 - Pairing is QR-code only for users. The "paste pairing link" dialog exists only in debug builds (the Mac has no
   way to show the link); `debugPairUri` keeps working.
-- Each system permission prompt is preceded by one plain line; a refusal leads to one "Open Settings" button.
+- Each system permission prompt is preceded by one plain line that names the option to choose as the system dialog
+  shows it (camera: 「使用應用程式時」 / "While using the app", since there is no plain "Allow" there) and says the
+  wording may differ; a refusal leads to one "Open Settings" button.
+- Never hard-code line breaks. In zh-TW strings, words that must not split are joined with U+2060 (`&#8288;`), and
+  「QR&#160;code」 uses a no-break space; see the comment at the top of `values/strings.xml`.
+- The third-party notices are shown verbatim but reflowed to the screen width (`Notices.kt`; a test checks that no
+  word changes), under a one-line introduction in the UI language.
 
 ## Free app; reserved donation entry
 

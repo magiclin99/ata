@@ -40,14 +40,24 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import io.github.magiclin99.ata.NoticeBlock
+import io.github.magiclin99.ata.isJustNow
+import io.github.magiclin99.ata.reflowNotices
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import androidx.core.net.toUri
@@ -128,51 +138,41 @@ fun MainScreen(gate: BleGate) {
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            item { SectionTitle(stringResource(R.string.paired_macs)) }
             if (macs.isEmpty()) {
-                // First run: two plain steps and one obvious button. The site address is plain text the user can
-                // type on the Mac, or send to themselves.
-                // First run: has the Mac got ATA yet? The primary action sends the Mac download page (in this
-                // language) to the person themselves, through whatever app they already use.
-                item { Hint(stringResource(R.string.empty_install)) }
                 item {
-                    val url = stringResource(R.string.install_url)
-                    val text = stringResource(R.string.install_share_text, url)
-                    Button(
-                        onClick = {
+                    val text = stringResource(R.string.install_share_text, stringResource(R.string.install_url))
+                    EmptyState(
+                        onPair = pairing.scanQr,
+                        onSendLink = {
                             val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
                             runCatching { ctx.startActivity(Intent.createChooser(send, null)) }
                         },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                    ) { Text(stringResource(R.string.send_install_link)) }
+                    )
                 }
-                item { Spacer(Modifier.height(8.dp)); Hint(stringResource(R.string.empty_pair)) }
+                // The Mac cannot show a pairing link, so pasting one is a debug-build tool only.
+                if (BuildConfig.DEBUG) item { TextButton(onClick = pairing.pasteLink) { Text(stringResource(R.string.paste_link)) } }
             } else {
+                item { SectionTitle(stringResource(R.string.paired_macs)) }
                 items(macs, key = { it.idHex }) { mac -> MacRow(mac) { removing = mac } }
-            }
-            item {
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (macs.isEmpty()) {
-                        OutlinedButton(onClick = pairing.scanQr, modifier = Modifier.fillMaxWidth().height(52.dp)) {
-                            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.pair_button))
-                        }
-                    } else {
+                item {
+                    Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         TextButton(onClick = pairing.scanQr) { Text(stringResource(R.string.pair_another)) }
-                    }
-                    // The Mac cannot show a pairing link, so pasting one is a debug-build tool only.
-                    if (BuildConfig.DEBUG) {
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = pairing.pasteLink) { Text(stringResource(R.string.paste_link)) }
+                        if (BuildConfig.DEBUG) {
+                            Spacer(Modifier.width(8.dp))
+                            TextButton(onClick = pairing.pasteLink) { Text(stringResource(R.string.paste_link)) }
+                        }
                     }
                 }
             }
-            item { Spacer(Modifier.height(16.dp)); SectionTitle(stringResource(R.string.recent_transfers)) }
-            if (history.isEmpty()) {
-                item { Hint(stringResource(R.string.no_transfers)) }
-            } else {
-                items(history, key = { it.time }) { HistoryRow(it) }
+            // History is the person's own record, so it stays even after every Mac is unpaired. With nothing paired and
+            // nothing sent, the "how to send" hint would only distract from pairing, so the section is left out.
+            if (history.isNotEmpty() || macs.isNotEmpty()) {
+                item { Spacer(Modifier.height(16.dp)); SectionTitle(stringResource(R.string.recent_transfers)) }
+                if (history.isEmpty()) {
+                    item { Hint(stringResource(R.string.no_transfers)) }
+                } else {
+                    items(history, key = { it.time }) { HistoryRow(it) }
+                }
             }
             item { Spacer(Modifier.height(16.dp)); SectionTitle(stringResource(R.string.about_section)) }
             item { AboutLinks(onLicenses = { showLicenses = true }) }
@@ -201,9 +201,38 @@ fun MainScreen(gate: BleGate) {
     )
 }
 
+/**
+ * First run, nothing paired. Most people get here from the QR code in the Mac app's welcome window, so pairing is the
+ * primary action. "My Mac doesn't have ATA yet" is the secondary one: it sends the Mac download page (in this
+ * language) to the person themselves, through whatever app they already use.
+ */
+@Composable
+internal fun EmptyState(onPair: () -> Unit, onSendLink: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            stringResource(R.string.empty_title), style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(top = 8.dp).semantics { heading() },
+        )
+        Hint(stringResource(R.string.empty_pair))
+        Button(onClick = onPair, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 52.dp)) {
+            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.pair_button))
+        }
+        Spacer(Modifier.height(16.dp))
+        Hint(stringResource(R.string.empty_install))
+        OutlinedButton(onClick = onSendLink, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.send_install_link), textAlign = TextAlign.Center)
+        }
+    }
+}
+
 @Composable
 private fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
+    Text(
+        text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp).semantics { heading() },
+    )
 }
 
 @Composable
@@ -222,7 +251,7 @@ private fun MacRow(mac: PairedMac, onRemove: () -> Unit) {
                 Text(stringResource(R.string.paired_on, DateUtils.formatDateTime(LocalContext.current, mac.pairedAt, DateUtils.FORMAT_SHOW_DATE)))
             },
             trailingContent = {
-                IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.remove_pairing)) }
+                IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.remove_pairing, mac.name)) }
             },
         )
     }
@@ -232,41 +261,57 @@ private fun MacRow(mac: PairedMac, onRemove: () -> Unit) {
 private fun HistoryRow(e: HistoryEntry) {
     val ctx = LocalContext.current
     val what = if (e.fileCount == 1) e.firstName else pluralStringResource(R.plurals.files_count, e.fileCount, e.fileCount)
+    // Names the Mac by its name, not "your Mac": it may have been unpaired since.
     val status = when {
-        !e.ok -> stringResource(R.string.history_failed, shortErrorText(ctx, e.error?.let { runCatching { ErrorCode.valueOf(it) }.getOrNull() }))
-        e.cellularBytes > 0 -> stringResource(R.string.history_ok_cellular, mobileDataText(ctx, e.cellularBytes))
-        else -> stringResource(R.string.history_ok)
+        !e.ok -> stringResource(R.string.history_failed, e.macName, shortErrorText(ctx, e.error?.let { runCatching { ErrorCode.valueOf(it) }.getOrNull() }))
+        e.cellularBytes > 0 -> stringResource(R.string.history_ok_cellular, e.macName, mobileDataText(ctx, e.cellularBytes))
+        else -> stringResource(R.string.history_ok, e.macName)
     }
+    val now = System.currentTimeMillis()
+    val ago = if (isJustNow(e.time, now)) stringResource(R.string.just_now)
+    else DateUtils.getRelativeTimeSpanString(e.time, now, DateUtils.MINUTE_IN_MILLIS).toString()
     ListItem(
+        // One announcement per transfer for screen readers; the icon only repeats what the status line says.
+        modifier = Modifier.semantics(mergeDescendants = true) {},
         leadingContent = {
             Icon(
                 if (e.ok) Icons.Filled.CheckCircle else Icons.Filled.Warning, contentDescription = null,
                 tint = if (e.ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             )
         },
-        headlineContent = { Text(stringResource(R.string.history_line, what, e.macName), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        headlineContent = { Text(what, maxLines = 1, overflow = TextOverflow.MiddleEllipsis) },
         supportingContent = {
-            Text(
-                "$status · ${Formatter.formatShortFileSize(ctx, e.bytes)} · " +
-                    DateUtils.getRelativeTimeSpanString(e.time, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS),
-                maxLines = 2,
-            )
+            Column {
+                Text(status, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text("${Formatter.formatShortFileSize(ctx, e.bytes)} · $ago", maxLines = 1)
+            }
         },
     )
 }
 
 @Composable
-private fun PairingDialog(s: PairState, onClose: () -> Unit, onCancel: () -> Unit, onTryPhoto: (macIdHex: String) -> Unit) {
+internal fun PairingDialog(s: PairState, onClose: () -> Unit, onCancel: () -> Unit, onTryPhoto: (macIdHex: String) -> Unit) {
     val ctx = LocalContext.current
     if (s == PairState.Idle) return
     val busy = s is PairState.Searching || s is PairState.Connecting
     AlertDialog(
         onDismissRequest = { if (!busy) onClose() },
-        title = { Text(stringResource(if (s is PairState.Failed) R.string.pairing_failed else R.string.pairing_title)) },
+        title = {
+            Text(
+                stringResource(
+                    when (s) {
+                        is PairState.Failed -> R.string.pairing_failed
+                        is PairState.Done -> R.string.pairing_done_title
+                        else -> R.string.pairing_busy_title
+                    }
+                )
+            )
+        },
         text = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (busy) {
-                    CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp)
+                    // Decorative: the title and the sentence already say it is working.
+                    CircularProgressIndicator(Modifier.size(24.dp).clearAndSetSemantics {}, strokeWidth = 3.dp)
                     Spacer(Modifier.width(16.dp))
                 }
                 Box(Modifier.weight(1f)) {
@@ -330,18 +375,59 @@ private fun AboutLinks(onLicenses: () -> Unit) {
     }
 }
 
+/**
+ * Third-party notices as a full-screen page: a one-line introduction in the UI language, then the notices verbatim
+ * (they stay in English), reflowed so they wrap to the screen instead of keeping the file's fixed line width. A fade
+ * at the bottom edge shows there is more below until the end is reached.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LicensesDialog(onClose: () -> Unit) {
     val res = LocalResources.current
-    val text = remember { res.openRawResource(R.raw.third_party_notices).bufferedReader().use { it.readText() } }
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text(stringResource(R.string.licenses)) },
-        text = {
-            Box(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState())) {
-                Text(text, fontFamily = FontFamily.Monospace, fontSize = 11.sp, lineHeight = 15.sp)
+    val blocks = remember { reflowNotices(res.openRawResource(R.raw.third_party_notices).bufferedReader().use { it.readText() }) }
+    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.licenses)) },
+                    navigationIcon = {
+                        IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.close)) }
+                    },
+                )
+            },
+        ) { inner ->
+            val list = rememberLazyListState()
+            Box(Modifier.fillMaxSize().padding(inner)) {
+                LazyColumn(
+                    state = list,
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 32.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    item {
+                        Text(stringResource(R.string.licenses_intro), style = MaterialTheme.typography.bodyLarge)
+                        HorizontalDivider(Modifier.padding(top = 14.dp))
+                    }
+                    items(blocks) { b ->
+                        when (b) {
+                            NoticeBlock.Rule -> HorizontalDivider(Modifier.padding(vertical = 6.dp))
+                            is NoticeBlock.Text -> Text(
+                                b.lines.joinToString("\n"),
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = if (b.centered) TextAlign.Center else TextAlign.Start,
+                                modifier = Modifier.fillMaxWidth().padding(start = (b.indent * 12).dp),
+                            )
+                        }
+                    }
+                }
+                // Fades the last visible lines while there is more to read below.
+                if (list.canScrollForward) {
+                    val bg = MaterialTheme.colorScheme.surface
+                    Box(
+                        Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(56.dp)
+                            .background(Brush.verticalGradient(listOf(bg.copy(alpha = 0f), bg)))
+                    )
+                }
             }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text(stringResource(R.string.close)) } },
-    )
+        }
+    }
 }

@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- English. Same glossary as values/strings.xml (internal TERMS.md): plain words, no path names, no codes. -->
+<!--
+  English. Same glossary as values/strings.xml (internal TERMS.md): plain words, no path names, no codes.
+  Never hard-code line breaks; "QR&#160;code" keeps a no-break space so the two words stay on one line.
+-->
 <resources>
     <string name="share_label">Send to Mac</string>
 
     <string name="paired_macs">Paired Macs</string>
-    <string name="empty_install">Is ATA installed on your Mac? If not, send yourself the download link and open it on the Mac.</string>
-    <string name="empty_pair">Once it\'s installed, tap \"Pair with a Mac\" and scan the QR code that ATA shows on the Mac (don\'t see one? Click \"Pair a Phone…\" in ATA on the Mac).</string>
+    <string name="empty_title">Pair with your Mac first</string>
+    <string name="empty_install">No ATA on your Mac yet? Send yourself the download link, then open it on the Mac to install.</string>
+    <string name="empty_pair">Open ATA on your Mac, tap \"Pair with a Mac\" below, and scan the QR&#160;code on the Mac\'s screen. No QR&#160;code? Click \"Pair a Phone…\" in ATA on the Mac.</string>
     <string name="send_install_link">Send the download link to myself</string>
     <string name="help_url">https://magiclin99.github.io/ata/support/</string>
     <string name="install_url">https://magiclin99.github.io/ata/install/</string>
     <string name="install_share_text">Open this link on your Mac to download ATA: %1$s</string>
-    <string name="paired_on">Paired %1$s</string>
+    <string name="paired_on">Paired on %1$s</string>
     <string name="pair_button">Pair with a Mac</string>
-    <string name="remove_pairing">Remove pairing</string>
+    <string name="remove_pairing">Remove pairing with \"%1$s\"</string>
     <string name="remove_title">Remove \"%1$s\"?</string>
     <string name="remove_text">To send files to this Mac again, you\'ll need to pair it again.</string>
     <string name="remove">Remove</string>
@@ -22,10 +26,10 @@
     <string name="retry">Try again</string>
     <string name="recent_transfers">Recently sent</string>
     <string name="no_transfers">In Photos or any app, tap Share and choose \"Send to Mac\". Your files go straight to your Mac.</string>
-    <string name="history_line">%1$s → %2$s</string>
-    <string name="history_ok">Sent</string>
-    <string name="history_ok_cellular">Sent · used about %1$s of mobile data</string>
-    <string name="history_failed">Not sent · %1$s</string>
+    <string name="history_ok">Sent to \"%1$s\"</string>
+    <string name="history_ok_cellular">Sent to \"%1$s\", used about %2$s of mobile data</string>
+    <string name="history_failed">Not sent to \"%1$s\": %2$s</string>
+    <string name="just_now">Just now</string>
     <plurals name="files_count">
         <item quantity="one">%1$d file</item>
         <item quantity="other">%1$d files</item>
@@ -36,12 +40,13 @@
     </plurals>
 
     <string name="scanner_unavailable_title">Camera unavailable</string>
-    <string name="scanner_unavailable_text">The camera can\'t be opened right now, so the QR code can\'t be scanned. Close any other app using the camera and try again.</string>
+    <string name="scanner_unavailable_text">The camera can\'t be opened right now, so the QR&#160;code can\'t be scanned. Close any other app using the camera and try again.</string>
     <string name="paste_link">Paste pairing link</string>
     <string name="pair">Pair</string>
-    <string name="pairing_title">Pairing</string>
-    <string name="pairing_searching">Looking for \"%1$s\" nearby…</string>
-    <string name="pairing_connecting">Pairing with \"%1$s\"…</string>
+    <string name="pairing_busy_title">Pairing…</string>
+    <string name="pairing_done_title">Paired</string>
+    <string name="pairing_searching">Looking for \"%1$s\" nearby. Keep your phone next to the Mac.</string>
+    <string name="pairing_connecting">Pairing with \"%1$s\". This takes a moment.</string>
     <string name="pairing_done">Paired with \"%1$s\". From now on, tap Share in any app and choose \"Send to Mac\".</string>
     <string name="pairing_failed">Pairing didn\'t work</string>
     <string name="try_photo_text">Want to send a photo to your Mac now to try it?</string>
@@ -49,13 +54,13 @@
     <string name="not_now">Not now</string>
 
     <string name="perm_ble_title">Allow \"Nearby devices\"</string>
-    <string name="perm_ble_text">Next, tap \"Allow\". ATA uses this to find your Mac, never to locate you.</string>
+    <string name="perm_ble_text">Your phone will ask next. Choose the option that allows it, usually \"Allow\" (the wording may differ slightly on your phone). ATA uses this to find your Mac, never to locate you.</string>
     <string name="perm_ble_title_legacy">Allow location</string>
-    <string name="perm_ble_text_legacy">Next, tap \"Allow\". This Android version requires it to find Bluetooth devices; ATA doesn\'t use your location.</string>
+    <string name="perm_ble_text_legacy">Your phone will ask next. Choose the option that allows it, such as \"Allow\" or \"While using the app\" (the wording may differ slightly on your phone). This Android version requires it to find Bluetooth devices; ATA doesn\'t use your location.</string>
     <string name="perm_denied_text">ATA needs \"Nearby devices\" to find your Mac. Tap \"Open Settings\", then turn on Nearby devices under Permissions.</string>
     <string name="perm_denied_text_legacy">ATA needs location access to find your Mac. Tap \"Open Settings\", then turn on Location under Permissions.</string>
     <string name="perm_notif_title">Show sending progress</string>
-    <string name="perm_notif_text">Recommended: you\'ll see the progress and can cancel even after leaving this screen.</string>
+    <string name="perm_notif_text">We suggest allowing it, usually with \"Allow\". Then you can see the progress in a notification and cancel any time, even after leaving this screen.</string>
     <string name="continue_">Continue</string>
     <string name="skip">Not now</string>
     <string name="open_settings">Open Settings</string>
@@ -66,20 +71,20 @@
 
     <string name="send_title">Send to Mac</string>
     <string name="phase_preparing">Getting your files ready…</string>
-    <string name="phase_searching">Looking for your Mac \"%1$s\"…</string>
-    <string name="phase_connecting">Connecting to your Mac \"%1$s\"…</string>
-    <string name="phase_waiting">Waiting for your Mac \"%1$s\"…</string>
+    <string name="phase_searching">Looking for your Mac \"%1$s\"</string>
+    <string name="phase_connecting">Connecting to your Mac \"%1$s\"</string>
+    <string name="phase_waiting">Waiting for your Mac \"%1$s\" to answer</string>
     <string name="phase_lan">Connecting to your Mac…</string>
     <string name="phase_rtc">Not on the same Wi-Fi, so sending over the internet. This may be slower…</string>
-    <string name="phase_sending">Sending to your Mac \"%1$s\"…</string>
+    <string name="phase_sending">Sending to your Mac \"%1$s\"</string>
     <string name="phase_done">Sent to your Mac \"%1$s\"</string>
     <string name="phase_done_cellular">Sent to your Mac \"%1$s\" (used about %2$s of mobile data)</string>
     <string name="phase_failed">Not sent</string>
     <string name="phase_cancelled">Sending cancelled</string>
     <string name="progress_bytes">%1$s of %2$s</string>
-    <string name="busy_title">A transfer is in progress</string>
-    <string name="busy_text">Wait for the current one to finish before sharing more files.</string>
-    <string name="file_ok">Delivered</string>
+    <string name="busy_title">Other files are still being sent</string>
+    <string name="busy_text">Wait until they\'re done, then share your new files.</string>
+    <string name="file_ok">Sent</string>
     <string name="file_failed">Didn\'t arrive completely</string>
 
     <string name="notif_channel">Sending files</string>
@@ -97,7 +102,7 @@
     <string name="err_mac_not_found_named">Can\'t find \"%1$s\" nearby. Make sure ATA is open on that Mac, and bring your phone next to it.</string>
     <string name="err_not_paired">This Mac isn\'t paired with this phone. Tap \"Pair with a Mac\" to pair again.</string>
     <string name="err_pairing_removed">This Mac has removed its pairing with this phone. Pair again.</string>
-    <string name="err_pairing_expired">This QR code no longer works. Click \"Pair a Phone…\" on your Mac again to show a new one.</string>
+    <string name="err_pairing_expired">This QR&#160;code no longer works. Click \"Pair a Phone…\" on your Mac again to show a new one.</string>
     <string name="err_mac_busy">Your Mac is receiving files from another phone. Wait a moment, then send again.</string>
     <string name="err_bad_version">ATA on your Mac needs an update. On the Mac, open %1$s to download the latest version.</string>
     <string name="err_mac_auth_failed">This Mac\'s pairing doesn\'t match. Remove the pairing on both, then pair again.</string>
@@ -105,13 +110,13 @@
     <string name="err_rejected_space">Your Mac is out of space. Free some up and send again.</string>
     <string name="err_rejected_folder">Your Mac can\'t find the save folder. Choose one again in ATA on the Mac.</string>
     <string name="err_no_path">Couldn\'t reach your Mac. Connect your phone to the same Wi-Fi as the Mac, then try again.</string>
-    <string name="err_interrupted">The transfer was interrupted. Files already completed stay on the Mac.</string>
+    <string name="err_interrupted">Sending stopped partway. Files that were already sent stay on the Mac.</string>
     <string name="err_file_failed">Some files didn\'t arrive completely. Send them again.</string>
     <string name="err_file_unreadable">This file can\'t be opened, so it can\'t be sent. Go back to the app and share it again.</string>
     <string name="err_cancelled">Cancelled.</string>
     <string name="err_bluetooth_off">Bluetooth is off. Turn it on and send again.</string>
     <string name="err_permission">ATA doesn\'t have \"Nearby devices\" access, so it can\'t find your Mac. Turn it on in Settings.</string>
-    <string name="err_bad_pairing_code">This isn\'t an ATA pairing QR code. Scan the QR code that ATA shows on your Mac.</string>
+    <string name="err_bad_pairing_code">This isn\'t an ATA pairing QR&#160;code. Scan the QR&#160;code that ATA shows on your Mac.</string>
     <string name="err_connection_lost">Lost the connection to your Mac. Move closer and send again.</string>
     <string name="err_protocol">Something went wrong. Send again. If it keeps happening, update ATA on both.</string>
 
@@ -124,7 +129,7 @@
     <string name="status_nearby">Nearby</string>
     <string name="status_searching">Looking…</string>
     <string name="status_away">Not nearby</string>
-    <string name="send_to">Send to \"%1$s\"</string>
+    <string name="send_to">Send to \"%1$s\", %2$s</string>
     <string name="scan_searching">Looking for your Mac nearby…</string>
     <string name="scan_none_hint">Your Mac isn\'t nearby. Make sure ATA is open on the Mac and Bluetooth is on, then bring your phone closer.</string>
     <string name="scan_no_permission">Allow \"Nearby devices\" so ATA can find your Mac.</string>
@@ -133,18 +138,19 @@
     <string name="allow">Allow</string>
     <string name="pair_another">Pair another Mac</string>
     <string name="pick_pair_title">Pair with your Mac first</string>
-    <string name="pick_pair_text">Open ATA on the Mac, click \"Pair a Phone…\", then scan the QR code on the Mac with this phone. No ATA on the Mac yet? Open %1$s on the Mac to download it. Your files stay here; once paired you can send them right away.</string>
-    <string name="scan_qr">Scan QR code</string>
+    <string name="pick_pair_text">Open ATA on the Mac, click \"Pair a Phone…\", then scan the QR&#160;code on the Mac with this phone. No ATA on the Mac yet? Open %1$s on the Mac to download it. Your files stay here; once paired you can send them right away.</string>
+    <string name="scan_qr">Scan QR&#160;code</string>
 
     <string name="about_section">About</string>
     <string name="version_label">Version</string>
     <string name="licenses">Third-party software</string>
+    <string name="licenses_intro">ATA uses the free software below, made by other people. As they ask, their original notices follow. It\'s long, so scroll down to read it all.</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="support_ata">Support ATA</string>
     <string name="support">Help and feedback</string>
 
-    <string name="cam_title">Scan the QR code with the camera</string>
-    <string name="cam_text">Next, tap \"Allow\". The camera is only used while you scan the QR code; nothing is saved or sent.</string>
-    <string name="cam_denied_text">The camera is needed to scan the QR code on your Mac. Tap \"Open Settings\", then turn on Camera under Permissions.</string>
-    <string name="scan_hint">Fit the QR code on your Mac inside the frame</string>
+    <string name="cam_title">Scan the QR&#160;code with the camera</string>
+    <string name="cam_text">Your phone will ask next. Choose the option that lets ATA use the camera, such as \"While using the app\" (the wording may differ slightly on your phone). The camera is only used while you scan the QR&#160;code; nothing is saved or sent.</string>
+    <string name="cam_denied_text">The camera is needed to scan the QR&#160;code on your Mac. Tap \"Open Settings\", then turn on Camera under Permissions.</string>
+    <string name="scan_hint">Fit the QR&#160;code on your Mac inside the frame</string>
 </resources>

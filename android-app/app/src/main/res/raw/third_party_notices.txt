@@ -1,5 +1,5 @@
-ATA is free and open source under the MIT License
-(https://github.com/magiclin99/ata). It uses the following third-party software.
+ATA (https://github.com/magiclin99/ata) is released under the MIT License.
+It uses the following third-party software.
 
 Apache License 2.0 (full text at the end of this notice)
   - Kotlin standard library, kotlinx.coroutines, kotlinx.serialization (JetBrains s.r.o. and contributors)

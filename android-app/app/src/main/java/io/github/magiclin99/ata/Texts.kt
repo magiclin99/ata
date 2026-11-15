@@ -48,6 +48,12 @@ fun shortErrorText(ctx: Context, code: ErrorCode?): String {
 }
 
 /**
+ * True when [time] is less than a minute before [now] (or slightly after it, if the clock moved back): the history
+ * then reads "Just now" instead of the system's "0 minutes ago".
+ */
+fun isJustNow(time: Long, now: Long): Boolean = now - time < 60_000L
+
+/**
  * Mobile data used, rounded for a sentence like "used about 2.4 MB of mobile data". Anything above zero shows at
  * least "1 kB" so a tiny transfer still reads honestly instead of "0 B".
  */

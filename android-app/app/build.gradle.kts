@@ -77,6 +77,15 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all { test ->
+            // Opt in to the layout screenshots: ./gradlew :app:testDebugUnitTest -Pata.screenshots
+            test.systemProperty("ata.screenshots", (findProperty("ata.screenshots") != null).toString())
+            test.systemProperty("ata.screenshotDir", layout.buildDirectory.dir("screenshots").get().asFile.path)
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -118,4 +127,8 @@ dependencies {
     implementation("io.getstream:stream-webrtc-android:1.3.10")
 
     testImplementation("junit:junit:4.13.2")
+    // Layout screenshots of the wording at several widths and font sizes (opt-in, see LayoutScreenshotTest).
+    testImplementation("org.robolectric:robolectric:4.18")
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

@@ -23,9 +23,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -33,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -110,17 +113,10 @@ class ScanActivity : ComponentActivity() {
                             Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.close), tint = Color.White)
                         }
                     }
-                    Surface(
-                        color = Color.Black.copy(alpha = 0.6f),
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.align(Alignment.BottomCenter).safeDrawingPadding().padding(24.dp),
-                    ) {
-                        Text(
-                            stringResource(if (wrongCode) R.string.err_bad_pairing_code else R.string.scan_hint),
-                            color = Color.White, textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        )
-                    }
+                    ScanHint(
+                        stringResource(if (wrongCode) R.string.err_bad_pairing_code else R.string.scan_hint),
+                        Modifier.align(Alignment.BottomCenter).safeDrawingPadding().padding(24.dp),
+                    )
                 }
             }
         }
@@ -157,5 +153,18 @@ class ScanActivity : ComponentActivity() {
         controller?.clearImageAnalysisAnalyzer()
         if (::analysis.isInitialized) analysis.shutdown()
         super.onDestroy()
+    }
+}
+
+/** The hint at the bottom of the scanner, over the camera picture. */
+@Composable
+internal fun ScanHint(text: String, modifier: Modifier = Modifier) {
+    Surface(color = Color.Black.copy(alpha = 0.6f), shape = MaterialTheme.shapes.medium, modifier = modifier) {
+        Text(
+            text, color = Color.White, textAlign = TextAlign.Center,
+            // Balanced lines: no single word left alone on the last line.
+            style = LocalTextStyle.current.copy(lineBreak = LineBreak.Heading),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
     }
 }

@@ -10,7 +10,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.LifecycleStartEffect
 import io.github.magiclin99.ata.NearbyScanner
@@ -120,7 +122,7 @@ private fun SheetTitle(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(painterResource(R.drawable.ic_stat_ata), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(12.dp))
-        Text(text, style = MaterialTheme.typography.titleLarge)
+        Text(text, style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
     }
     Spacer(Modifier.size(12.dp))
 }
@@ -253,7 +255,7 @@ private fun ScanBanner(status: ScanStatus, anyNearby: Boolean, elapsed: Long, on
     when (status) {
         ScanStatus.SCANNING, ScanStatus.IDLE -> {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 24.dp)) {
-                CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(Modifier.size(14.dp).clearAndSetSemantics {}, strokeWidth = 2.dp)
                 Spacer(Modifier.width(10.dp))
                 Text(stringResource(R.string.scan_searching), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -290,15 +292,17 @@ private fun ScanBanner(status: ScanStatus, anyNearby: Boolean, elapsed: Long, on
 private fun MacPickRow(mac: PairedMac, nearby: Boolean, searching: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val label = stringResource(if (nearby) R.string.status_nearby else if (searching) R.string.status_searching else R.string.status_away)
-    val sendTo = stringResource(R.string.send_to, mac.name)
+    // One natural sentence for screen readers ("Send to "Mac", Nearby"); the visible texts and icons below are hidden
+    // from them so nothing is announced twice.
+    val description = stringResource(R.string.send_to, mac.name, label)
     Surface(
         onClick = onClick,
         enabled = nearby,
         shape = MaterialTheme.shapes.large,
         color = if (nearby) colors.primaryContainer else colors.surfaceContainerHigh,
-        modifier = Modifier.fillMaxWidth().semantics { contentDescription = "$sendTo, $label" },
+        modifier = Modifier.fillMaxWidth().semantics { contentDescription = description },
     ) {
-        Row(Modifier.heightIn(min = 72.dp).padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.clearAndSetSemantics {}.heightIn(min = 72.dp).padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(shape = CircleShape, color = if (nearby) colors.primary else colors.surfaceVariant, modifier = Modifier.size(40.dp)) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -361,7 +365,7 @@ private fun Notice(title: String, text: String, buttons: @Composable () -> Unit)
 private fun StatusLine(text: String, working: Boolean, ok: Boolean? = null) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         when {
-            working -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.5.dp)
+            working -> CircularProgressIndicator(Modifier.size(20.dp).clearAndSetSemantics {}, strokeWidth = 2.5.dp)
             ok == true -> Icon(Icons.Filled.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
             ok == false -> Icon(Icons.Filled.Warning, null, tint = MaterialTheme.colorScheme.error)
         }
@@ -425,7 +429,7 @@ private fun TransferBody(s: TransferState, canRetry: Boolean, onRetry: () -> Uni
 @Composable
 private fun FileRow(f: FileItem) {
     val ctx = LocalContext.current
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(f.name, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.MiddleEllipsis)
             val sub = when (f.status) {
@@ -444,7 +448,7 @@ private fun FileRow(f: FileItem) {
             FileStatus.OK -> Icon(Icons.Filled.CheckCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             FileStatus.FAILED -> Icon(Icons.Filled.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
             FileStatus.SENDING -> CircularProgressIndicator(
-                progress = { if (f.size > 0) f.sent.toFloat() / f.size else 0f }, modifier = Modifier.size(20.dp), strokeWidth = 2.5.dp,
+                progress = { if (f.size > 0) f.sent.toFloat() / f.size else 0f }, modifier = Modifier.size(20.dp).clearAndSetSemantics {}, strokeWidth = 2.5.dp,
             )
             FileStatus.PENDING -> Spacer(Modifier.size(20.dp))
         }
