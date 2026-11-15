@@ -9,6 +9,8 @@ links are relative except in `404.html`, which uses `/ata/...` because GitHub se
 | `index.html` / `zh-tw/index.html` | Landing page |
 | `install/` / `zh-tw/install/` | Mac install, Open Anyway steps, and permissions |
 | `faq/` / `zh-tw/faq/` | FAQ (the only place, with the forum posts, that compares ATA with other tools) |
+| `tech/` / `zh-tw/tech/` | Technical details: source and licence, how a transfer connects, pairing keys and stored data, installer checks and the signing-certificate fingerprints, network use. All technical wording lives here; the other pages follow the plain-language glossary (TERMS) and link here from the footer. Anchor `#installer` is linked from the install pages. |
+| `assets/img/` | Real screenshots only (macOS 14.7, English UI): `macos14-warning.png`. Crop out anything personal. |
 | `beta/` / `zh-tw/beta/` | Google Play closed-test page: who can join, how to ask (email with the Google account address), what happens next (opt-in link, install, keep it for 14 days), feedback. Linked from the "coming soon" note on both landing pages. Remove or redirect after the Play launch. |
 | `support/` / `zh-tw/support/` | Help and feedback: common fixes, GitHub Issues, email, and what to include in a report. The Android app's "Help and feedback" link opens `https://magiclin99.github.io/ata/support`. No donation content here. |
 | `privacy/` | Privacy policy, English (`#en`) and Traditional Chinese (`#zh-tw`) on one page. This is the URL for Play Console: `https://magiclin99.github.io/ata/privacy/` |
@@ -88,3 +90,12 @@ jobs:
 
 Preview locally with `python3 -m http.server -d site 8000`, then open `http://localhost:8000/`. The `404.html`
 links assume the `/ata/` prefix, so they only resolve after deployment.
+
+## Mac download link (update each release)
+
+Both install pages link the `.dmg` directly:
+`https://github.com/magiclin99/ata/releases/download/v1.0.2/ATA-1.0.2.dmg`, and step 2 names the file
+`ATA-1.0.2.dmg`. Update both when a new version ships. Once releases also carry an unversioned `ATA.dmg`, switch to
+`https://github.com/magiclin99/ata/releases/latest/download/ATA.dmg` and drop the version from the text.
+
+The Mac app opens `faq/#firewall` (both languages). Keep that anchor.

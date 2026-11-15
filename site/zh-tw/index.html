@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ATA：把 Android 手機的檔案傳到 Mac</title>
-<meta name="description" content="在任何 app 按分享，檔案就存進 Mac 的「下載項目」。直接連線、端對端加密，不用帳號、沒有雲端。">
+<title>ATA：把 Android 手機的照片和檔案傳到 Mac</title>
+<meta name="description" content="在 Android 手機上分享照片或檔案，就會出現在你的 Mac 上。免費、不用帳號、不經過雲端。">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/touch-icon-180.png">
 <link rel="alternate" hreflang="en" href="https://magiclin99.github.io/ata/">
 <link rel="alternate" hreflang="zh-Hant-TW" href="https://magiclin99.github.io/ata/zh-tw/">
 <meta property="og:title" content="ATA：把 Android 手機的檔案傳到 Mac">
-<meta property="og:description" content="分享、選 Mac、完成。直接連線、端對端加密，中間沒有伺服器。">
+<meta property="og:description" content="手機按分享，檔案就出現在 Mac 上。免費、不用帳號、不經過雲端。">
 <meta property="og:image" content="https://magiclin99.github.io/ata/assets/og-image-zh-tw.png">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -19,25 +19,27 @@
 <header class="site"><div class="wrap">
   <a class="brand" href="./"><img src="../assets/favicon.svg" alt="" width="34" height="34">ATA</a>
   <nav class="main" aria-label="主選單">
-    <a href="./" aria-current="page">首頁</a>
-    <a href="install/">Mac 安裝</a>
+    <a href="install/">在 Mac 上安裝</a>
     <a href="faq/">常見問題</a>
     <a href="support/">說明</a>
-    <a href="../privacy/#zh-tw">隱私權</a>
     <a class="lang" href="../" hreflang="en" lang="en">English</a>
   </nav>
 </div></header>
 
 <main id="main" class="wrap">
 <section class="hero">
-  <h1>把 Android 手機上的檔案，直接傳到你的 Mac 電腦。</h1>
-  <p class="lede">在任何 app 按「分享」、選你的 Mac，檔案就會存進 Mac 的「下載項目」。兩台裝置直接連線、端對端加密，不用帳號，也沒有雲端。</p>
-  <div class="cta">
-    <a class="btn primary" href="install/">安裝免費的 Mac 版</a>
-    <a class="btn" id="play-cta" href="https://play.google.com/store/apps/details?id=io.github.magiclin99.ata" hidden>到 Google Play 下載</a>
+  <h1 class="outcome">在 Android 手機上按「分享」，照片和檔案就出現在你的 Mac 上。</h1>
+  <p class="lede">免費，不用帳號、不經過雲端、不用接線。只要手機在 Mac 旁邊就好。</p>
+
+  <div class="for-desktop">
+    <a class="btn primary big" href="install/">下載 Mac 版 ATA</a>
+    <p class="note-line">手機上也要裝 ATA。<a href="beta/">Android 版即將在 Google Play 上架，現在就可以先幫忙測試。</a></p>
   </div>
-  <p id="android-soon"><strong>Android 版即將在 Google Play 上架</strong>。上架前要先經過<a href="beta/">封閉測試</a>，歡迎加入：請寄信到 <a href="mailto:magiclin99@gmail.com?subject=ATA%20closed%20test">magiclin99@gmail.com</a>，並附上你手機登入的 Google 帳號。</p>
-  <p class="fine">完全免費：沒有內購、沒有次數限制、沒有廣告。兩個 app 都開放原始碼。</p>
+  <div class="for-phone">
+    <a class="btn primary big" href="beta/">在手機上安裝 ATA</a>
+    <p class="note-line">Android 版即將在 Google Play 上架，點上面的按鈕看現在怎麼裝。Mac 上也要裝 ATA：用 Mac 打開 <strong>magiclin99.github.io/ata</strong>。</p>
+  </div>
+  <a class="btn" id="play-cta" href="https://play.google.com/store/apps/details?id=io.github.magiclin99.ata" hidden>到 Google Play 下載</a>
 </section>
 
 <section aria-labelledby="demo" id="demo-slot" hidden>
@@ -45,40 +47,40 @@
 </section>
 
 <section aria-labelledby="how">
-  <h2 id="how">怎麼用</h2>
-  <ol class="steps">
-    <li><h3>安裝兩邊的 app</h3><p>手機安裝 ATA（即將在 Google Play 上架）；Mac 安裝免費的 ATA，它會常駐在選單列。</p></li>
-    <li><h3>配對一次</h3><p>在 Mac 上打開 ATA，選「<strong>配對新裝置…</strong>」；再打開手機上的 ATA，點「<strong>與 Mac 配對</strong>」掃描 QR code。</p></li>
-    <li><h3>分享</h3><p>在任何 app 按「分享」→「<strong>傳到 Mac</strong>」→ 點選你的 Mac。檔案會存到「下載項目」，也可以改存到你指定的資料夾。</p></li>
+  <h2 id="how">三個步驟</h2>
+  <ol class="pictured">
+    <li>
+      <svg viewBox="0 0 64 64" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="ico-stroke" d="M32 8v30M20 27l12 12 12-12"/><path class="ico-accent" d="M12 44v8h40v-8"/></svg>
+      <span class="num">第 1 步</span>
+      <h3>兩邊都裝好</h3>
+      <p>Mac 上裝 ATA，Android 手機上也裝 ATA。</p>
+    </li>
+    <li>
+      <svg viewBox="0 0 64 64" fill="none" stroke-width="4" stroke-linejoin="round" aria-hidden="true"><rect class="ico-stroke" x="10" y="10" width="18" height="18" rx="3"/><rect class="ico-stroke" x="36" y="10" width="18" height="18" rx="3"/><rect class="ico-stroke" x="10" y="36" width="18" height="18" rx="3"/><path class="ico-accent" d="M38 38h6v6h-6zM48 48h6v6h-6z"/></svg>
+      <span class="num">第 2 步</span>
+      <h3>配對一次</h3>
+      <p>Mac 會顯示一個 QR code，用手機上的 ATA 掃一下就好，之後不用再做。</p>
+    </li>
+    <li>
+      <svg viewBox="0 0 64 64" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="ico-stroke" cx="16" cy="32" r="7"/><circle class="ico-stroke" cx="46" cy="14" r="7"/><circle class="ico-stroke" cx="46" cy="50" r="7"/><path class="ico-accent" d="M22 28l18-10M22 36l18 10"/></svg>
+      <span class="num">第 3 步</span>
+      <h3>按分享</h3>
+      <p>在任何 app 按「<strong>分享</strong>」→「<strong>傳到 Mac</strong>」，檔案就會存進 Mac 的「下載項目」。</p>
+    </li>
   </ol>
 </section>
 
-<section aria-labelledby="why">
-  <h2 id="why">有什麼不一樣</h2>
-  <div class="grid2">
-    <div class="card"><h3>中間沒有伺服器</h3><p>檔案從手機直接到 Mac：能走 Wi-Fi 就走 Wi-Fi，不行就建立 P2P 直連。ATA 沒有轉送伺服器，所以檔案不會經過任何伺服器。</p></div>
-    <div class="card"><h3>端對端加密</h3><p>配對時產生的金鑰只存在你的兩台裝置上，每次傳輸都用它驗證身分並加密。</p></div>
-    <div class="card"><h3>不用註冊</h3><p>沒有帳號、沒有雲端空間、沒有廣告、沒有分析追蹤。兩個 app 都不會傳任何資料給開發者或第三方。</p></div>
-    <div class="card"><h3>兩個 app 都開放原始碼</h3><p>Android app、Mac app 與通訊協定規格都以 MIT 授權公開在 <a href="https://github.com/magiclin99/ata">GitHub</a>。你可以自己讀程式碼，檢查這一頁上的每一項說法。</p></div>
+<section aria-labelledby="good">
+  <h2 id="good">先知道這些</h2>
+  <div class="grid-2x2">
+    <div class="card"><h3>真的免費</h3><p>沒有內購、沒有廣告、沒有次數限制，也不用註冊帳號。</p></div>
+    <div class="card"><h3>重視隱私</h3><p>不經過雲端，檔案直接從手機傳到 Mac，全程加密。ATA 不收集你的任何資料。</p></div>
+    <div class="card"><h3>手機要在旁邊</h3><p>手機要在 Mac 旁邊（同一個房間內），藍牙要開著。沒辦法傳到別的地方的 Mac。</p></div>
+    <div class="card"><h3>同一個 Wi-Fi 最快</h3><p>連同一個 Wi-Fi 時，一支 60 MB 的影片大約 6 秒就傳好。手機用行動網路也能傳，只是比較慢，而且會用到行動數據。</p></div>
   </div>
+  <p class="note-line">需要 Android 手機（Android 9 以上）和 macOS 14 以上的 Mac。不支援 iPhone，也只能從手機傳到 Mac。
+    <a href="faq/">更多常見問題</a></p>
 </section>
-
-<section aria-labelledby="limits">
-  <h2 id="limits">先講清楚的限制</h2>
-  <ul class="tight">
-    <li><strong>只能在附近。</strong>ATA 用藍牙找到你的 Mac，手機和 Mac 要靠近，大約同一個房間。不能傳到遠方的 Mac。</li>
-    <li><strong>只有單向。</strong>只能從 Android 手機傳到 Mac。不能從 Mac 傳回手機，也不支援 iPhone、iPad。</li>
-    <li><strong>同一個 Wi-Fi 最快。</strong>我們實測同一個 Wi-Fi 下約 60 MB 大約 6 秒（含建立連線）。不同網路之間的 P2P 直連比較慢（行動網路實測約每秒 1 MB），而且會用到行動數據。</li>
-    <li><strong>大多數網路可以，但不是全部。</strong>部分公司、學校或公共 Wi-Fi 等限制嚴格的網路會擋住直接連線。ATA 絕不透過伺服器轉送，這時會顯示「找不到直連路徑」。改連同一個 Wi-Fi 就能解決。</li>
-    <li><strong>Mac 上的 ATA 要保持開啟</strong>（關掉視窗後會留在選單列），藍牙也要開著。需要 macOS 14 以上；手機需要 Android 9 以上且支援藍牙低功耗（BLE）。</li>
-  </ul>
-</section>
-
-<section aria-labelledby="pricing">
-  <h2 id="pricing">完全免費</h2>
-  <p>兩個 app 都完全免費：沒有內購、沒有傳送次數限制、沒有廣告、不是訂閱制，也不用帳號。兩個 app 也都以 MIT 授權開放原始碼。</p>
-</section>
-
 <!-- Optional support link: stays hidden until [[SUPPORT_URL]] is configured. -->
 <section aria-labelledby="support" id="support-slot" hidden>
   <h2 id="support">支持 ATA（自由贊助）</h2>
@@ -89,9 +91,8 @@
 
 <footer class="site"><div class="wrap">
   <nav aria-label="頁尾">
-    <a href="install/">Mac 安裝</a><a href="faq/">常見問題</a><a href="support/">說明</a><a href="../privacy/#zh-tw">隱私權政策</a>
-    <a href="https://github.com/magiclin99/ata">原始碼</a>
-    <a href="mailto:magiclin99@gmail.com">聯絡：magiclin99@gmail.com</a>
+    <a href="install/">在 Mac 上安裝</a><a href="faq/">常見問題</a><a href="support/">說明</a><a href="beta/">幫忙測試手機版</a><a href="../privacy/#zh-tw">隱私權</a><a href="tech/">技術細節</a>
+    <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>
   </nav>
   <p>Android 是 Google LLC 的商標。Mac 是 Apple Inc. 在美國及其他國家和地區註冊的商標。ATA 與 Apple 或 Google 沒有關聯，也未獲其背書。</p>
 </div></footer>

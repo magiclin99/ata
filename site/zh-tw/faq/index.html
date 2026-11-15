@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ATA 常見問題</title>
-<meta name="description" content="ATA 的常見問題：距離、網路、速度、隱私、價格，以及它做不到的事。">
+<meta name="description" content="ATA 的常見問題：要不要錢、安不安全、要多近、要不要同一個 Wi-Fi，以及遇到問題時怎麼辦。">
 <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../../assets/touch-icon-180.png">
 <link rel="alternate" hreflang="en" href="https://magiclin99.github.io/ata/faq/">
@@ -16,11 +16,9 @@
 <header class="site"><div class="wrap">
   <a class="brand" href="../"><img src="../../assets/favicon.svg" alt="" width="34" height="34">ATA</a>
   <nav class="main" aria-label="主選單">
-    <a href="../">首頁</a>
-    <a href="../install/">Mac 安裝</a>
+    <a href="../install/">在 Mac 上安裝</a>
     <a href="./" aria-current="page">常見問題</a>
     <a href="../support/">說明</a>
-    <a href="../../privacy/#zh-tw">隱私權</a>
     <a class="lang" href="../../faq/" hreflang="en" lang="en">English</a>
   </nav>
 </div></header>
@@ -31,89 +29,74 @@
 </section>
 
 <section aria-labelledby="basics">
-  <h2 id="basics">能做什麼、不能做什麼</h2>
-  <details><summary>支援 iPhone、iPad，或從 Mac 傳回手機嗎？</summary>
-    <p>不支援。ATA 只有單向：從 Android 手機（Android 9 以上、支援藍牙低功耗）傳到 Mac 電腦（macOS 14 以上）。</p></details>
-  <details><summary>手機和 Mac 要多近？</summary>
-    <p>大約同一個房間。ATA 用藍牙找到 Mac 並開始每一次傳輸，超出藍牙範圍就找不到，沒有遠端傳送的功能。</p></details>
-  <details><summary>一定要連同一個 Wi-Fi 嗎？</summary>
-    <p>不一定，但同一個 Wi-Fi 快很多。ATA 會先試區網；如果手機和 Mac 不在同一個網路（例如手機用行動網路），會改試透過網際網路的 P2P 直連。這條路比較慢（我們用行動網路實測約每秒 1 MB），而且會用到行動數據。</p></details>
-  <details><summary>速度多快？</summary>
-    <p>我們實測同一個 Wi-Fi 下約 60 MB 大約 6 秒（含建立連線），實際速度取決於你的 Wi-Fi。不同網路之間會慢很多，行動網路約每秒 1 MB。</p></details>
-  <details><summary>App 顯示「找不到直連路徑」怎麼辦？</summary>
-    <p>代表區網和 P2P 直連都建立不起來。部分公司、學校、飯店或公共 Wi-Fi 等限制嚴格的網路會擋住裝置之間的直接連線，而 ATA 刻意不設任何轉送伺服器。請把手機連到和 Mac 相同的 Wi-Fi 再試一次。</p></details>
-  <details><summary>可以傳什麼檔案？有大小限制嗎？</summary>
-    <p>任何能從 app 分享出來的檔案都可以，一次也可以傳多個。ATA 沒有設定大小上限；如果 Mac 的存檔資料夾空間不足，Mac 會拒絕這次傳輸。</p></details>
-  <details><summary>檔案存在哪裡？</summary>
-    <p>預設存在 Mac 的「下載項目」，可以在 Mac 的 ATA 裡用「<strong>儲存到「…」…</strong>」改成其他資料夾。遇到同名檔案會自動加上編號，不會覆蓋原檔。</p></details>
-  <details><summary>傳到一半中斷會怎樣？</summary>
-    <p>已經傳完的檔案會留在 Mac 上；只收到一部分的檔案會被刪除，重新傳送即可。每個檔案存檔前都會比對校驗碼。目前不支援續傳。</p></details>
-  <details><summary>可以配對多台 Mac 或多支手機嗎？</summary>
-    <p>可以。手機會列出所有已配對的 Mac 並標示哪些在附近，每次由你點選。一台 Mac 可以和多支手機配對，但同一時間只接收一支手機的傳輸。</p></details>
-  <details><summary>手機上的 ATA 要一直開著嗎？</summary>
-    <p>不用。開始傳送後會在背景繼續，通知列會顯示進度並可以取消。Mac 上的 ATA 則要保持開啟（關掉視窗後它會留在選單列）。</p></details>
-</section>
-
-<section aria-labelledby="privacy">
-  <h2 id="privacy">隱私與安全</h2>
-  <details><summary>檔案會經過伺服器嗎？</summary>
-    <p>不會。同一個網路時直接走你的 Wi-Fi，不同網路時走 P2P 直連。ATA 沒有轉送伺服器，也沒有雲端儲存。</p></details>
-  <details><summary>那「STUN 伺服器」是什麼？</summary>
-    <p>跨網路建立 P2P 直連時，每台裝置要先問公開的 STUN 伺服器「我的公開 IP 位址是什麼」。ATA 使用 Google 和 Cloudflare 的公開 STUN 伺服器。它們看得到裝置的 IP 位址（任何網際網路連線都無法避免），但看不到你的檔案、檔名或其他任何內容。同一個 Wi-Fi 傳輸時不會用到它們。</p></details>
-  <details><summary>怎麼加密？</summary>
-    <p>用 QR code 配對時，會產生一把只有你的手機和 Mac 共有的隨機 256 位元金鑰。每次連線都用它驗證身分，連線資訊和檔案都經過加密（區網使用 AES-256-GCM；P2P 直連使用 DTLS，其指紋透過已加密的藍牙通道交換）。完整協定公開在 <a href="https://github.com/magiclin99/ata">GitHub repo</a>。</p></details>
-  <details><summary>ATA 會收集資料嗎？</summary>
-    <p>不會。沒有帳號、沒有伺服器，也沒有廣告、分析或當機回報 SDK，兩個 app 都不會傳任何資料給開發者或第三方。唯一的對外接觸見上方 STUN 伺服器那一題：需要建立 P2P 直連時，兩台公開的 STUN 伺服器會看到你的 IP 位址。詳見<a href="../../privacy/#zh-tw">隱私權政策</a>。</p></details>
-  <details><summary>為什麼 Android 要「附近的裝置」權限（舊版 Android 要位置權限）？</summary>
-    <p>ATA 需要藍牙才能找到你的 Mac。Android 12 以上是「附近的裝置」權限，ATA 已宣告不用於判斷位置；Android 9 到 11 的系統規定任何藍牙掃描都需要位置權限。ATA 不會讀取或使用你的位置。</p></details>
-  <details><summary>為什麼 ATA 要相機權限？</summary>
-    <p>只用來掃描配對用的 QR code，而且只在你點選掃描時才會詢問。QR code 由 app 內建的開源解碼器在手機上解讀，相機畫面不會儲存，也不會傳到任何地方。不想開放相機的話，可以選「<strong>貼上配對連結</strong>」，貼上 Mac 上顯示的連結。</p></details>
-  <details><summary>有開放原始碼嗎？</summary>
-    <p>有。Android app、Mac app 與通訊協定規格（目前是繁體中文）都以 MIT 授權公開在同一個 repo：<a href="https://github.com/magiclin99/ata">github.com/magiclin99/ata</a>。</p></details>
-  <details><summary>我可以自己驗證這些隱私說法嗎？</summary>
-    <p>可以。兩個 app 都開放原始碼，你可以直接讀到它們傳了什麼、傳到哪裡：藍牙握手、區網傳輸、使用兩台 STUN 伺服器的 P2P 連線建立，以及程式裡沒有任何分析追蹤或開發者伺服器。你也可以用同一個 repo 自己編譯這兩個 app。</p></details>
-</section>
-
-<section aria-labelledby="money">
-  <h2 id="money">費用</h2>
+  <h2 id="basics">開始之前</h2>
   <details><summary>真的免費嗎？</summary>
-    <p>是的。兩個 app 都完全免費：沒有內購、沒有傳送次數限制、沒有廣告，也不是訂閱制。沒有任何功能需要付費才能使用。</p></details>
+    <p>是的。沒有內購、沒有廣告、沒有次數限制，也不用註冊帳號，所有功能都能用。</p></details>
+  <details><summary>iPhone、iPad 或 Windows 電腦可以用嗎？</summary>
+    <p>不行。ATA 是從 <strong>Android 手機</strong>（Android 9 以上）傳到 <strong>Mac</strong>（macOS 14 以上），而且只能單向：手機傳到 Mac，不能從 Mac 傳回手機。</p></details>
+  <details><summary>手機和 Mac 要靠多近？</summary>
+    <p>同一個房間內就可以。ATA 靠藍牙找到你的 Mac，所以沒辦法傳到別的地方的 Mac。</p></details>
+  <details><summary>一定要連同一個 Wi-Fi 嗎？</summary>
+    <p>不一定，但連同一個 Wi-Fi 快很多：一支 60 MB 的影片大約 6 秒就傳好。手機用行動網路也能傳，只是比較慢，而且會用到行動數據。</p></details>
+  <details><summary>可以傳什麼？檔案可以多大？</summary>
+    <p>只要能從 app 分享出來的都可以：照片、影片、PDF、文件，一次傳好幾個也行。沒有大小限制，只要 Mac 的空間夠就好。</p></details>
+  <details><summary>檔案會存到 Mac 的哪裡？</summary>
+    <p>存在「<strong>下載項目</strong>」。也可以在 Mac 的 ATA 視窗裡改成別的檔案夾。如果已經有同名的檔案，ATA 會兩個都保留，不會蓋掉。</p></details>
 </section>
 
-<section aria-labelledby="compare">
-  <h2 id="compare">跟其他方法比較</h2>
-  <details><summary>這跟 AirDrop 一樣嗎？</summary>
-    <p>不一樣。AirDrop 是 Apple 在 Apple 裝置之間的功能，ATA 不使用、也不連接 AirDrop。ATA 是獨立的一組 app，專門把檔案從 Android 手機傳到 Mac。</p></details>
-  <details><summary>為什麼不直接用雲端硬碟或通訊軟體？</summary>
-    <p>那些方式是先把檔案上傳到某家公司的伺服器再下載回來，伺服器上通常會留一份副本。ATA 在你的兩台裝置之間直接傳送，除了收件的 Mac 之外不會留下任何副本。代價是兩台裝置必須在附近。</p></details>
+<section aria-labelledby="safe">
+  <h2 id="safe">安全與隱私</h2>
+  <details><summary>安全嗎？別人會看到我的檔案嗎？</summary>
+    <p>檔案直接從你的手機傳到你的 Mac，全程加密，不經過雲端，也不經過任何公司的伺服器。只有你配對過的手機和 Mac 能互相連線。</p></details>
+  <details><summary>ATA 會收集我的資料嗎？</summary>
+    <p>不會。不用帳號、沒有追蹤、沒有廣告，也不會傳任何東西給我們。完整說明請看<a href="../../privacy/#zh-tw">隱私權政策</a>。</p></details>
+  <details><summary>為什麼 Mac 說它無法檢查 ATA？</summary>
+    <p>因為 ATA 不是從 App Store 下載的，也沒有付費送 Apple 檢查，所以第一次打開時，Mac 會請你自己允許。<a href="../install/#s3">安裝說明</a>裡有每一步要按哪裡，只需要做一次。</p></details>
+  <details><summary>為什麼手機要「附近的裝置」、位置或相機權限？</summary>
+    <p>「<strong>附近的裝置</strong>」是讓 ATA 透過藍牙找到你的 Mac，ATA 不會用它來定位你。比較舊的 Android 會改成問「<strong>位置</strong>」權限，ATA 一樣不會用到你的位置。<strong>相機</strong>只在配對時掃 QR code 用，畫面不會存下來，也不會傳出去；不想開相機的話，可以改用「貼上配對連結」。</p></details>
+  <details><summary>我可以看看它是怎麼運作的嗎？</summary>
+    <p>可以。程式碼是公開的，任何人都能檢查。請看<a href="../tech/">技術細節</a>。</p></details>
 </section>
 
-<section aria-labelledby="mac">
-  <h2 id="mac">Mac 版</h2>
-  <details><summary>為什麼打開 Mac 版時 macOS 會警告？</summary>
-    <p>Mac 版沒有經過 Apple 公證（公證需要付費加入 Apple 開發者計畫）。照著<a href="../install/#manual">「強制打開」步驟</a>做一次即可，或改用一行指令安裝，就不會出現警告。</p></details>
-  <details id="firewall" open><summary>傳送很慢，或 ATA 顯示「區域網路連線被擋下了」</summary>
-    <p>ATA 會先透過區域網路接收。如果 macOS 防火牆擋下手機的連線，手機會改走慢很多的點對點連線，Mac 版也會顯示<strong>「區域網路連線被擋下了，請檢查 macOS 防火牆」</strong>。解決方式：</p>
+<section aria-labelledby="trouble">
+  <h2 id="trouble">遇到問題時</h2>
+  <details><summary>手機找不到我的 Mac</summary>
+    <ul class="tight">
+      <li>確認 Mac 上的 ATA 是開著的。不確定的話，從「應用程式」再打開一次 ATA。</li>
+      <li>手機和 Mac 的藍牙都要開著。</li>
+      <li>把手機拿近一點。</li>
+    </ul></details>
+  <details><summary>顯示連不上我的 Mac</summary>
+    <p>讓手機連上和 Mac <strong>同一個 Wi-Fi</strong>，再試一次。有些公司、學校、飯店或公共 Wi-Fi，在兩台不在同一個網路時會擋住這種連線。</p></details>
+  <details id="firewall" open><summary>傳得很慢，或 ATA 說被防火牆擋住</summary>
+    <p>可能是 Mac 的防火牆擋住了手機的直接連線。這時還是傳得過去，只是很慢。修正方法：</p>
     <ol>
-      <li>打開<strong>「系統設定」→「網路」→「防火牆」→「選項⋯」</strong>。</li>
-      <li>找到 <strong>ATA</strong>，確認設定為<strong>「允許傳入連線」</strong>。如果 ATA 出現不只一次（舊版本留下的），用<strong>「−」</strong>移除多餘的項目，只留一個設為允許的 ATA。</li>
-      <li>結束 ATA（在 ATA 視窗按<strong>「結束 ATA」</strong>），再從「應用程式」重新打開。防火牆的變更可能要等 ATA 重新啟動後才會生效。</li>
+      <li>打開「<strong>系統設定</strong>」→「<strong>網路</strong>」→「<strong>防火牆</strong>」→「<strong>選項⋯</strong>」。</li>
+      <li>找到 <strong>ATA</strong>，設成「<strong>允許傳入連線</strong>」。如果 ATA 出現不只一個，選取多出來的那幾個，按「<strong>−</strong>」刪掉，只留一個。</li>
+      <li>結束 ATA（在 ATA 視窗按「<strong>結束 ATA</strong>」），再從「應用程式」重新打開。</li>
     </ol>
-    <p>如果 macOS 詢問是否允許 ATA「接受傳入的網路連線」，請按<strong>「允許」</strong>。不需要關閉防火牆。</p></details>
-  <details><summary>支援哪些 Mac？</summary>
-    <p>macOS 14 以上、有藍牙的 Mac。App 是通用版本，Apple 晶片和 Intel 處理器的 Mac 都能原生執行。</p></details>
-  <details><summary>遇到其他問題？</summary>
-    <p>寄信到 <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>；Mac 版的問題也可以到 <a href="https://github.com/magiclin99/ata/issues">GitHub</a> 開 issue。</p></details>
+    <p>如果 Mac 詢問是否允許 ATA「接受傳入的網路連線」，請按「<strong>允許</strong>」。不需要把防火牆關掉。</p></details>
+  <details><summary>昨天還能用，Mac 重新開機後就不行了</summary>
+    <p>Mac 上的 ATA 要開著才收得到。從「應用程式」打開 ATA，並在 ATA 視窗裡打開「<strong>登入時啟動</strong>」，之後開機就會自動執行。</p></details>
+  <details><summary>手機的分享選單裡找不到 ATA</summary>
+    <p>找「<strong>傳到 Mac</strong>」。第一次可能藏在清單最後的「<strong>更多</strong>」裡，用過之後，Android 通常會把它排到前面。</p></details>
+  <details><summary>QR code 掃了沒反應</summary>
+    <p>每個 QR code 只能用一次，而且只有 5 分鐘有效。在 Mac 上再按一次「<strong>配對新裝置…</strong>」，換一個新的就好。</p></details>
+  <details><summary>傳到一半停了</summary>
+    <p>已經傳完的檔案都在 Mac 上了，剩下的再分享一次就好。</p></details>
+  <details><summary>可以配對好幾台 Mac 或好幾支手機嗎？</summary>
+    <p>可以。手機會列出所有配對過的 Mac，並標示哪幾台在附近。一台 Mac 可以和好幾支手機配對，但一次只接收一支手機的檔案。</p></details>
+  <details><summary>其他問題</summary>
+    <p>請看<a href="../support/">說明</a>，或寄信到 <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>。</p></details>
 </section>
 </main>
 
 <footer class="site"><div class="wrap">
   <nav aria-label="頁尾">
-    <a href="../">首頁</a><a href="../install/">Mac 安裝</a><a href="../support/">說明</a><a href="../../privacy/#zh-tw">隱私權政策</a>
-    <a href="https://github.com/magiclin99/ata">原始碼</a>
-    <a href="mailto:magiclin99@gmail.com">聯絡：magiclin99@gmail.com</a>
+    <a href="../">首頁</a><a href="../install/">在 Mac 上安裝</a><a href="../support/">說明</a><a href="../beta/">幫忙測試手機版</a><a href="../../privacy/#zh-tw">隱私權</a><a href="../tech/">技術細節</a>
+    <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>
   </nav>
-  <p>Android 是 Google LLC 的商標。Mac 是 Apple Inc. 在美國及其他國家和地區註冊的商標。AirDrop 是 Apple Inc. 的商標。ATA 與 Apple 或 Google 沒有關聯，也未獲其背書。</p>
+  <p>Android 是 Google LLC 的商標。Mac 是 Apple Inc. 在美國及其他國家和地區註冊的商標。ATA 與 Apple 或 Google 沒有關聯，也未獲其背書。</p>
 </div></footer>
 </body>
 </html>
