@@ -16,8 +16,7 @@ on:
   push:
     tags: ["v*"]
 
-permissions:
-  contents: write   # create the release and upload assets
+permissions: {}   # nothing by default; the release job below gets contents: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -44,10 +43,12 @@ jobs:
   release:
     needs: check-signing
     if: needs.check-signing.outputs.configured == 'true'
+    permissions:
+      contents: write   # create the release and upload assets
     runs-on: macos-15
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Locate the Mac app
         run: |
@@ -81,16 +82,21 @@ jobs:
           kcpw="$(openssl rand -hex 32)"
           echo "::add-mask::$kcpw"
           printf '%s' "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/ata-signing.p12"
-          security create-keychain -p "$kcpw" "$kc"
-          security set-keychain-settings -lut 3600 "$kc"
-          security unlock-keychain -p "$kcpw" "$kc"
-          security import "$RUNNER_TEMP/ata-signing.p12" -k "$kc" -f pkcs12 -P "$P12_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$kcpw" "$kc" >/dev/null
+          case "$P12_PASSWORD" in *'"'*|*\\*) echo "MAC_SIGNING_P12_PASSWORD must not contain \" or \\" >&2; exit 1 ;; esac
+          # `security -i` reads these commands from stdin, so neither password appears in a process argument list.
+          security -i >/dev/null <<EOF
+          create-keychain -p "$kcpw" "$kc"
+          set-keychain-settings -lut 3600 "$kc"
+          unlock-keychain -p "$kcpw" "$kc"
+          import "$RUNNER_TEMP/ata-signing.p12" -k "$kc" -f pkcs12 -P "$P12_PASSWORD" -T /usr/bin/codesign
+          set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$kcpw" "$kc"
+          EOF
           rm -f "$RUNNER_TEMP/ata-signing.p12"
           printf '%s' "$kcpw" > "$RUNNER_TEMP/ata-keychain-password"
           echo "ATA_SIGN_KEYCHAIN=$kc" >> "$GITHUB_ENV"
           echo "ATA_SIGN_KEYCHAIN_PASSWORD_FILE=$RUNNER_TEMP/ata-keychain-password" >> "$GITHUB_ENV"
-          security find-identity -p codesigning "$kc"
+          security find-identity -p codesigning "$kc" | grep -q '1 identities found' \
+            || { echo "the .p12 in MAC_SIGNING_P12_BASE64 did not import (wrong password?)" >&2; exit 1; }
 
       - name: Build, sign and package
         working-directory: ${{ env.APP_DIR }}
