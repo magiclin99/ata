@@ -36,9 +36,8 @@ isn't notarized, so the first launch needs one **Open Anyway** step. See the
 
 ## Get the Android app
 
-**Android app: coming soon to Google Play.** It's currently in
-[closed testing](https://magiclin99.github.io/ata/beta/) (Android 9 or later). To join the
-test, email [magiclin99@gmail.com](mailto:magiclin99@gmail.com?subject=ATA%20closed%20test) and include the Google
+**Android app: coming soon to Google Play** (Android 9 or later). Before release it goes through a
+[closed test](https://magiclin99.github.io/ata/beta/), and you can join it: email [magiclin99@gmail.com](mailto:magiclin99@gmail.com?subject=ATA%20closed%20test) and include the Google
 account address you use on your phone. The app is built from [`android-app/`](android-app/). To build it yourself,
 see [Build from source](#build-from-source).
 
