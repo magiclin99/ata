@@ -62,7 +62,7 @@
 <section>
   <h2>4. Camera and Google Play on Android</h2>
   <ul class="tight">
-    <li><strong>Camera (QR code scanning).</strong> ATA asks for the Camera permission only when you tap scan to pair with a Mac. The QR code is decoded on the phone by an open-source decoder built into the app. Camera frames aren't saved, aren't sent anywhere, and are discarded once the code is read. ATA keeps only the text of the pairing link. You can deny the camera and use <strong>Paste pairing link</strong> instead.</li>
+    <li><strong>Camera (QR code scanning).</strong> ATA asks for the Camera permission only when you tap scan to pair with a Mac. The QR code is decoded on the phone by an open-source decoder built into the app. Camera frames aren't saved, aren't sent anywhere, and are discarded once the code is read. ATA keeps only the text of the pairing link. If you deny it, ATA can't pair by QR code; it tells you so and offers a button to open settings.</li>
     <li><strong>Google Play statistics.</strong> Google Play may give developers aggregate install statistics, and crash and performance reports from users who opted in to sharing diagnostics with Google. That's controlled by your Google and Android settings, not by ATA.</li>
   </ul>
 </section>
@@ -79,7 +79,7 @@
     <tbody>
       <tr><td>Android</td><td>Nearby devices (Bluetooth); Location on Android 9–11 only</td><td>Finding and connecting to your Mac. Location isn't used.</td></tr>
       <tr><td>Android</td><td>Internet, network state</td><td>Sending files over Wi-Fi or the internet, and the connection-helper request described in section 3.</td></tr>
-      <tr><td>Android</td><td>Camera (only when you tap scan)</td><td>Reading the pairing QR code on the phone. Frames aren't stored or sent. Optional, because you can paste the pairing link instead.</td></tr>
+      <tr><td>Android</td><td>Camera (only when you tap scan)</td><td>Reading the pairing QR code on the phone. Frames aren't stored or sent. Asked only when you pair.</td></tr>
       <tr><td>Android</td><td>Notifications, foreground service</td><td>Showing progress and keeping a transfer running when you leave the app.</td></tr>
       <tr><td>Mac</td><td>Bluetooth, Local Network, incoming connections</td><td>Being found by your phone and receiving files.</td></tr>
       <tr><td>Mac</td><td>Notifications, Login Items</td><td>Telling you a file arrived, and optionally starting at login.</td></tr>
@@ -144,7 +144,7 @@
 <section>
   <h2>4. Android 上的相機與 Google Play</h2>
   <ul class="tight">
-    <li><strong>相機（QR code 掃描）。</strong>只有在你點選掃描來配對 Mac 時，ATA 才會要求相機權限。QR code 由 app 內建的開源解碼器在手機上解讀；相機畫面不會儲存、不會傳到任何地方，讀到 QR code 後即丟棄，ATA 只保留配對連結的文字。你也可以拒絕相機權限，改用「<strong>貼上配對連結</strong>」。</li>
+    <li><strong>相機（QR code 掃描）。</strong>只有在你點選掃描來配對 Mac 時，ATA 才會要求相機權限。QR code 由 app 內建的開源解碼器在手機上解讀；相機畫面不會儲存、不會傳到任何地方，讀到 QR code 後即丟棄，ATA 只保留配對連結的文字。如果拒絕，ATA 就無法用 QR code 配對，會告訴你並提供「開啟設定」按鈕。</li>
     <li><strong>Google Play 統計。</strong>Google Play 可能會提供開發者彙總的安裝統計，以及選擇與 Google 分享診斷資料的使用者的當機與效能報告。這由你的 Google 與 Android 設定控制，與 ATA 無關。</li>
   </ul>
 </section>
@@ -161,7 +161,7 @@
     <tbody>
       <tr><td>Android</td><td>附近的裝置（藍牙）；僅 Android 9–11 需要位置</td><td>找到並連線到你的 Mac；不使用位置</td></tr>
       <tr><td>Android</td><td>網際網路、網路狀態</td><td>透過 Wi-Fi 或網際網路傳送檔案，以及第 3 節說明的連線輔助查詢</td></tr>
-      <tr><td>Android</td><td>相機（只在你點選掃描時）</td><td>在手機上讀取配對 QR code；畫面不儲存也不傳送。可略過，改用貼上配對連結</td></tr>
+      <tr><td>Android</td><td>相機（只在你點選掃描時）</td><td>在手機上讀取配對 QR code；畫面不儲存也不傳送。只在配對時詢問</td></tr>
       <tr><td>Android</td><td>通知、前景服務</td><td>顯示進度，離開 app 時讓傳輸繼續</td></tr>
       <tr><td>Mac</td><td>藍牙、區域網路、接受傳入連線</td><td>讓手機找到並接收檔案</td></tr>
       <tr><td>Mac</td><td>通知、登入項目</td><td>通知檔案送達、可選的登入時啟動</td></tr>
