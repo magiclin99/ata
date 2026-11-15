@@ -1,0 +1,56 @@
+# Mac CI: builds the Swift package and runs its unit, engine and loopback tests. No signing, no secrets.
+#
+# Runner: macos-15. Its default Xcode is 16.x (Swift 6 toolchain), and the macOS 15 SDK builds for the package's
+# macOS 14 deployment target. It is the same image as the release workflow, so CI and releases use the same compiler.
+#
+# The tests need no Bluetooth, GUI session, keychain or signing: BLE is replaced by in-memory links, pairing keys by
+# a file/memory store, and the WebRTC tests run a real peer connection over loopback. Those WebRTC tests use the
+# app's normal ICE configuration, so they also send STUN requests; they don't depend on an answer (gathering stops
+# after 5 s and the host candidates are used). LiveAppTests is opt-in and skips itself unless ATA_LIVE_SIGNAL_PORT is set.
+name: Mac CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["mac-app/**", "spec/**", "SPEC.md", ".github/workflows/mac-ci.yml"]
+  pull_request:
+    paths: ["mac-app/**", "spec/**", "SPEC.md", ".github/workflows/mac-ci.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mac-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mac-app
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # Only SwiftPM's download cache (the WebRTC xcframework zip). It's keyed on Package.swift, which pins the
+      # artifact URL and its checksum; SwiftPM verifies that checksum on every build, cached or not. The build
+      # directory itself is not cached, so every run compiles from scratch.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm/artifacts
+          key: swiftpm-artifacts-${{ runner.os }}-${{ hashFiles('mac-app/Package.swift') }}
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test

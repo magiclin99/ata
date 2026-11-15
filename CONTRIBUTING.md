@@ -51,8 +51,9 @@ unsigned bundle. More in [`android-app/README.md`](android-app/README.md).
 
 ### CI
 
-Pull requests run [Android CI](.github/workflows/android-ci.yml) (`:core:test` and `assembleDebug`). Please run
-`swift test` locally for Mac changes, because the Mac tests run in CI only for release tags.
+Pull requests run [Android CI](.github/workflows/android-ci.yml) (`:core:test` and `assembleDebug`) and
+[Mac CI](.github/workflows/mac-ci.yml) (`swift build` and `swift test`), each when its app, the spec or the
+vectors change. Neither needs secrets.
 
 ## Protocol changes
 

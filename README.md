@@ -104,7 +104,7 @@ ATA is free and stays free. If it saves you time and you'd like to support its d
 | [`SPEC.md`](SPEC.md) | Protocol specification v2 (Traditional Chinese). |
 | [`spec/vectors.json`](spec/vectors.json) | Test vectors for the specification; both apps' tests read them in place. |
 | [`site/`](site/) | The website at https://magiclin99.github.io/ata/. |
-| [`.github/workflows/`](.github/workflows/) | Android CI (tests + debug build), Mac release on tag `v*`, website deployment. |
+| [`.github/workflows/`](.github/workflows/) | Android CI and Mac CI (tests + builds), Mac release on tag `v*`, website deployment. |
 
 ## Build from source
 
