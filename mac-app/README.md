@@ -4,7 +4,8 @@ ATA receives photos and files sent from your Android phone to your Mac computer.
 within Bluetooth range of each other; the files themselves travel over your local network. ATA for Mac is free and
 open source (MIT). It needs macOS 14 or later and runs on Apple silicon and Intel Macs.
 
-To send files you need the ATA app on your Android phone (Google Play). Both apps are completely free: no
+To send files you need the ATA app on your Android phone (coming soon to Google Play; currently in closed testing,
+see the [main README](../README.md#get-the-android-app)). Both apps are completely free: no
 purchases, no subscriptions, no ads, no limits.
 
 ## Install

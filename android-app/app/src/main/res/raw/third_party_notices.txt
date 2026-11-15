@@ -7,6 +7,13 @@ Apache License 2.0 (full text at the end of this notice)
   - stream-webrtc-android (Stream.io Inc.) - Android packaging of WebRTC
   - AndroidX CameraX (The Android Open Source Project) - camera preview for the pairing QR code
   - ZXing "core" (ZXing authors) - QR code decoding, on device
+  - Libraries these depend on: further AndroidX libraries (including Media3, Startup,
+    ProfileInstaller, Emoji2), Guava (The Guava Authors), Dagger and javax.inject /
+    jakarta.inject (The Dagger Authors, JSR-330 / Eclipse Foundation), AutoValue,
+    JSR-305 and J2ObjC annotations (Google), JSpecify, JetBrains annotations
+
+MIT License
+  - Checker Framework qualifiers (checker-qual), a dependency of Guava, text below.
 
 BSD 3-Clause License
   - WebRTC (The WebRTC project authors), text below. WebRTC itself includes further
@@ -46,6 +53,29 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+------------------------------------------------------------------------------
+Checker Framework qualifiers (checker-qual)
+
+Copyright 2004-present by the Checker Framework developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 

@@ -1,0 +1,89 @@
+name: Bug report
+description: Something doesn't work as described.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Please don't paste pairing links (`ata://pair…`), QR codes, screenshots that show a QR code, or any private files.** They can contain secrets. Describe what happened instead.
+        For a security problem, use [private vulnerability reporting](https://github.com/magiclin99/ata/security/advisories/new) instead (see SECURITY.md).
+  - type: input
+    id: phone
+    attributes:
+      label: Phone model
+      placeholder: e.g. Pixel 8
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version
+      placeholder: e.g. Android 15
+    validations:
+      required: true
+  - type: input
+    id: android-app
+    attributes:
+      label: ATA Android app version
+      description: In the ATA app on the phone, in the About section.
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac
+      placeholder: e.g. macOS 15.1, MacBook Air (Apple silicon)
+    validations:
+      required: true
+  - type: input
+    id: mac-app
+    attributes:
+      label: ATA Mac app version
+      description: Shown as "Version …" in the ATA window on the Mac.
+      placeholder: e.g. 1.0.2
+    validations:
+      required: true
+  - type: dropdown
+    id: step
+    attributes:
+      label: Which step failed?
+      options:
+        - Installing or opening the Mac app
+        - Pairing (scanning the QR code or pasting the link)
+        - The phone doesn't see the Mac as nearby
+        - Connecting / the transfer doesn't start
+        - The transfer starts but fails or stops
+        - Files arrive but are wrong or missing
+        - Something else
+    validations:
+      required: true
+  - type: dropdown
+    id: network
+    attributes:
+      label: Were the phone and the Mac on the same Wi-Fi?
+      options:
+        - "Yes"
+        - "No (different networks or mobile data)"
+        - "Not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Include the exact error message shown on the phone or the Mac, if any.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Firewall or VPN on the Mac, battery saver on the phone, file types and sizes, how often it happens. Remove device names and file names you'd rather not share.

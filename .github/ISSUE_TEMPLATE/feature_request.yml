@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest an improvement.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Some limits are deliberate: ATA sends from an Android phone to a nearby Mac only, without servers or accounts. Ideas that keep it that way are the easiest to accept.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The situation and what gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app?
+      options: ["Android", "Mac", "Both", "Not sure"]

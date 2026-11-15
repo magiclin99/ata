@@ -12,6 +12,7 @@ Share from any app, pick your Mac, and the file lands in Downloads. The devices 
   Android app: coming soon to Google Play ·
   <a href="https://magiclin99.github.io/ata/install/">Install the Mac app</a> ·
   <a href="https://magiclin99.github.io/ata/">Website</a> ·
+  <a href="https://magiclin99.github.io/ata/support/">Help</a> ·
   <a href="https://magiclin99.github.io/ata/zh-tw/">繁體中文</a>
 </p>
 
@@ -27,13 +28,15 @@ purchases, no limits, no ads) and collect nothing. You can read the code to chec
 curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh
 ```
 
-Or download the `.dmg` from [Releases](https://github.com/magiclin99/ata/releases/latest). The app isn't notarized,
-so the first launch needs one **Open Anyway** step. See the
-[install guide](https://magiclin99.github.io/ata/install/). macOS 14 or later.
+The latest release is **ATA 1.0.2 for Mac** ([release notes](https://github.com/magiclin99/ata/releases/latest)).
+The command installs whatever the latest release is, verifies its checksum and its signing certificate, and is also
+how you update. Or download the `.dmg` from [Releases](https://github.com/magiclin99/ata/releases/latest). The app
+isn't notarized, so the first launch needs one **Open Anyway** step. See the
+[install guide](https://magiclin99.github.io/ata/install/). macOS 14 or later, Apple silicon and Intel.
 
 ## Get the Android app
 
-The Android app (Android 9 or later) is coming soon to Google Play. It's currently in closed testing. To join the
+**Android app: coming soon to Google Play.** It's currently in closed testing (Android 9 or later). To join the
 test, email [magiclin99@gmail.com](mailto:magiclin99@gmail.com?subject=ATA%20closed%20test) and include the Google
 account address you use on your phone. The app is built from [`android-app/`](android-app/). To build it yourself,
 see [Build from source](#build-from-source).
@@ -55,6 +58,19 @@ To build it yourself, see [Build from source](#build-from-source).
 
 If neither path works (some strict networks block peer-to-peer), the phone says "no direct path" instead of falling
 back to a server. Files never pass through any server.
+
+## Security model
+
+- Only paired devices can talk to each other. The pairing key comes from the Mac's QR code and never leaves the two
+  devices. Every connection proves possession of it in both directions before anything else is sent.
+- Everything after the handshake is encrypted: AES-256-GCM over Bluetooth and on the local network, DTLS on WebRTC
+  (its fingerprints travel inside the encrypted Bluetooth channel). There is no server and no relay.
+- Mac releases are signed with one fixed self-signed certificate. The installer refuses any other signature, and
+  [`SECURITY.md`](SECURITY.md) shows how to check it yourself.
+
+The full protocol, with test vectors both apps must pass, is in [`SPEC.md`](SPEC.md) (Traditional Chinese) and
+[`spec/vectors.json`](spec/vectors.json). Found a problem? Please report it privately as described in
+[`SECURITY.md`](SECURITY.md).
 
 ## Limits, plainly
 
@@ -108,11 +124,19 @@ scripts/build-app.sh release    # → build/ATA.app, ad-hoc signed
 
 ```sh
 cd android-app
+echo "sdk.dir=/path/to/Android/sdk" > local.properties   # or export ANDROID_HOME; the file is git-ignored
 ./gradlew :core:test assembleDebug   # → app/build/outputs/apk/debug/app-debug.apk
 ```
 
 Release builds are signed with keys kept outside the repository; without them the Mac release script stops and the
-Android release bundle is built unsigned. See each app's README.
+Android release bundle is built unsigned. See each app's README, and [`CONTRIBUTING.md`](CONTRIBUTING.md) before
+opening a pull request.
+
+## Help and feedback
+
+- Setup help and common fixes: [magiclin99.github.io/ata/support](https://magiclin99.github.io/ata/support/)
+- Bugs and ideas: [GitHub Issues](https://github.com/magiclin99/ata/issues/new/choose)
+- Security: [`SECURITY.md`](SECURITY.md)
 
 ## Licence
 
