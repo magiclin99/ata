@@ -99,3 +99,10 @@ Both install pages link the `.dmg` directly:
 `https://github.com/magiclin99/ata/releases/latest/download/ATA.dmg` and drop the version from the text.
 
 The Mac app opens `faq/#firewall` (both languages). Keep that anchor.
+
+## Mac app labels (sync with each Mac release)
+
+The pages quote the labels of the **released** Mac app (1.0.2): "Pair New Device…" / 「配對新裝置…」 and "Launch at
+Login" / 「登入時啟動」. The next Mac release renames them to "Pair a Phone…" / 「配對手機…」 and "Open at Login" /
+「登入時打開」. When it ships, replace them in: `install/`, `zh-tw/install/`, `faq/`, `zh-tw/faq/`, `support/`,
+`zh-tw/support/`, and the Chinese half of `privacy/` (`grep -rn -e 'Pair New Device' -e '配對新裝置' -e 'Launch at Login' -e '登入時啟動' site/`).

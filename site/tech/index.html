@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATA Technical Details</title>
+<meta name="description" content="How ATA connects, its security model, the Mac installer's checks, the signing certificate, and where the source code and protocol live.">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/touch-icon-180.png">
+<link rel="alternate" hreflang="zh-Hant-TW" href="https://magiclin99.github.io/ata/zh-tw/tech/">
+<link rel="alternate" hreflang="en" href="https://magiclin99.github.io/ata/tech/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/favicon.svg" alt="" width="34" height="34">ATA</a>
+  <nav class="main" aria-label="Main">
+    <a href="../install/">Install on Mac</a>
+    <a href="../faq/">Questions</a>
+    <a href="../support/">Help</a>
+    <a class="lang" href="../zh-tw/tech/" hreflang="zh-Hant-TW" lang="zh-Hant-TW">繁體中文</a>
+  </nav>
+</div></header>
+
+<main id="main" class="wrap">
+<section class="hero">
+  <h1>Technical details</h1>
+  <p class="lede">For people who want to know exactly how ATA works and why they can trust it. You don't need any of this to use ATA.</p>
+</section>
+
+<section aria-labelledby="code">
+  <h2 id="code">Source code and licence</h2>
+  <p>The Android app, the Mac app, and the protocol specification are open source under the MIT licence, in one repository:
+    <a href="https://github.com/magiclin99/ata">github.com/magiclin99/ata</a>. The protocol is in <code>SPEC.md</code> (currently written in
+    Traditional Chinese), with test vectors in <code>spec/vectors.json</code>. Both apps have unit tests against those vectors. Security reports:
+    see <code>SECURITY.md</code> in the repository.</p>
+  <ul class="tight">
+    <li>Android: Kotlin and Jetpack Compose, Android 9 or later (minSdk 28). QR codes are decoded on the phone with the bundled ZXing library.</li>
+    <li>Mac: Swift and SwiftUI, macOS 14 or later, a universal build (Apple silicon and Intel).</li>
+  </ul>
+</section>
+
+<section aria-labelledby="how">
+  <h2 id="how">How a transfer connects</h2>
+  <ol class="howto">
+    <li><strong>Discovery and signalling over Bluetooth LE.</strong> The Mac is a BLE peripheral. The phone connects and both sides run a mutual HMAC-SHA256
+      challenge-response with nonces from each side, keyed by the 256-bit pairing key. Per-direction session keys are derived with HKDF-SHA256. Every BLE
+      message after that is AES-256-GCM with counter nonces.</li>
+    <li><strong>Path 1: local network.</strong> The Mac opens an ephemeral TCP port and sends its LAN IPv4 addresses over the encrypted BLE channel. The phone dials
+      them, bound to its Wi-Fi network, and streams length-prefixed AES-256-GCM records.</li>
+    <li><strong>Path 2: direct peer-to-peer.</strong> If TCP fails, the phone sends a complete (non-trickle) WebRTC offer over BLE. ICE uses only the public STUN servers
+      <code>stun.l.google.com:19302</code> and <code>stun.cloudflare.com:3478</code>. TURN (a relay) is never configured. The DTLS fingerprints are
+      authenticated because the SDP travels over the already-authenticated BLE channel.</li>
+    <li><strong>No path:</strong> the phone reports that it couldn't reach the Mac. There's deliberately no relay fallback, so on networks that block
+      peer-to-peer (for example symmetric NAT on both sides) the transfer fails rather than going through a server.</li>
+  </ol>
+  <p>Each file carries a SHA-256 that the Mac checks before renaming the temporary file into place. A mismatched or incomplete file is deleted.
+    Measured: about 60 MB in around 6 s on the same Wi-Fi including discovery and handshake; around 1 MB/s peer-to-peer over mobile data.</p>
+</section>
+
+<section aria-labelledby="keys">
+  <h2 id="keys">Pairing keys and stored data</h2>
+  <ul class="tight">
+    <li>Pairing: the Mac shows a QR code holding its 16-byte device ID and a fresh 32-byte key, valid for 5 minutes and usable once.</li>
+    <li>Android stores the key encrypted with a non-exportable Android Keystore key, and app backup is disabled.</li>
+    <li>The Mac stores it in <code>~/Library/Application Support/io.github.magiclin99.ata.mac/pairings.json</code> (folder mode 0700, file 0600, excluded from Time Machine backups).</li>
+    <li>The Mac advertises the local name <code>ATA-</code> plus the first 8 hex characters of its random device ID, which any nearby scanner can see.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="installer">
+  <h2 id="installer">The Mac installer and signing certificate</h2>
+  <p>The Mac app isn't notarized (no paid Apple Developer Program membership). It's signed with one fixed self-signed certificate:
+    <code>mac-app/signing/ata-signing-cert.pem</code>, SHA-1 <code>3DA39545619D4949FA758C6BECC77F9E2E3CE65E</code>, SHA-256
+    <code>B7C994A86BB61C91BB8A2F94CBAA33B9BC1C7FE97E646CA3DF38A49E964C9387</code>. If an "ATA" ever presents a different certificate, don't install it.</p>
+  <p>The one-line installer (<code>curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh</code>):</p>
+  <ol class="howto">
+    <li>Finds the latest release and downloads <code>ATA-&lt;version&gt;.zip</code> and its <code>.sha256</code>.</li>
+    <li>Checks the SHA-256, then runs <code>codesign --verify --deep --strict</code> against a pinned requirement (bundle ID plus the certificate's SHA-1). Anything else is refused and nothing is installed.</li>
+    <li>Quits a running ATA, replaces <code>/Applications/ATA.app</code> (asking for a password only if that folder isn't writable), and opens it.</li>
+  </ol>
+  <p>Files fetched with <code>curl</code> get no quarantine attribute, so Gatekeeper doesn't prompt. To preview without changing anything:
+    <code>… | sh -s -- --dry-run</code>. Read the script first: it's attached to every release and is in <code>mac-app/install.sh</code>.</p>
+</section>
+
+<section aria-labelledby="net">
+  <h2 id="net">Network use and privacy</h2>
+  <ul class="tight">
+    <li>No analytics, no crash reporting, no ads, no accounts, and no developer server. The apps send nothing to the developer.</li>
+    <li>The only third-party contact is the STUN request on the peer-to-peer path, which reveals the devices' public IP addresses and ports to Google or Cloudflare.
+      Same-Wi-Fi transfers don't touch the internet.</li>
+    <li>The Mac app's "Check for Updates…" only opens the Releases page in your browser. There's no background update check.</li>
+    <li>Android permissions: BLUETOOTH_SCAN (declared <code>neverForLocation</code>) and BLUETOOTH_CONNECT; location only on Android 9–11 (required by the OS for BLE scans);
+      CAMERA (only while scanning); INTERNET and network state; a foreground service of type connectedDevice; notifications.</li>
+    <li>Mac: Bluetooth, local network, an inbound listener (so the macOS application firewall may ask), notifications, and login items.</li>
+  </ul>
+  <p>The full policy is the <a href="../privacy/">privacy policy</a>.</p>
+</section>
+
+<section aria-labelledby="compare">
+  <h2 id="compare">How it compares</h2>
+  <ul class="tight">
+    <li>AirDrop is Apple's feature between Apple devices. ATA doesn't use or connect to it.</li>
+    <li>Cloud drives and chat apps upload your file to a company's server and keep a copy there. ATA sends directly and keeps no copy except on the Mac you sent to. The trade-off is that the devices must be within Bluetooth range.</li>
+  </ul>
+</section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <nav aria-label="Footer">
+    <a href="../">Home</a><a href="../install/">Install on Mac</a><a href="../faq/">Questions</a><a href="../support/">Help</a><a href="../privacy/">Privacy</a>
+    <a href="https://github.com/magiclin99/ata">Source code</a>
+    <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>
+  </nav>
+  <p>Android is a trademark of Google LLC. Mac is a trademark of Apple Inc., registered in the U.S. and other countries and regions.
+    AirDrop is a trademark of Apple Inc. ATA is not affiliated with or endorsed by Apple or Google.</p>
+</div></footer>
+</body>
+</html>

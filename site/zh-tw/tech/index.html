@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATA 技術細節</title>
+<meta name="description" content="ATA 怎麼連線、安全設計、Mac 安裝程式的檢查方式、簽章憑證，以及原始碼和通訊協定在哪裡。">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../assets/touch-icon-180.png">
+<link rel="alternate" hreflang="en" href="https://magiclin99.github.io/ata/tech/">
+<link rel="alternate" hreflang="zh-Hant-TW" href="https://magiclin99.github.io/ata/zh-tw/tech/">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">跳到主要內容</a>
+<header class="site"><div class="wrap">
+  <a class="brand" href="../"><img src="../../assets/favicon.svg" alt="" width="34" height="34">ATA</a>
+  <nav class="main" aria-label="主選單">
+    <a href="../install/">在 Mac 上安裝</a>
+    <a href="../faq/">常見問題</a>
+    <a href="../support/">說明</a>
+    <a class="lang" href="../../tech/" hreflang="en" lang="en">English</a>
+  </nav>
+</div></header>
+
+<main id="main" class="wrap">
+<section class="hero">
+  <h1>技術細節</h1>
+  <p class="lede">給想知道 ATA 到底怎麼運作、為什麼可以信任它的人。一般使用不需要看這一頁。</p>
+</section>
+
+<section aria-labelledby="code">
+  <h2 id="code">原始碼與授權</h2>
+  <p>Android app、Mac app 與通訊協定規格都以 MIT 授權開放原始碼，放在同一個 repo：<a href="https://github.com/magiclin99/ata">github.com/magiclin99/ata</a>。協定寫在 <code>SPEC.md</code>（目前是繁體中文），測試向量在 <code>spec/vectors.json</code>，兩邊的 app 都有對照這組向量的單元測試。資安問題的回報方式請看 repo 裡的 <code>SECURITY.md</code>。</p>
+  <ul class="tight">
+    <li>Android：Kotlin 與 Jetpack Compose，Android 9 以上（minSdk 28）。QR code 由內建的 ZXing 函式庫在手機上解讀。</li>
+    <li>Mac：Swift 與 SwiftUI，macOS 14 以上，通用版本（Apple 晶片與 Intel）。</li>
+  </ul>
+</section>
+
+<section aria-labelledby="how">
+  <h2 id="how">一次傳輸怎麼連線</h2>
+  <ol class="howto">
+    <li><strong>用藍牙低功耗（BLE）找到對方並交換連線資訊。</strong>Mac 是 BLE peripheral。手機連上後，雙方用 256 位元配對金鑰做雙向 HMAC-SHA256 挑戰回應（雙方各出一個 nonce），再用 HKDF-SHA256 導出各方向的 session 金鑰。之後每一則 BLE 訊息都以 AES-256-GCM（計數器 nonce）加密。</li>
+    <li><strong>路徑一：區域網路。</strong>Mac 開一個臨時 TCP 連接埠，透過加密的 BLE 通道把自己的區網 IPv4 位址傳給手機。手機綁定在 Wi-Fi 網路上撥接，以帶長度前綴的 AES-256-GCM 記錄傳送。</li>
+    <li><strong>路徑二：P2P 直連。</strong>TCP 連不上時，手機透過 BLE 送出完整的（非 trickle）WebRTC offer。ICE 只使用公開 STUN 伺服器 <code>stun.l.google.com:19302</code> 與 <code>stun.cloudflare.com:3478</code>，從不設定 TURN（中繼）。SDP 走在已驗證的 BLE 通道上，所以 DTLS 指紋也經過驗證。</li>
+    <li><strong>都不通：</strong>手機會告訴你連不上 Mac。刻意不設中繼備援，所以在擋住 P2P 的網路（例如兩邊都是 symmetric NAT）會直接失敗，而不是改走伺服器。</li>
+  </ol>
+  <p>每個檔案都附 SHA-256，Mac 比對相符後才把暫存檔改成正式檔名；不符或不完整的檔案會被刪除。實測：同一個 Wi-Fi 約 60 MB 大約 6 秒（含尋找與握手）；行動網路走 P2P 約每秒 1 MB。</p>
+</section>
+
+<section aria-labelledby="keys">
+  <h2 id="keys">配對金鑰與儲存的資料</h2>
+  <ul class="tight">
+    <li>配對：Mac 顯示的 QR code 內含 16 位元組的裝置 ID 與新產生的 32 位元組金鑰，5 分鐘內有效、只能用一次。</li>
+    <li>Android 以不可匯出的 Android Keystore 金鑰加密後儲存，並關閉 app 備份。</li>
+    <li>Mac 存在 <code>~/Library/Application Support/io.github.magiclin99.ata.mac/pairings.json</code>（資料夾權限 0700、檔案 0600，排除在 Time Machine 備份之外）。</li>
+    <li>Mac 廣播的名稱是 <code>ATA-</code> 加上隨機裝置 ID 的前 8 個十六進位字元，附近的藍牙掃描器都看得到。</li>
+  </ul>
+</section>
+
+<section aria-labelledby="installer">
+  <h2 id="installer">Mac 安裝程式與簽章憑證</h2>
+  <p>Mac 版沒有經過 Apple 公證（沒有加入付費的 Apple 開發者計畫），而是用一張固定的自簽憑證簽章：<code>mac-app/signing/ata-signing-cert.pem</code>，SHA-1 <code>3DA39545619D4949FA758C6BECC77F9E2E3CE65E</code>，SHA-256 <code>B7C994A86BB61C91BB8A2F94CBAA33B9BC1C7FE97E646CA3DF38A49E964C9387</code>。如果哪天出現憑證不同的「ATA」，請不要安裝。</p>
+  <p>一行安裝指令（<code>curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh</code>）會：</p>
+  <ol class="howto">
+    <li>找到最新版本，下載 <code>ATA-&lt;版本&gt;.zip</code> 和它的 <code>.sha256</code>。</li>
+    <li>比對 SHA-256，再用 <code>codesign --verify --deep --strict</code> 對照固定的需求（bundle ID 加上憑證的 SHA-1）。不符就拒絕，什麼都不會安裝。</li>
+    <li>結束正在執行的 ATA，取代 <code>/Applications/ATA.app</code>（只有該資料夾無法寫入時才要求密碼），然後打開它。</li>
+  </ol>
+  <p>用 <code>curl</code> 下載的檔案不會被加上 quarantine 屬性，所以 Gatekeeper 不會跳出提醒。想先看它會做什麼、不實際變更：<code>… | sh -s -- --dry-run</code>。建議先讀過指令稿：每個 release 都附有它，原始檔在 <code>mac-app/install.sh</code>。</p>
+</section>
+
+<section aria-labelledby="net">
+  <h2 id="net">網路使用與隱私</h2>
+  <ul class="tight">
+    <li>沒有分析追蹤、沒有當機回報、沒有廣告、沒有帳號，也沒有開發者的伺服器。兩個 app 都不會傳任何東西給開發者。</li>
+    <li>唯一的第三方接觸是 P2P 路徑上的 STUN 請求，Google 或 Cloudflare 會看到裝置的公開 IP 位址與連接埠。同一個 Wi-Fi 傳輸時完全不會連到網際網路。</li>
+    <li>Mac 版的「檢查更新…」只會在瀏覽器打開 Releases 頁面，沒有背景檢查更新。</li>
+    <li>Android 權限：BLUETOOTH_SCAN（宣告 <code>neverForLocation</code>）、BLUETOOTH_CONNECT；位置權限只在 Android 9–11 需要（系統規定 BLE 掃描要有）；CAMERA（只在掃描時）；網際網路與網路狀態；connectedDevice 類型的前景服務；通知。</li>
+    <li>Mac：藍牙、區域網路、一個接收連線的 listener（所以 macOS 應用程式防火牆可能會詢問）、通知、登入項目。</li>
+  </ul>
+  <p>完整內容請看<a href="../../privacy/#zh-tw">隱私權政策</a>。</p>
+</section>
+
+<section aria-labelledby="compare">
+  <h2 id="compare">和其他方式比較</h2>
+  <ul class="tight">
+    <li>AirDrop 是 Apple 裝置之間的功能，ATA 不使用、也不連接 AirDrop。</li>
+    <li>雲端硬碟和通訊軟體會把檔案上傳到某家公司的伺服器並留一份副本；ATA 直接傳送，除了收件的 Mac 之外不留任何副本。代價是兩台裝置必須在藍牙範圍內。</li>
+  </ul>
+</section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <nav aria-label="頁尾">
+    <a href="../">首頁</a><a href="../install/">在 Mac 上安裝</a><a href="../faq/">常見問題</a><a href="../support/">說明</a><a href="../../privacy/#zh-tw">隱私權</a>
+    <a href="https://github.com/magiclin99/ata">原始碼</a>
+    <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>
+  </nav>
+  <p>Android 是 Google LLC 的商標。Mac 是 Apple Inc. 在美國及其他國家和地區註冊的商標。AirDrop 是 Apple Inc. 的商標。ATA 與 Apple 或 Google 沒有關聯，也未獲其背書。</p>
+</div></footer>
+</body>
+</html>
