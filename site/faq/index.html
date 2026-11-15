@@ -98,6 +98,17 @@
   <h2 id="mac">Mac app</h2>
   <details><summary>Why does macOS warn me when I open the Mac app?</summary>
     <p>The Mac app isn't notarized by Apple (that requires a paid membership in Apple's developer program). Follow the <a href="../install/#manual">Open Anyway steps</a> once, or use the one-line install, which doesn't trigger the warning.</p></details>
+  <details id="firewall" open><summary>Transfers are slow, or ATA says "Local network connection was blocked"</summary>
+    <p>ATA receives over your local network first. If the macOS firewall drops the phone's connection, the phone falls back to a much slower
+      peer-to-peer path, and the Mac app shows <strong>Local network connection was blocked — check the macOS firewall</strong>. To fix it:</p>
+    <ol>
+      <li>Open <strong>System Settings → Network → Firewall → Options…</strong></li>
+      <li>Find <strong>ATA</strong> and make sure it's set to <strong>Allow incoming connections</strong>. If ATA is listed more than once
+        (left over from an earlier version), remove the extra entries with <strong>−</strong> so only one ATA remains, set to Allow.</li>
+      <li>Quit ATA (in the ATA window, <strong>Quit ATA</strong>) and open it again from Applications. The firewall may only apply the change
+        after ATA restarts.</li>
+    </ol>
+    <p>If macOS asks whether ATA may "accept incoming network connections", click <strong>Allow</strong>. You don't need to turn the firewall off.</p></details>
   <details><summary>Which Macs are supported?</summary>
     <p>Any Mac with Bluetooth running macOS 14 or later. The app is universal, so it runs natively on both Apple silicon and Intel Macs.</p></details>
   <details><summary>Something else is wrong.</summary>

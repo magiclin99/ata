@@ -54,6 +54,8 @@
 "Receiving “%@” %lld%%" = "正在接收「%@」%lld%%";
 "Connected to %@" = "已連線到「%@」";
 "Starting…" = "啟動中…";
+"Local network connection was blocked — check the macOS firewall" = "區域網路連線被擋下了，請檢查 macOS 防火牆";
+"Learn More…" = "了解更多…";
 "Waiting for Bluetooth permission…" = "等待藍牙權限…";
 "Bluetooth is off" = "藍牙已關閉";
 "Bluetooth access not allowed" = "未允許 ATA 使用藍牙";

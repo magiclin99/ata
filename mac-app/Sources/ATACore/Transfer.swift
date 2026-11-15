@@ -47,6 +47,10 @@ final class TCPFileReceiver {
 
     var port: UInt16 { listener.port }
 
+    /// True once any inbound TCP connection reached the listener (even one with a wrong sid). Stays readable after
+    /// `cancel()`. If the phone fell back to WebRTC and this is still false, nothing on the LAN got through to us.
+    var sawConnection: Bool { lock.lock(); defer { lock.unlock() }; return connCounter > 0 }
+
     func start() throws {
         try listener.start(port: 0, loopbackOnly: false) { [weak self] sock in
             guard let self else { sock.close(); return }

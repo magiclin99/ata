@@ -92,6 +92,14 @@
   <h2 id="mac">Mac 版</h2>
   <details><summary>為什麼打開 Mac 版時 macOS 會警告？</summary>
     <p>Mac 版沒有經過 Apple 公證（公證需要付費加入 Apple 開發者計畫）。照著<a href="../install/#manual">「強制打開」步驟</a>做一次即可，或改用一行指令安裝，就不會出現警告。</p></details>
+  <details id="firewall" open><summary>傳送很慢，或 ATA 顯示「區域網路連線被擋下了」</summary>
+    <p>ATA 會先透過區域網路接收。如果 macOS 防火牆擋下手機的連線，手機會改走慢很多的點對點連線，Mac 版也會顯示<strong>「區域網路連線被擋下了，請檢查 macOS 防火牆」</strong>。解決方式：</p>
+    <ol>
+      <li>打開<strong>「系統設定」→「網路」→「防火牆」→「選項⋯」</strong>。</li>
+      <li>找到 <strong>ATA</strong>，確認設定為<strong>「允許傳入連線」</strong>。如果 ATA 出現不只一次（舊版本留下的），用<strong>「−」</strong>移除多餘的項目，只留一個設為允許的 ATA。</li>
+      <li>結束 ATA（在 ATA 視窗按<strong>「結束 ATA」</strong>），再從「應用程式」重新打開。防火牆的變更可能要等 ATA 重新啟動後才會生效。</li>
+    </ol>
+    <p>如果 macOS 詢問是否允許 ATA「接受傳入的網路連線」，請按<strong>「允許」</strong>。不需要關閉防火牆。</p></details>
   <details><summary>支援哪些 Mac？</summary>
     <p>macOS 14 以上、有藍牙的 Mac。App 是通用版本，Apple 晶片與 Intel 的 Mac 都原生支援。</p></details>
   <details><summary>遇到其他問題？</summary>

@@ -55,6 +55,15 @@ struct MainView: View {
                 if case .unauthorized = model.bluetooth {
                     Button("Open Bluetooth Privacy Settings…") { model.openBluetoothSettings() }
                 }
+                if model.localNetworkBlocked {
+                    HStack(alignment: .firstTextBaseline) {
+                        Label("Local network connection was blocked — check the macOS firewall", systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer()
+                        Button("Learn More…") { model.openFirewallHelp() }
+                    }
+                }
             } footer: {
                 Text("ATA keeps running in the background after you close this window. To open it again, open ATA from the Applications folder or use the ATA icon in the menu bar.")
                     .font(.footnote).foregroundStyle(.secondary)

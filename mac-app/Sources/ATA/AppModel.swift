@@ -61,6 +61,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var saveDir: URL
     @Published private(set) var launchAtLogin = false
     @Published private(set) var pairing: PairingUIState?
+    /// The last transfer offered the local network, nothing connected, and the macOS firewall is on: show a hint.
+    /// Cleared by the next transfer that arrives over the local network.
+    @Published private(set) var localNetworkBlocked = false
 
     private let options = LaunchOptions.parse()
     private let defaults = UserDefaults.standard
@@ -186,6 +189,11 @@ final class AppModel: ObservableObject {
         case .sessionEnded(let s):
             receiving = nil
             connectedPhone = nil
+            if s.via == "lan" { localNetworkBlocked = false }
+            else if s.lanUnreached && Firewall.isEnabled() {
+                Log.info("local network connection looked blocked (firewall is on); showing the firewall hint")
+                localNetworkBlocked = true
+            }
             if s.announcedFiles > 0 {
                 if let err = s.error { lastError = Self.localizedEngineError(err) }
                 else if s.failedFiles > 0 { lastError = String(localized: "\(s.failedFiles) file(s) failed verification") }
@@ -271,6 +279,14 @@ final class AppModel: ObservableObject {
     }
 
     func checkForUpdates() { NSWorkspace.shared.open(Self.releasesURL) }
+
+    /// FAQ entry explaining the firewall fix, in the UI language.
+    static var firewallHelpURL: URL {
+        let zh = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true
+        return URL(string: zh ? "https://magiclin99.github.io/ata/zh-tw/faq/#firewall" : "https://magiclin99.github.io/ata/faq/#firewall")!
+    }
+
+    func openFirewallHelp() { NSWorkspace.shared.open(Self.firewallHelpURL) }
 
     /// nil (the default) hides "Support ATA…". Opening it changes nothing in the app.
     let supportURL: URL? = SupportLink.url(in: .main)

@@ -70,7 +70,11 @@ macOS asks for these the first time they are needed:
   a button that opens the Bluetooth privacy settings. Releases are all signed with the same certificate, so updating
   ATA is expected not to ask again (see "Signing" below).
 - **Incoming network connections** (only if the macOS firewall is on) — click **Allow**, otherwise the phone cannot
-  send over Wi-Fi.
+  send over Wi-Fi and falls back to a much slower path. If a transfer had to fall back while the firewall is on, ATA
+  shows "Local network connection was blocked — check the macOS firewall" in its window and menu. It links to the
+  [FAQ entry](https://magiclin99.github.io/ata/faq/#firewall): allow ATA in System Settings → Network → Firewall →
+  Options, remove duplicate ATA entries left by older versions, then quit and reopen ATA. ATA never changes firewall
+  settings itself.
 - **Notifications** — asked after the first transfer; optional.
 - **Launch at Login** works best when ATA is in /Applications.
 

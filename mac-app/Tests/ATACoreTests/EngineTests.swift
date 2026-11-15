@@ -328,6 +328,7 @@ final class LANTransferTests: EngineTestCase {
         let s = try XCTUnwrap(events.sessionEnded())
         XCTAssertTrue(s.ok)
         XCTAssertEqual(s.via, "lan")
+        XCTAssertFalse(s.lanUnreached)
         XCTAssertEqual(s.saved.count, 5)
         XCTAssertEqual(dirContents(), ["a (1).jpg", "a.jpg", "b.mov", "empty.txt", "one.bin"])
         XCTAssertEqual(try Data(contentsOf: dir.appendingPathComponent("a.jpg")), fs[2].data)
@@ -480,8 +481,24 @@ final class RTCTransferTests: EngineTestCase {
         let s = try XCTUnwrap(events.sessionEnded(15))
         XCTAssertTrue(s.ok)
         XCTAssertEqual(s.via, "rtc")
+        XCTAssertTrue(s.lanUnreached, "LAN was offered and nothing connected: the app may suspect the firewall")
         XCTAssertEqual(dirContents(), ["x.bin", "y.bin", "z.txt"])
         XCTAssertEqual(try Data(contentsOf: dir.appendingPathComponent("x.bin")), fs[2].data)
+    }
+
+    func testLANReachedThenWebRTCIsNotFlagged() throws {
+        // The phone's TCP connection got through (it just didn't complete); falling back to WebRTC is then not a
+        // sign of a blocked LAN.
+        let (p, _, _) = try pairedPhone()
+        let fs = files([10_000])
+        let port = try accept(p, fs)
+        let sock = try p.connectLAN(addresses: ["127.0.0.1"], port: port)
+        sock.close()
+        XCTAssertEqual(try p.sendFilesRTC(fs).map(\.ok), [true])
+        try p.bye(ok: true, via: "rtc")
+        let s = try XCTUnwrap(events.sessionEnded(15))
+        XCTAssertEqual(s.via, "rtc")
+        XCTAssertFalse(s.lanUnreached)
     }
 
     func testWebRTCShaMismatch() throws {

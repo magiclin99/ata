@@ -89,6 +89,11 @@ struct MenuContent: View {
         if case .unauthorized = model.bluetooth {
             Button("Open Bluetooth Privacy Settings…") { model.openBluetoothSettings() }
         }
+        if model.localNetworkBlocked {
+            Button { model.openFirewallHelp() } label: {
+                Label("Local network connection was blocked — check the macOS firewall", systemImage: "exclamationmark.triangle")
+            }
+        }
 
         Divider()
 

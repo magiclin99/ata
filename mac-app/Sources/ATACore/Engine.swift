@@ -19,6 +19,10 @@ public struct SessionSummary {
     public let ok: Bool
     public let via: String?
     public let error: String?
+    /// The Mac offered LAN TCP (`accept` had a port and addresses), not a single inbound connection arrived, and the
+    /// files came over WebRTC instead. Typical cause: the macOS application firewall dropping the phone's connection.
+    /// (Also true if the phone simply wasn't on the same network, so the app pairs it with the firewall state.)
+    public var lanUnreached: Bool = false
 }
 
 public enum EngineEvent {
@@ -83,6 +87,8 @@ public final class ReceiverEngine {
         var fileCount = 0
         let claim = TransferClaim()
         var tcp: TCPFileReceiver?
+        /// The session's LAN listener, kept after `tcp` is cancelled so its `sawConnection` can still be read.
+        var lanListener: TCPFileReceiver?
         var rtc: RTCFileReceiver?
         var lastActivity = Date()
         var lastProgressEvent = Date.distantPast
@@ -427,6 +433,7 @@ public final class ReceiverEngine {
             s.tcp = tcp
             port = Int(tcp.port)
             lan = config.lanAddresses()
+            if !lan.isEmpty { s.lanListener = tcp }
         } catch {
             Log.err("TCP listener failed: \(error); phone will have to use WebRTC")
         }
@@ -514,8 +521,13 @@ public final class ReceiverEngine {
         let ok = error == nil && (s.finishedAt != nil || !s.accepted)
         let kind = s.accepted ? "" : " (no transfer)"
         Log.session("session with \"\(s.phoneName)\" ended\(kind): ok=\(ok) via=\(s.finishedVia ?? "none") saved=\(s.saved.count) failed=\(s.failedFiles)\(error.map { " error=\($0)" } ?? "")")
-        emit(.sessionEnded(SessionSummary(phoneName: s.phoneName, announcedFiles: s.fileCount, saved: s.saved, failedFiles: s.failedFiles, ok: ok,
-                                          via: s.finishedVia, error: error)))
+        var summary = SessionSummary(phoneName: s.phoneName, announcedFiles: s.fileCount, saved: s.saved, failedFiles: s.failedFiles, ok: ok,
+                                     via: s.finishedVia, error: error)
+        if s.finishedVia == "rtc", let l = s.lanListener, !l.sawConnection {
+            summary.lanUnreached = true
+            Log.session("LAN was offered but no TCP connection ever arrived; the files came over WebRTC (firewall?)")
+        }
+        emit(.sessionEnded(summary))
     }
 
     private func tick() {
