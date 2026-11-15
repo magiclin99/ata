@@ -8,9 +8,11 @@ import android.app.Service
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.IBinder
+import android.os.Process
 import android.os.SystemClock
 import android.text.format.Formatter
 import androidx.core.app.NotificationCompat
@@ -83,6 +85,7 @@ class TransferService : Service() {
     companion object {
         private const val ACTION_START = "io.github.magiclin99.ata.START"
         private const val ACTION_CANCEL = "io.github.magiclin99.ata.CANCEL"
+        private const val EXTRA_URIS = "uris"
         private const val EXTRA_MAC = "mac"
         private const val EXTRA_ADDRESS = "address"
         private const val EXTRA_FORCE_RTC = "forceRtc"
@@ -98,12 +101,19 @@ class TransferService : Service() {
         fun start(ctx: Context, uris: List<Uri>, macIdHex: String, address: String? = null, forceRtc: Boolean = false) {
             val macName = (ctx.applicationContext as AtaApp).pairings.macs.value.firstOrNull { it.idHex == macIdHex }?.name
             val i = Intent(ctx, TransferService::class.java).setAction(ACTION_START)
-                .putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+                .putParcelableArrayListExtra(EXTRA_URIS, ArrayList(uris))
                 .putExtra(EXTRA_MAC, macIdHex)
                 .putExtra(EXTRA_ADDRESS, address)
                 .putExtra(EXTRA_FORCE_RTC, forceRtc)
-            // Re-grant read access to the service for content:// URIs we were given by the sharing app.
-            val content = uris.filter { it.scheme == "content" }
+            // Re-grant read access to the service for content:// URIs we were given by the sharing app. Only URIs
+            // this app actually holds a grant for can be passed on: granting one we do not hold throws a
+            // SecurityException and would crash the share sheet. URIs left out here are still opened by the
+            // service (same UID); if they are unreadable the transfer fails with "file unreadable", not a crash.
+            val content = uris.filter {
+                it.scheme == "content" &&
+                    ctx.checkUriPermission(it, Process.myPid(), Process.myUid(), Intent.FLAG_GRANT_READ_URI_PERMISSION) ==
+                    PackageManager.PERMISSION_GRANTED
+            }
             if (content.isNotEmpty()) {
                 val clip = ClipData.newRawUri("", content[0])
                 content.drop(1).forEach { clip.addItem(ClipData.Item(it)) }
@@ -111,7 +121,14 @@ class TransferService : Service() {
                 i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             TransferHub.set(TransferState(Phase.PREPARING, macName = macName))
-            ContextCompat.startForegroundService(ctx, i)
+            try {
+                ContextCompat.startForegroundService(ctx, i)
+            } catch (e: SecurityException) {
+                Logcat.i("service: URI grant refused (${e.javaClass.simpleName}); starting without re-grant")
+                i.clipData = null
+                i.removeFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                ContextCompat.startForegroundService(ctx, i)
+            }
         }
 
         fun cancel(ctx: Context) {
@@ -148,7 +165,7 @@ class TransferService : Service() {
                     return START_NOT_STICKY
                 }
                 @Suppress("DEPRECATION")
-                val uris: List<Uri> = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM) ?: emptyList()
+                val uris: List<Uri> = intent.getParcelableArrayListExtra(EXTRA_URIS) ?: emptyList()
                 val mac = intent.getStringExtra(EXTRA_MAC)
                 val address = intent.getStringExtra(EXTRA_ADDRESS)
                 val forceRtc = intent.getBooleanExtra(EXTRA_FORCE_RTC, false)
