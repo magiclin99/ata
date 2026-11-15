@@ -44,7 +44,8 @@
     write to /Applications. On a normal admin account it doesn't ask.</p>
   <p>Files downloaded by <code>curl</code> aren't marked as "downloaded from the internet", so macOS doesn't show the warning described in option 2.
     Running the same line again later is also how you update.</p>
-  <p class="fine">To see what it would do without changing anything: <code>curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh -s -- --dry-run</code></p>
+  <p class="fine">To see what it would do without changing anything:</p>
+  <pre><code>curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh -s -- --dry-run</code></pre>
   <p class="fine">Prefer to read a script before running it? You should. Download it, look, then run it:</p>
   <pre><code>curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh -o ata-install.sh
 less ata-install.sh
@@ -84,8 +85,8 @@ sh ata-install.sh</code></pre>
   <ol class="howto">
     <li>Open ATA. Its window appears, and an ATA icon is added to the menu bar at the top of the screen. If you close the window, ATA keeps running in the menu bar. Open ATA again to bring the window back.</li>
     <li>Allow Bluetooth when macOS asks (see below).</li>
-    <li>In ATA on the Mac, choose <strong>Pair New Device…</strong>. A QR code appears. It's valid for 5 minutes.</li>
-    <li>On your Android phone, open ATA, tap <strong>Pair New Device…</strong>, and scan the code. The phone asks for camera access the first time you scan. If you'd rather not allow it, use <strong>Paste pairing link</strong> instead.</li>
+    <li>In the ATA window (or the menu bar menu) on the Mac, choose <strong>Pair New Device…</strong>. A QR code appears. It's valid for 5 minutes.</li>
+    <li>On your Android phone, open ATA, tap <strong>Pair with a Mac</strong>, and scan the code. The phone asks for camera access the first time you scan. If you'd rather not allow it, use <strong>Paste pairing link</strong> instead.</li>
     <li>Optional: turn on <strong>Launch at Login</strong> in ATA so it's always ready.</li>
   </ol>
 </section>

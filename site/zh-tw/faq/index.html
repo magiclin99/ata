@@ -45,13 +45,13 @@
   <details><summary>可以傳什麼檔案？有大小限制嗎？</summary>
     <p>任何能從 app 分享出來的檔案都可以，一次也可以傳多個。ATA 沒有設定大小上限；如果 Mac 的存檔資料夾空間不足，Mac 會拒絕這次傳輸。</p></details>
   <details><summary>檔案存在哪裡？</summary>
-    <p>預設存在 Mac 的「下載項目」，可以在 Mac 的 ATA 中（<strong>Save to "…"…</strong>）改成其他資料夾。遇到同名檔案會自動加上編號，不會覆蓋原檔。</p></details>
+    <p>預設存在 Mac 的「下載項目」，可以在 Mac 的 ATA 裡用「<strong>儲存到「…」…</strong>」改成其他資料夾。遇到同名檔案會自動加上編號，不會覆蓋原檔。</p></details>
   <details><summary>傳到一半中斷會怎樣？</summary>
     <p>已經傳完的檔案會留在 Mac 上；只收到一部分的檔案會被刪除，重新傳送即可。每個檔案存檔前都會比對校驗碼。目前不支援續傳。</p></details>
   <details><summary>可以配對多台 Mac 或多支手機嗎？</summary>
     <p>可以。手機會列出所有已配對的 Mac 並標示哪些在附近，每次由你點選。一台 Mac 可以和多支手機配對，但同一時間只接收一支手機的傳輸。</p></details>
   <details><summary>手機上的 ATA 要一直開著嗎？</summary>
-    <p>不用。開始傳送後會在背景繼續，通知列會顯示進度並可以取消。Mac 上的 ATA 則必須在執行中（常駐在選單列）。</p></details>
+    <p>不用。開始傳送後會在背景繼續，通知列會顯示進度並可以取消。Mac 上的 ATA 則要保持開啟（關掉視窗後它會留在選單列）。</p></details>
 </section>
 
 <section aria-labelledby="privacy">
@@ -61,9 +61,9 @@
   <details><summary>那「STUN 伺服器」是什麼？</summary>
     <p>跨網路建立 P2P 直連時，每台裝置要先問公開的 STUN 伺服器「我的公開 IP 位址是什麼」。ATA 使用 Google 和 Cloudflare 的公開 STUN 伺服器。它們看得到裝置的 IP 位址（任何網際網路連線都無法避免），但看不到你的檔案、檔名或其他任何內容。同一個 Wi-Fi 傳輸時不會用到它們。</p></details>
   <details><summary>怎麼加密？</summary>
-    <p>用 QR code 配對時，會產生一把只有你的手機和 Mac 共有的隨機 256 位元金鑰。每次連線都用它驗證身分，連線資訊和檔案都經過加密（區網使用 AES-256-GCM；P2P 直連使用 DTLS，其指紋透過已加密的藍牙通道交換）。完整協定公開在<a href="https://github.com/magiclin99/ata">公開 repo</a>。</p></details>
+    <p>用 QR code 配對時，會產生一把只有你的手機和 Mac 共有的隨機 256 位元金鑰。每次連線都用它驗證身分，連線資訊和檔案都經過加密（區網使用 AES-256-GCM；P2P 直連使用 DTLS，其指紋透過已加密的藍牙通道交換）。完整協定公開在 <a href="https://github.com/magiclin99/ata">GitHub repo</a>。</p></details>
   <details><summary>ATA 會收集資料嗎？</summary>
-    <p>不會。沒有帳號、沒有伺服器，也沒有廣告、分析或當機回報 SDK，兩個 app 都不會傳任何資料給開發者或第三方。唯一的對外接觸見上方 STUN 伺服器那一題：需要建立 P2P 直連時，兩台公開的 STUN 伺服器會看到你的 IP 位址。詳見<a href="../support/">說明</a><a href="../../privacy/#zh-tw">隱私權政策</a>。</p></details>
+    <p>不會。沒有帳號、沒有伺服器，也沒有廣告、分析或當機回報 SDK，兩個 app 都不會傳任何資料給開發者或第三方。唯一的對外接觸見上方 STUN 伺服器那一題：需要建立 P2P 直連時，兩台公開的 STUN 伺服器會看到你的 IP 位址。詳見<a href="../../privacy/#zh-tw">隱私權政策</a>。</p></details>
   <details><summary>為什麼 Android 要「附近的裝置」權限（舊版 Android 要位置權限）？</summary>
     <p>ATA 需要藍牙才能找到你的 Mac。Android 12 以上是「附近的裝置」權限，ATA 已宣告不用於判斷位置；Android 9 到 11 的系統規定任何藍牙掃描都需要位置權限。ATA 不會讀取或使用你的位置。</p></details>
   <details><summary>為什麼 ATA 要相機權限？</summary>
@@ -83,7 +83,7 @@
 <section aria-labelledby="compare">
   <h2 id="compare">跟其他方法比較</h2>
   <details><summary>這跟 AirDrop 一樣嗎？</summary>
-    <p>不一樣。AirDrop 是 Apple 在 Apple 裝置之間的功能，ATA 不使用、也不連接 AirDrop。ATA 是另外一組 app，從 Android 手機傳到 Mac。</p></details>
+    <p>不一樣。AirDrop 是 Apple 在 Apple 裝置之間的功能，ATA 不使用、也不連接 AirDrop。ATA 是獨立的一組 app，專門把檔案從 Android 手機傳到 Mac。</p></details>
   <details><summary>為什麼不直接用雲端硬碟或通訊軟體？</summary>
     <p>那些方式是先把檔案上傳到某家公司的伺服器再下載回來，伺服器上通常會留一份副本。ATA 在你的兩台裝置之間直接傳送，除了收件的 Mac 之外不會留下任何副本。代價是兩台裝置必須在附近。</p></details>
 </section>
@@ -101,7 +101,7 @@
     </ol>
     <p>如果 macOS 詢問是否允許 ATA「接受傳入的網路連線」，請按<strong>「允許」</strong>。不需要關閉防火牆。</p></details>
   <details><summary>支援哪些 Mac？</summary>
-    <p>macOS 14 以上、有藍牙的 Mac。App 是通用版本，Apple 晶片與 Intel 的 Mac 都原生支援。</p></details>
+    <p>macOS 14 以上、有藍牙的 Mac。App 是通用版本，Apple 晶片和 Intel 處理器的 Mac 都能原生執行。</p></details>
   <details><summary>遇到其他問題？</summary>
     <p>寄信到 <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>；Mac 版的問題也可以到 <a href="https://github.com/magiclin99/ata/issues">GitHub</a> 開 issue。</p></details>
 </section>
@@ -109,7 +109,7 @@
 
 <footer class="site"><div class="wrap">
   <nav aria-label="頁尾">
-    <a href="../">首頁</a><a href="../install/">Mac 安裝</a><a href="../../privacy/#zh-tw">隱私權政策</a>
+    <a href="../">首頁</a><a href="../install/">Mac 安裝</a><a href="../support/">說明</a><a href="../../privacy/#zh-tw">隱私權政策</a>
     <a href="https://github.com/magiclin99/ata">原始碼</a>
     <a href="mailto:magiclin99@gmail.com">聯絡：magiclin99@gmail.com</a>
   </nav>

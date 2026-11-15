@@ -42,7 +42,7 @@
 <section>
   <h2>2. Data that stays on your devices</h2>
   <ul class="tight">
-    <li><strong>Pairing information.</strong> When you pair, each device stores a random device ID, the other device's name, and a shared 256-bit pairing key. On Android, the key is encrypted with a key held in the Android Keystore, and app backups are turned off. On the Mac, it's stored in a file in ATA's Application Support folder that only your macOS user account can read. This information never leaves your two devices.</li>
+    <li><strong>Pairing information.</strong> When you pair, each device stores a random device ID, the other device's name, and a shared 256-bit pairing key. On Android, the key is encrypted with a key held in the Android Keystore, and app backups are turned off. On the Mac, it's stored in a file in ATA's Application Support folder that only your macOS user account can read, and that folder is excluded from Time Machine backups. This information never leaves your two devices.</li>
     <li><strong>Device names.</strong> During pairing and each transfer, your phone sends its device name to your Mac, and the Mac sends its computer name to your phone, so each side can show who it's talking to.</li>
     <li><strong>Recent transfers.</strong> The Android app keeps a local list of recent transfers (file names, sizes, times, and results) so you can see what you sent. The Mac app remembers where its last 8 received files were saved, for its Recent Files menu, and you can clear that list. Uninstalling the Android app deletes its list.</li>
     <li><strong>Your files.</strong> Files you choose to share are read on the phone and written to the folder you chose on your Mac (Downloads by default). ATA keeps no other copy.</li>
@@ -126,9 +126,9 @@
 <section>
   <h2>2. 只存在你裝置上的資料</h2>
   <ul class="tight">
-    <li><strong>配對資訊。</strong>配對時，每台裝置會儲存一個隨機的裝置 ID、對方的裝置名稱，以及一把共用的 256 位元配對金鑰。Android 上這把金鑰以 Android Keystore 中的金鑰加密後儲存，並關閉 app 備份；Mac 上存放在 ATA 的「Application Support」資料夾中的檔案，以檔案權限保護，只有你的 macOS 使用者帳號能讀取。這些資訊不會離開你的兩台裝置。</li>
+    <li><strong>配對資訊。</strong>配對時，每台裝置會儲存一個隨機的裝置 ID、對方的裝置名稱，以及一把共用的 256 位元配對金鑰。Android 上這把金鑰以 Android Keystore 中的金鑰加密後儲存，並關閉 app 備份；Mac 上則存成 ATA「Application Support」資料夾裡的一個檔案，以檔案權限保護，只有你的 macOS 使用者帳號能讀取，而且這個資料夾不會被 Time Machine 備份。這些資訊不會離開你的兩台裝置。</li>
     <li><strong>裝置名稱。</strong>配對與每次傳輸時，手機會把手機名稱傳給你的 Mac，Mac 也會把電腦名稱傳給手機，讓雙方知道在跟誰連線。</li>
-    <li><strong>最近的傳輸。</strong>Android app 會在本機保留最近的傳輸紀錄（檔名、大小、時間、結果），方便你查看；移除 app 時會一併刪除。Mac app 會記住最近收到的 8 個檔案存放位置，顯示在「Recent Files」選單中，可以隨時清除。</li>
+    <li><strong>最近的傳輸。</strong>Android app 會在本機保留最近的傳輸紀錄（檔名、大小、時間、結果），方便你查看；移除 app 時會一併刪除。Mac app 會記住最近收到的 8 個檔案存放位置，顯示在「最近的檔案」選單中，可以隨時清除。</li>
     <li><strong>你的檔案。</strong>你選擇分享的檔案在手機上讀取，寫入你在 Mac 上指定的資料夾（預設「下載項目」）。ATA 不會另外留存副本。</li>
   </ul>
 </section>
@@ -153,7 +153,7 @@
 
 <section>
   <h2>5. Mac app 的網路使用</h2>
-  <p>除了上述的接收傳輸之外，Mac app 不會發出任何網路請求。「Check for Updates…」會在你的瀏覽器開啟 GitHub Releases 頁面。一行安裝指令與版本下載來自 GitHub，本網站也架設在 GitHub Pages 上，因此 GitHub 可能依 <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub 隱私權聲明</a>記錄你的 IP 位址。本網站不使用 cookie、分析工具或第三方指令碼。</p>
+  <p>除了上述的接收傳輸之外，Mac app 不會發出任何網路請求。「檢查更新…」會在你的瀏覽器開啟 GitHub Releases 頁面。一行安裝指令與版本下載來自 GitHub，本網站也架設在 GitHub Pages 上，因此 GitHub 可能依 <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub 隱私權聲明</a>記錄你的 IP 位址。本網站不使用 cookie、分析工具或第三方指令碼。</p>
 </section>
 
 <section>

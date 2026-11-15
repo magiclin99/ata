@@ -9,6 +9,7 @@ links are relative except in `404.html`, which uses `/ata/...` because GitHub se
 | `index.html` / `zh-tw/index.html` | Landing page |
 | `install/` / `zh-tw/install/` | Mac install, Open Anyway steps, and permissions |
 | `faq/` / `zh-tw/faq/` | FAQ (the only place, with the forum posts, that compares ATA with other tools) |
+| `beta/` / `zh-tw/beta/` | Google Play closed-test page: who can join, how to ask (email with the Google account address), what happens next (opt-in link, install, keep it for 14 days), feedback. Linked from the "coming soon" note on both landing pages. Remove or redirect after the Play launch. |
 | `support/` / `zh-tw/support/` | Help and feedback: common fixes, GitHub Issues, email, and what to include in a report. The Android app's "Help and feedback" link opens `https://magiclin99.github.io/ata/support`. No donation content here. |
 | `privacy/` | Privacy policy, English (`#en`) and Traditional Chinese (`#zh-tw`) on one page. This is the URL for Play Console: `https://magiclin99.github.io/ata/privacy/` |
 | `404.html` | Not-found page |
