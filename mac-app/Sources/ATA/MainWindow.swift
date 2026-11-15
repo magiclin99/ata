@@ -45,6 +45,30 @@ struct MainView: View {
     @State private var confirmRemove: PairedDevice?
 
     var body: some View {
+        if model.needsMoveToApplications { moveToApplications } else { main }
+    }
+
+    /// Opened from the disk image or a download: one plain sentence, a button that shows ATA in Finder, Quit.
+    private var moveToApplications: some View {
+        VStack(spacing: 14) {
+            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 72, height: 72)
+            Text("Move ATA to Applications first").font(.title2.weight(.semibold))
+            Text("Drag ATA into your Applications folder, then open it from there.")
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Button("Quit ATA") { NSApp.terminate(nil) }
+                Button("Show ATA in Finder") { model.revealAppForMoving() }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+            }
+            .controlSize(.large)
+        }
+        .padding(32)
+        .frame(minWidth: 440, minHeight: 300)
+    }
+
+    private var main: some View {
         Form {
             Section {
                 HStack(spacing: 12) {

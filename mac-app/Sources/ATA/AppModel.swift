@@ -99,6 +99,10 @@ final class AppModel: ObservableObject {
     @Published private(set) var firewallQuestionComing = false
     /// macOS 15+: the "find devices on your local network" question is about to be asked during setup.
     @Published private(set) var localNetworkQuestionComing = false
+    /// Opened straight from the disk image or from a quarantined download (macOS runs it from a temporary,
+    /// read-only place): ATA doesn't start receiving, it asks to be moved to Applications first.
+    @Published private(set) var needsMoveToApplications = false
+    private(set) var originalAppURL: URL?
 
     private let options = LaunchOptions.parse()
     private let defaults = UserDefaults.standard
@@ -132,6 +136,13 @@ final class AppModel: ObservableObject {
         started = true
         if let lf = options.logFile { Log.setFile(lf) }
         let info = Bundle.main.infoDictionary
+        if let problem = InstallLocation.problem() {
+            Log.info("running from \(problem) (\(Bundle.main.bundlePath)); asking to move ATA to Applications first")
+            needsMoveToApplications = true
+            originalAppURL = InstallLocation.originalURL()
+            DispatchQueue.main.async { MainWindowController.shared.show() }
+            return
+        }
         Log.info("ATA \(info?["CFBundleShortVersionString"] as? String ?? "?") (\(info?["CFBundleVersion"] as? String ?? "?")) starting; pid \(getpid())")
 
         // One time: bring over pairings an earlier build kept in the Keychain (never prompts).
@@ -311,6 +322,7 @@ final class AppModel: ObservableObject {
         case .other: return String(localized: "Bluetooth isn't available right now. Try again in a moment.")
         case .on: break
         }
+        if needsMoveToApplications { return String(localized: "Move ATA to Applications first") }
         if let e = lastError { return e }
         if devices.isEmpty { return String(localized: "No phone paired yet") }
         return String(localized: "Ready. Send from your phone any time.")
@@ -379,18 +391,25 @@ final class AppModel: ObservableObject {
 
     func openGetAndroidApp() { NSWorkspace.shared.open(Links.getAndroidApp) }
 
+    /// Shows the app bundle the person actually downloaded (not the temporary copy macOS runs), so they can drag it
+    /// to Applications.
+    func revealAppForMoving() {
+        NSWorkspace.shared.activateFileViewerSelecting([originalAppURL ?? Bundle.main.bundleURL])
+    }
+
     func beginPairing() {
+        guard let engine else { return }
         let (uri, expires) = engine.startPairing()
         pairing = PairingUIState(uri: uri, expiresAt: expires, phase: .waiting)
     }
 
     func endPairing() {
-        engine.cancelPairing()
+        engine?.cancelPairing()
         pairing = nil
     }
 
     func remove(_ d: PairedDevice) {
-        engine.removeDevice(phoneId: d.phoneId)
+        engine?.removeDevice(phoneId: d.phoneId)
     }
 
     func reveal(_ url: URL) {
@@ -420,7 +439,7 @@ final class AppModel: ObservableObject {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         saveDir = url
         defaults.set(url.path, forKey: "saveDir")
-        engine.setSaveDir(url)
+        engine?.setSaveDir(url)
     }
 
     func openSaveFolder() { NSWorkspace.shared.open(saveDir) }

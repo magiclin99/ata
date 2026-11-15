@@ -214,6 +214,7 @@ final class PairingWindowController: NSObject, NSWindowDelegate {
 
     func show() {
         let model = AppModel.shared
+        if model.needsMoveToApplications { MainWindowController.shared.show(); return }
         if model.pairing == nil || model.pairing?.phase != .waiting { model.beginPairing() }
         if window == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 640),

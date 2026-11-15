@@ -42,6 +42,9 @@
 
 /* Main window */
 "Welcome to ATA" = "歡迎使用 ATA";
+"Move ATA to Applications first" = "請先把 ATA 移到「應用程式」";
+"Drag ATA into your Applications folder, then open it from there." = "把 ATA 拖到「應用程式」檔案夾，再從那裡打開。";
+"Show ATA in Finder" = "在 Finder 中顯示 ATA";
 "ATA lets you send photos and files from your Android phone to this Mac." = "ATA 讓你把 Android 手機上的照片和檔案傳到這台 Mac。";
 "ATA keeps running in the background, even after you close this window. To see this window again, open ATA again, or click its icon in the Dock." = "關掉這個視窗後，ATA 會繼續在背景執行。想再看到這個視窗，再打開一次 ATA，或按 Dock 上的 ATA 圖像就可以。";
 "Your Mac will ask whether ATA can use Bluetooth. Click “Allow” so your phone can find this Mac. Without it, ATA can't receive files." = "Mac 會詢問 ATA 能不能使用藍牙。請按「允許」，手機才能找到這台 Mac；不允許的話，ATA 就收不到檔案。";
