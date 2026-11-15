@@ -85,6 +85,21 @@ which connects to it directly and falls back to scanning for that Mac if the add
 - MACs are compared with `MessageDigest.isEqual` (constant time).
 - Logs never contain K, session keys, nonces, HMACs or the pairing URI (the loopback test asserts K never reaches the log).
 
+## User-facing wording
+
+Every string a user sees follows the shared glossary (internal `TERMS.md`): plain words for a non-technical reader,
+no connection-path names (the path stays in logs only), no codes or raw system text, and each error says what
+happened plus one thing to try (`Texts.kt`, `res/values*/strings.xml`). Specifics:
+
+- A finished transfer reads 「已傳送到你的 Mac「X」」 / "Sent to your Mac "X"". When part of it went over mobile data
+  it adds 「（用了約 N 行動數據）」. Measurement: while the WebRTC path is active, `AndroidRtcPeer` marks the selected
+  ICE pair as mobile data when the local candidate's adapter type is cellular (or, if unknown, when its local
+  address belongs to a cellular `Network`); `TransferService` adds each progress delta to the count while that flag
+  is set. The LAN path is bound to Wi-Fi/Ethernet and never counts. It is payload bytes, so the UI says "about".
+- Pairing is QR-code only for users. The "paste pairing link" dialog exists only in debug builds (the Mac has no
+  way to show the link); `debugPairUri` keeps working.
+- Each system permission prompt is preceded by one plain line; a refusal leads to one "Open Settings" button.
+
 ## Free app; reserved donation entry
 
 - ATA is completely free: no in-app purchases, no paywall, no transfer limit, no ads, no analytics. The app does not

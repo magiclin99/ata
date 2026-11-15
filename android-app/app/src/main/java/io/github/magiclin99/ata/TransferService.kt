@@ -56,6 +56,8 @@ data class TransferState(
     val totalSent: Long = 0,
     val error: ErrorCode? = null,
     val errorDetail: String? = null,
+    /** File bytes sent while the active connection ran over mobile data (0 on Wi-Fi). */
+    val cellularBytes: Long = 0,
 ) {
     val totalSize: Long get() = files.sumOf { it.size }
     val active: Boolean get() = !phase.terminal
@@ -195,7 +197,15 @@ class TransferService : Service() {
         false
     }
 
+    // Mobile-data accounting: progress deltas are added to cellularBytes while the path is WebRTC and the selected
+    // ICE pair's local side is a cellular interface. The LAN path is bound to the Wi-Fi/Ethernet network, so it
+    // never counts. Payload bytes only; framing and encryption add a few percent, hence "about" in the UI.
+    @Volatile private var rtcPeer: AndroidRtcPeer? = null
+    private var lastTotalSent = 0L
+    private var cellularBytes = 0L
+
     private suspend fun runTransfer(uris: List<Uri>, macIdHex: String?, address: String?, forceRtc: Boolean) {
+        rtcPeer = null; lastTotalSent = 0L; cellularBytes = 0L
         val t0 = SystemClock.elapsedRealtime()
         var sendStart = 0L
         var outcome: TransferOutcome? = null
@@ -253,7 +263,7 @@ class TransferService : Service() {
                 TransferHub.update { it.copy(macName = macName) }
             }
 
-            val engine = TransferEngine(log, androidLanDialer(this, log), { AndroidRtcPeer(this, log) }, forceRtc)
+            val engine = TransferEngine(log, androidLanDialer(this, log), { AndroidRtcPeer(this, log).also { rtcPeer = it } }, forceRtc)
             sendStart = SystemClock.elapsedRealtime()
             outcome = engine.run(session, sources, listener)
             failure = outcome.error
@@ -285,8 +295,11 @@ class TransferService : Service() {
         }
 
         override fun onProgress(fileIndex: Int, fileSent: Long, totalSent: Long) {
+            val delta = (totalSent - lastTotalSent).coerceAtLeast(0)
+            lastTotalSent = totalSent
+            if (TransferHub.state.value?.path == Path.RTC && rtcPeer?.onCellular == true) cellularBytes += delta
             TransferHub.update { s ->
-                s.copy(totalSent = totalSent, files = s.files.mapIndexed { i, f ->
+                s.copy(totalSent = totalSent, cellularBytes = cellularBytes, files = s.files.mapIndexed { i, f ->
                     if (i == fileIndex) f.copy(sent = fileSent, status = FileStatus.SENDING) else f
                 })
             }
@@ -310,6 +323,7 @@ class TransferService : Service() {
         val bytesOk = outcome?.bytesOk ?: 0L
         // Machine-readable result line for adb-driven tests (SPEC §9). ms covers the whole job, scan included.
         log.i("RESULT ok=$ok via=${via?.wire ?: "none"} files=$filesOk bytes=$bytesOk ms=${now - t0}")
+        if (cellularBytes > 0) log.i("transfer: $cellularBytes B over mobile data")
         if (sendStart > 0) log.i("transfer: ${now - sendStart} ms after authentication${failure?.let { "; error=${it.code} ${it.detail}" } ?: ""}")
         else if (failure != null) log.i("transfer: failed before sending: ${failure.code} ${failure.detail}")
 
@@ -321,6 +335,7 @@ class TransferService : Service() {
                     else -> Phase.FAILED
                 },
                 path = via ?: s.path,
+                cellularBytes = cellularBytes,
                 error = if (ok) null else failure?.code,
                 errorDetail = failure?.detail,
                 files = s.files.mapIndexed { i, f ->
@@ -339,7 +354,7 @@ class TransferService : Service() {
             (application as AtaApp).history.add(
                 HistoryEntry(
                     System.currentTimeMillis(), macName ?: "", s.files.size, s.files.first().name,
-                    if (ok) s.totalSize else bytesOk, ok, via?.wire, failure?.code?.name,
+                    if (ok) s.totalSize else bytesOk, ok, via?.wire, failure?.code?.name, cellularBytes,
                 )
             )
         }
@@ -390,7 +405,9 @@ class TransferService : Service() {
     }
 
     private fun resultNotification(s: TransferState): Notification {
-        val text = if (s.phase == Phase.DONE) pathLabel(this, s.path) else errorText(this, s.error, s.errorDetail, s.macName)
+        val text = if (s.phase == Phase.DONE) {
+            if (s.cellularBytes > 0) getString(R.string.notif_cellular, mobileDataText(this, s.cellularBytes)) else null
+        } else errorText(this, s.error, s.errorDetail, s.macName)
         return NotificationCompat.Builder(this, CHANNEL_RESULT)
             .setSmallIcon(R.drawable.ic_stat_ata)
             .setAutoCancel(true)

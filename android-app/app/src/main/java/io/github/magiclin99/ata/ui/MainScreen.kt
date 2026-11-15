@@ -74,7 +74,9 @@ import io.github.magiclin99.ata.PairedMac
 import io.github.magiclin99.ata.R
 import io.github.magiclin99.ata.app
 import io.github.magiclin99.ata.errorText
-import io.github.magiclin99.ata.pathLabel
+import io.github.magiclin99.ata.SITE_SHORT
+import io.github.magiclin99.ata.mobileDataText
+import io.github.magiclin99.ata.shortErrorText
 import com.ata.core.ErrorCode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,19 +110,35 @@ fun MainScreen(gate: BleGate) {
         ) {
             item { SectionTitle(stringResource(R.string.paired_macs)) }
             if (macs.isEmpty()) {
-                item { Hint(stringResource(R.string.no_paired_macs)) }
+                // First run: two plain steps and one obvious button. The site address is plain text the user can
+                // type on the Mac, or send to themselves.
+                item { Hint(stringResource(R.string.empty_install, SITE_SHORT)) }
+                item {
+                    TextButton(onClick = {
+                        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "https://$SITE_SHORT/")
+                        runCatching { ctx.startActivity(Intent.createChooser(send, null)) }
+                    }) { Text(stringResource(R.string.send_link_to_self)) }
+                }
+                item { Hint(stringResource(R.string.empty_pair)) }
             } else {
                 items(macs, key = { it.idHex }) { mac -> MacRow(mac) { removing = mac } }
             }
             item {
                 Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = pairing.scanQr) {
-                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.pair_button))
+                    if (macs.isEmpty()) {
+                        Button(onClick = pairing.scanQr, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+                            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.pair_button))
+                        }
+                    } else {
+                        TextButton(onClick = pairing.scanQr) { Text(stringResource(R.string.pair_another)) }
                     }
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = pairing.pasteLink) { Text(stringResource(R.string.paste_link)) }
+                    // The Mac cannot show a pairing link, so pasting one is a debug-build tool only.
+                    if (BuildConfig.DEBUG) {
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = pairing.pasteLink) { Text(stringResource(R.string.paste_link)) }
+                    }
                 }
             }
             item { Spacer(Modifier.height(16.dp)); SectionTitle(stringResource(R.string.recent_transfers)) }
@@ -184,8 +202,11 @@ private fun MacRow(mac: PairedMac, onRemove: () -> Unit) {
 private fun HistoryRow(e: HistoryEntry) {
     val ctx = LocalContext.current
     val what = if (e.fileCount == 1) e.firstName else pluralStringResource(R.plurals.files_count, e.fileCount, e.fileCount)
-    val status = if (e.ok) stringResource(R.string.history_ok, pathLabel(ctx, e.via))
-    else stringResource(R.string.history_failed, shortError(ctx, e))
+    val status = when {
+        !e.ok -> stringResource(R.string.history_failed, shortErrorText(ctx, e.error?.let { runCatching { ErrorCode.valueOf(it) }.getOrNull() }))
+        e.cellularBytes > 0 -> stringResource(R.string.history_ok_cellular, mobileDataText(ctx, e.cellularBytes))
+        else -> stringResource(R.string.history_ok)
+    }
     ListItem(
         leadingContent = {
             Icon(
@@ -202,12 +223,6 @@ private fun HistoryRow(e: HistoryEntry) {
             )
         },
     )
-}
-
-private fun shortError(ctx: Context, e: HistoryEntry): String {
-    val code = e.error?.let { runCatching { ErrorCode.valueOf(it) }.getOrNull() }
-    val via = e.via?.let { pathLabel(ctx, it) }
-    return listOfNotNull(via, errorText(ctx, code).substringBefore('。').substringBefore(". ")).joinToString(" · ")
 }
 
 @Composable

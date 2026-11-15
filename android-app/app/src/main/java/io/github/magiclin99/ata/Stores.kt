@@ -131,6 +131,8 @@ data class HistoryEntry(
     val via: String?,
     /** ErrorCode name, or null on success. */
     val error: String?,
+    /** Bytes that went over mobile data (0 on Wi-Fi). */
+    val cellularBytes: Long = 0,
 )
 
 /** The last [MAX] transfers, newest first. */
@@ -146,6 +148,7 @@ class HistoryStore(ctx: Context) {
             HistoryEntry(
                 o.getLong("time"), o.getString("mac"), o.getInt("count"), o.getString("first"), o.getLong("bytes"),
                 o.getBoolean("ok"), o.optString("via").ifEmpty { null }, o.optString("error").ifEmpty { null },
+                o.optLong("cell", 0L),
             )
         }
     }.getOrDefault(emptyList())
@@ -156,7 +159,7 @@ class HistoryStore(ctx: Context) {
         val a = JSONArray()
         for (x in list) a.put(
             JSONObject().put("time", x.time).put("mac", x.macName).put("count", x.fileCount).put("first", x.firstName)
-                .put("bytes", x.bytes).put("ok", x.ok).put("via", x.via ?: "").put("error", x.error ?: "")
+                .put("bytes", x.bytes).put("ok", x.ok).put("via", x.via ?: "").put("error", x.error ?: "").put("cell", x.cellularBytes)
         )
         prefs.edit { putString("items", a.toString()) }
         _items.value = list

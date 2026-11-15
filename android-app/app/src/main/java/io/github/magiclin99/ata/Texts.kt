@@ -1,27 +1,31 @@
 package io.github.magiclin99.ata
 
 import android.content.Context
+import android.text.format.Formatter
 import com.ata.core.ErrorCode
-import com.ata.core.Path
 
-fun pathLabel(ctx: Context, path: Path?): String = when (path) {
-    Path.LAN -> ctx.getString(R.string.via_lan)
-    Path.RTC -> ctx.getString(R.string.via_rtc)
-    null -> ""
-}
+/** The project site's short address, shown as text the user can type on the Mac (no scheme, easy to read aloud). */
+const val SITE_SHORT = "magiclin99.github.io/ata"
 
-fun pathLabel(ctx: Context, wire: String?): String = pathLabel(ctx, Path.entries.firstOrNull { it.wire == wire })
-
-/** Human-readable, specific failure text. [detail] is only shown for `reject` (the Mac's reason). */
+/**
+ * Plain-language failure text (internal TERMS.md): what happened, then one thing to try. Never shows codes or raw
+ * system text; [detail] is only used to pick the right sentence for a Mac `reject` reason.
+ */
 fun errorText(ctx: Context, code: ErrorCode?, detail: String? = null, macName: String? = null): String = when (code) {
     ErrorCode.MAC_NOT_FOUND -> if (macName.isNullOrBlank()) ctx.getString(R.string.err_mac_not_found) else ctx.getString(R.string.err_mac_not_found_named, macName)
     ErrorCode.NOT_PAIRED -> ctx.getString(R.string.err_not_paired)
     ErrorCode.PAIRING_REMOVED -> ctx.getString(R.string.err_pairing_removed)
     ErrorCode.PAIRING_EXPIRED -> ctx.getString(R.string.err_pairing_expired)
     ErrorCode.MAC_BUSY -> ctx.getString(R.string.err_mac_busy)
-    ErrorCode.BAD_VERSION -> ctx.getString(R.string.err_bad_version)
+    ErrorCode.BAD_VERSION -> ctx.getString(R.string.err_bad_version, SITE_SHORT)
     ErrorCode.MAC_AUTH_FAILED -> ctx.getString(R.string.err_mac_auth_failed)
-    ErrorCode.REJECTED -> ctx.getString(R.string.err_rejected, detail.orEmpty())
+    ErrorCode.REJECTED -> ctx.getString(
+        when {
+            detail?.contains("no_space") == true -> R.string.err_rejected_space
+            detail?.contains("save_folder") == true -> R.string.err_rejected_folder
+            else -> R.string.err_rejected
+        }
+    )
     ErrorCode.NO_PATH -> ctx.getString(R.string.err_no_path)
     ErrorCode.INTERRUPTED -> ctx.getString(R.string.err_interrupted)
     ErrorCode.FILE_FAILED -> ctx.getString(R.string.err_file_failed)
@@ -34,6 +38,21 @@ fun errorText(ctx: Context, code: ErrorCode?, detail: String? = null, macName: S
     ErrorCode.PROTOCOL, null -> ctx.getString(R.string.err_protocol)
 }
 
+/** "What happened" part of [errorText]: its first sentence, for the one-line history row. */
+fun shortErrorText(ctx: Context, code: ErrorCode?): String {
+    val full = errorText(ctx, code)
+    val zh = full.indexOf('。')
+    if (zh >= 0) return full.substring(0, zh)
+    val en = full.indexOf(". ")
+    return if (en >= 0) full.substring(0, en) else full.trimEnd('.')
+}
+
+/**
+ * Mobile data used, rounded for a sentence like "used about 2.4 MB of mobile data". Anything above zero shows at
+ * least "1 kB" so a tiny transfer still reads honestly instead of "0 B".
+ */
+fun mobileDataText(ctx: Context, bytes: Long): String = Formatter.formatShortFileSize(ctx, bytes.coerceAtLeast(1000))
+
 fun phaseText(ctx: Context, s: TransferState): String {
     val mac = s.macName.orEmpty()
     return when (s.phase) {
@@ -43,8 +62,9 @@ fun phaseText(ctx: Context, s: TransferState): String {
         Phase.WAITING -> ctx.getString(R.string.phase_waiting, mac)
         Phase.LAN -> ctx.getString(R.string.phase_lan)
         Phase.RTC -> ctx.getString(R.string.phase_rtc)
-        Phase.SENDING -> ctx.getString(R.string.phase_sending, mac, pathLabel(ctx, s.path))
-        Phase.DONE -> ctx.getString(R.string.phase_done, mac, pathLabel(ctx, s.path))
+        Phase.SENDING -> ctx.getString(R.string.phase_sending, mac)
+        Phase.DONE -> if (s.cellularBytes > 0) ctx.getString(R.string.phase_done_cellular, mac, mobileDataText(ctx, s.cellularBytes))
+        else ctx.getString(R.string.phase_done, mac)
         Phase.FAILED -> ctx.getString(R.string.phase_failed)
         Phase.CANCELLED -> ctx.getString(R.string.phase_cancelled)
     }

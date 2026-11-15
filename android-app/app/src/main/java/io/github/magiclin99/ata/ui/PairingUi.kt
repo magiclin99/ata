@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.magiclin99.ata.BuildConfig
 import io.github.magiclin99.ata.R
 import io.github.magiclin99.ata.ScanActivity
 import io.github.magiclin99.ata.app
@@ -34,8 +35,8 @@ private enum class CamDialog { NONE, RATIONALE, DENIED }
 
 /**
  * QR scanning with the camera ([ScanActivity], decoded on the phone). CAMERA is asked for only when the user taps
- * "Scan QR code", after a rationale. Without a camera, or if the user declines, the `ata://pair` link can be pasted
- * instead. Pairing itself runs in [io.github.magiclin99.ata.PairingManager]; BLE permissions are asked first.
+ * "Scan QR code", after a one-line explanation; if it is refused, one button opens the app's permission settings.
+ * (Pasting an `ata://pair` link exists only in debug builds.) Pairing itself runs in [io.github.magiclin99.ata.PairingManager]; BLE permissions are asked first.
  */
 @Composable
 fun rememberPairingActions(gate: BleGate): PairingActions {
@@ -57,11 +58,20 @@ fun rememberPairingActions(gate: BleGate): PairingActions {
         if (ok) launchScan() else camDialog = CamDialog.DENIED
     }
 
-    if (pasteDialog || scannerMissing) {
+    // Pasting a pairing link is a debug-build tool: the Mac has no way to show one, so in release builds it would
+    // be a dead end for real users.
+    if (pasteDialog && BuildConfig.DEBUG) {
         PasteLinkDialog(
-            explain = scannerMissing,
-            onDismiss = { pasteDialog = false; scannerMissing = false },
-            onPair = { uri -> pasteDialog = false; scannerMissing = false; gate.run { app.pairing.pair(uri) } },
+            onDismiss = { pasteDialog = false },
+            onPair = { uri -> pasteDialog = false; gate.run { app.pairing.pair(uri) } },
+        )
+    }
+    if (scannerMissing) {
+        AlertDialog(
+            onDismissRequest = { scannerMissing = false },
+            title = { Text(stringResource(R.string.scanner_unavailable_title)) },
+            text = { Text(stringResource(R.string.scanner_unavailable_text)) },
+            confirmButton = { TextButton(onClick = { scannerMissing = false }) { Text(stringResource(R.string.close)) } },
         )
     }
 
@@ -82,9 +92,7 @@ fun rememberPairingActions(gate: BleGate): PairingActions {
                     } else camPermission.launch(Manifest.permission.CAMERA)
                 }) { Text(stringResource(if (denied) R.string.open_settings else R.string.continue_)) }
             },
-            dismissButton = {
-                TextButton(onClick = { camDialog = CamDialog.NONE; pasteDialog = true }) { Text(stringResource(R.string.paste_instead)) }
-            },
+            dismissButton = { TextButton(onClick = { camDialog = CamDialog.NONE }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 
@@ -101,16 +109,13 @@ fun rememberPairingActions(gate: BleGate): PairingActions {
 }
 
 @Composable
-private fun PasteLinkDialog(explain: Boolean, onDismiss: () -> Unit, onPair: (String) -> Unit) {
+private fun PasteLinkDialog(onDismiss: () -> Unit, onPair: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(if (explain) R.string.scanner_unavailable_title else R.string.paste_link)) },
+        title = { Text(stringResource(R.string.paste_link)) },
         text = {
             Column {
-                if (explain) {
-                    Text(stringResource(R.string.scanner_unavailable_text)); Spacer(Modifier.height(12.dp))
-                }
                 OutlinedTextField(value = text, onValueChange = { text = it.trim() }, label = { Text(stringResource(R.string.pair_link_label)) }, singleLine = true)
             }
         },

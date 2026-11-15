@@ -98,15 +98,15 @@ fun rememberBleGate(): BleGate {
         GateDialog.NONE -> {}
         GateDialog.BLE_RATIONALE -> AlertDialog(
             onDismissRequest = dismiss,
-            title = { Text(stringResource(R.string.perm_ble_title)) },
+            title = { Text(stringResource(if (Build.VERSION.SDK_INT >= 31) R.string.perm_ble_title else R.string.perm_ble_title_legacy)) },
             text = { Text(stringResource(if (Build.VERSION.SDK_INT >= 31) R.string.perm_ble_text else R.string.perm_ble_text_legacy)) },
             confirmButton = { TextButton(onClick = { dialog = GateDialog.NONE; permLauncher.launch(blePermissions()) }) { Text(stringResource(R.string.continue_)) } },
             dismissButton = { TextButton(onClick = dismiss) { Text(stringResource(R.string.cancel)) } },
         )
         GateDialog.BLE_DENIED -> AlertDialog(
             onDismissRequest = dismiss,
-            title = { Text(stringResource(R.string.perm_ble_title)) },
-            text = { Text(stringResource(R.string.perm_denied_text)) },
+            title = { Text(stringResource(if (Build.VERSION.SDK_INT >= 31) R.string.perm_ble_title else R.string.perm_ble_title_legacy)) },
+            text = { Text(stringResource(if (Build.VERSION.SDK_INT >= 31) R.string.perm_denied_text else R.string.perm_denied_text_legacy)) },
             confirmButton = {
                 TextButton(onClick = {
                     dismiss()
@@ -130,7 +130,7 @@ fun rememberBleGate(): BleGate {
         )
         GateDialog.LOCATION_OFF -> AlertDialog(
             onDismissRequest = dismiss,
-            title = { Text(stringResource(R.string.perm_ble_title)) },
+            title = { Text(stringResource(if (Build.VERSION.SDK_INT >= 31) R.string.perm_ble_title else R.string.perm_ble_title_legacy)) },
             text = { Text(stringResource(R.string.location_off_text)) },
             confirmButton = {
                 TextButton(onClick = { dismiss(); ctx.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }) {

@@ -1,6 +1,8 @@
 package io.github.magiclin99.ata
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.ata.core.AtaLog
 import com.ata.core.Record
 import com.ata.core.RecordChannel
@@ -32,6 +34,15 @@ import kotlin.coroutines.resumeWithException
  */
 class AndroidRtcPeer(ctx: Context, private val log: AtaLog) : RtcPeer {
 
+    private val cm = ctx.getSystemService(ConnectivityManager::class.java)
+
+    /**
+     * True while the selected ICE pair's local side is a mobile-data interface. Read by TransferService to count
+     * the bytes that went over mobile data (shown to the user; the path itself is never named).
+     */
+    @Volatile var onCellular: Boolean = false
+        private set
+
     companion object {
         val STUN_URLS = listOf("stun:stun.l.google.com:19302", "stun:stun.cloudflare.com:3478")
         const val LABEL = "ata-file"
@@ -53,6 +64,28 @@ class AndroidRtcPeer(ctx: Context, private val log: AtaLog) : RtcPeer {
             .filter { it.startsWith("a=candidate:") || it.startsWith("candidate:") }
             .map { line -> line.split(' ').let { f -> if (f.size >= 8) "${f[7]} ${f[2].lowercase()} ${f[4]}:${f[5]}" else line } }
             .toList()
+    }
+
+    /**
+     * WebRTC reports the local candidate's adapter type; when it is unknown, fall back to finding the Android
+     * [Network] that owns the candidate's local address (the address itself, or `raddr` for a server-reflexive one).
+     */
+    private fun isCellular(local: IceCandidate): Boolean {
+        when (local.adapterType) {
+            PeerConnection.AdapterType.CELLULAR, PeerConnection.AdapterType.CELLULAR_2G, PeerConnection.AdapterType.CELLULAR_3G,
+            PeerConnection.AdapterType.CELLULAR_4G, PeerConnection.AdapterType.CELLULAR_5G -> return true
+            PeerConnection.AdapterType.WIFI, PeerConnection.AdapterType.ETHERNET -> return false
+            else -> {}
+        }
+        val f = local.sdp.trim().removePrefix("a=").split(' ')
+        val addr = f.indexOf("raddr").takeIf { it >= 0 && it + 1 < f.size }?.let { f[it + 1] } ?: f.getOrNull(4) ?: return false
+        return runCatching {
+            @Suppress("DEPRECATION")
+            cm?.allNetworks?.any { n ->
+                cm.getLinkProperties(n)?.linkAddresses?.any { it.address.hostAddress == addr } == true &&
+                    cm.getNetworkCapabilities(n)?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true
+            } == true
+        }.getOrDefault(false)
     }
 
     private val gathered = CompletableDeferred<Unit>()
@@ -78,7 +111,8 @@ class AndroidRtcPeer(ctx: Context, private val log: AtaLog) : RtcPeer {
         override fun onIceCandidate(c: IceCandidate) {}
         override fun onIceCandidatesRemoved(c: Array<out IceCandidate>) {}
         override fun onSelectedCandidatePairChanged(e: CandidatePairChangeEvent) {
-            log.i("rtc: selected pair local ${candidates(e.local.sdp)} remote ${candidates(e.remote.sdp)}")
+            onCellular = isCellular(e.local)
+            log.i("rtc: selected pair local ${candidates(e.local.sdp)} remote ${candidates(e.remote.sdp)} local network ${e.local.adapterType}${if (onCellular) " (mobile data)" else ""}")
         }
         override fun onAddStream(s: MediaStream) {}
         override fun onRemoveStream(s: MediaStream) {}

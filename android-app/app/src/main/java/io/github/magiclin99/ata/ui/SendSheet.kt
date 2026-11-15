@@ -63,7 +63,9 @@ import androidx.compose.ui.unit.dp
 import io.github.magiclin99.ata.FileItem
 import io.github.magiclin99.ata.FileStatus
 import io.github.magiclin99.ata.Phase
+import io.github.magiclin99.ata.BuildConfig
 import io.github.magiclin99.ata.R
+import io.github.magiclin99.ata.SITE_SHORT
 import io.github.magiclin99.ata.TransferHub
 import io.github.magiclin99.ata.TransferService
 import io.github.magiclin99.ata.TransferState
@@ -203,7 +205,7 @@ private fun DevicePicker(uris: List<Uri>, scanner: NearbyScanner, onPick: (Strin
         paired.isEmpty() -> {
             Text(stringResource(R.string.pick_pair_title), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.size(8.dp))
-            Text(stringResource(R.string.pick_pair_text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.pick_pair_text, SITE_SHORT), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.size(20.dp))
             Button(onClick = pairing.scanQr, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
                 Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -211,7 +213,9 @@ private fun DevicePicker(uris: List<Uri>, scanner: NearbyScanner, onPick: (Strin
                 Text(stringResource(R.string.scan_qr))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                TextButton(onClick = pairing.pasteLink) { Text(stringResource(R.string.paste_link)) }
+                // The Mac cannot show a pairing link, so pasting one is a debug-build tool only.
+                if (BuildConfig.DEBUG) TextButton(onClick = pairing.pasteLink) { Text(stringResource(R.string.paste_link)) }
+                else Spacer(Modifier.width(1.dp))
                 TextButton(onClick = onClose) { Text(stringResource(R.string.cancel)) }
             }
         }
@@ -426,7 +430,7 @@ private fun FileRow(f: FileItem) {
             Text(f.name, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.MiddleEllipsis)
             val sub = when (f.status) {
                 FileStatus.OK -> stringResource(R.string.file_ok) + " · " + Formatter.formatShortFileSize(ctx, f.size)
-                FileStatus.FAILED -> stringResource(R.string.file_failed, f.error ?: "")
+                FileStatus.FAILED -> stringResource(R.string.file_failed)
                 FileStatus.SENDING -> stringResource(R.string.progress_bytes, Formatter.formatShortFileSize(ctx, f.sent), Formatter.formatShortFileSize(ctx, f.size))
                 FileStatus.PENDING -> Formatter.formatShortFileSize(ctx, f.size)
             }
