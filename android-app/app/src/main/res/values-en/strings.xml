@@ -4,9 +4,11 @@
     <string name="share_label">Send to Mac</string>
 
     <string name="paired_macs">Paired Macs</string>
-    <string name="empty_install">Step 1: install ATA on your Mac. Open %1$s in the Mac\'s browser to download it.</string>
-    <string name="empty_pair">Step 2: open ATA on the Mac and click \"Pair a Phone…\". Then tap \"Pair with a Mac\" below and scan the QR code on the Mac.</string>
-    <string name="send_link_to_self">Send this address to myself</string>
+    <string name="empty_install">Is ATA installed on your Mac? If not, send yourself the download link and open it on the Mac.</string>
+    <string name="empty_pair">Once it\'s installed, tap \"Pair with a Mac\" and scan the QR code that ATA shows on the Mac (don\'t see one? Click \"Pair a Phone…\" in ATA on the Mac).</string>
+    <string name="send_install_link">Send the download link to myself</string>
+    <string name="install_url">https://magiclin99.github.io/ata/install/</string>
+    <string name="install_share_text">Open this link on your Mac to download ATA: %1$s</string>
     <string name="paired_on">Paired %1$s</string>
     <string name="pair_button">Pair with a Mac</string>
     <string name="remove_pairing">Remove pairing</string>
@@ -41,6 +43,9 @@
     <string name="pairing_connecting">Pairing with \"%1$s\"…</string>
     <string name="pairing_done">Paired with \"%1$s\". From now on, tap Share in any app and choose \"Send to Mac\".</string>
     <string name="pairing_failed">Pairing didn\'t work</string>
+    <string name="try_photo_text">Want to send a photo to your Mac now to try it?</string>
+    <string name="try_photo">Send a photo to try</string>
+    <string name="not_now">Not now</string>
 
     <string name="perm_ble_title">Allow \"Nearby devices\"</string>
     <string name="perm_ble_text">Next, tap \"Allow\". ATA uses this to find your Mac, never to locate you.</string>

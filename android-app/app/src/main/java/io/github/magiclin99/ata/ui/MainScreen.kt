@@ -74,7 +74,13 @@ import io.github.magiclin99.ata.PairedMac
 import io.github.magiclin99.ata.R
 import io.github.magiclin99.ata.app
 import io.github.magiclin99.ata.errorText
-import io.github.magiclin99.ata.SITE_SHORT
+import io.github.magiclin99.ata.ShareActivity
+import io.github.magiclin99.ata.TransferHub
+import io.github.magiclin99.ata.TransferService
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.saveable.rememberSaveable
 import io.github.magiclin99.ata.mobileDataText
 import io.github.magiclin99.ata.shortErrorText
 import com.ata.core.ErrorCode
@@ -92,6 +98,20 @@ fun MainScreen(gate: BleGate) {
 
     val pairing = rememberPairingActions(gate)
     var showLicenses by remember { mutableStateOf(false) }
+
+    // "Send a photo to try" right after pairing: the system photo picker needs no storage permission and grants
+    // read access to the chosen photo, which TransferService passes on to itself.
+    var tryPhotoMac by rememberSaveable { mutableStateOf<String?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        val mac = tryPhotoMac
+        tryPhotoMac = null
+        if (uri != null && mac != null && !TransferHub.busy) {
+            gate.run(withNotifications = true) {
+                TransferService.start(ctx, listOf(uri), mac, address = null)
+                ctx.startActivity(Intent(ctx, ShareActivity::class.java))
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
@@ -112,21 +132,28 @@ fun MainScreen(gate: BleGate) {
             if (macs.isEmpty()) {
                 // First run: two plain steps and one obvious button. The site address is plain text the user can
                 // type on the Mac, or send to themselves.
-                item { Hint(stringResource(R.string.empty_install, SITE_SHORT)) }
+                // First run: has the Mac got ATA yet? The primary action sends the Mac download page (in this
+                // language) to the person themselves, through whatever app they already use.
+                item { Hint(stringResource(R.string.empty_install)) }
                 item {
-                    TextButton(onClick = {
-                        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "https://$SITE_SHORT/")
-                        runCatching { ctx.startActivity(Intent.createChooser(send, null)) }
-                    }) { Text(stringResource(R.string.send_link_to_self)) }
+                    val url = stringResource(R.string.install_url)
+                    val text = stringResource(R.string.install_share_text, url)
+                    Button(
+                        onClick = {
+                            val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+                            runCatching { ctx.startActivity(Intent.createChooser(send, null)) }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                    ) { Text(stringResource(R.string.send_install_link)) }
                 }
-                item { Hint(stringResource(R.string.empty_pair)) }
+                item { Spacer(Modifier.height(8.dp)); Hint(stringResource(R.string.empty_pair)) }
             } else {
                 items(macs, key = { it.idHex }) { mac -> MacRow(mac) { removing = mac } }
             }
             item {
                 Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (macs.isEmpty()) {
-                        Button(onClick = pairing.scanQr, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+                        OutlinedButton(onClick = pairing.scanQr, modifier = Modifier.fillMaxWidth().height(52.dp)) {
                             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.pair_button))
@@ -168,7 +195,10 @@ fun MainScreen(gate: BleGate) {
         )
     }
 
-    PairingDialog(pairState, onClose = { app.pairing.reset() }, onCancel = { app.pairing.cancel() })
+    PairingDialog(
+        pairState, onClose = { app.pairing.reset() }, onCancel = { app.pairing.cancel() },
+        onTryPhoto = { id -> app.pairing.reset(); tryPhotoMac = id; photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+    )
 }
 
 @Composable
@@ -226,7 +256,7 @@ private fun HistoryRow(e: HistoryEntry) {
 }
 
 @Composable
-private fun PairingDialog(s: PairState, onClose: () -> Unit, onCancel: () -> Unit) {
+private fun PairingDialog(s: PairState, onClose: () -> Unit, onCancel: () -> Unit, onTryPhoto: (macIdHex: String) -> Unit) {
     val ctx = LocalContext.current
     if (s == PairState.Idle) return
     val busy = s is PairState.Searching || s is PairState.Connecting
@@ -244,7 +274,7 @@ private fun PairingDialog(s: PairState, onClose: () -> Unit, onCancel: () -> Uni
                         when (s) {
                             is PairState.Searching -> stringResource(R.string.pairing_searching, s.macName)
                             is PairState.Connecting -> stringResource(R.string.pairing_connecting, s.macName)
-                            is PairState.Done -> stringResource(R.string.pairing_done, s.macName)
+                            is PairState.Done -> stringResource(R.string.pairing_done, s.macName) + "\n\n" + stringResource(R.string.try_photo_text)
                             is PairState.Failed -> errorText(ctx, s.code, s.detail)
                             PairState.Idle -> ""
                         }
@@ -253,9 +283,16 @@ private fun PairingDialog(s: PairState, onClose: () -> Unit, onCancel: () -> Uni
             }
         },
         confirmButton = {
-            if (busy) TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
-            else TextButton(onClick = onClose) { Text(stringResource(if (s is PairState.Done) R.string.done else R.string.close)) }
+            when {
+                busy -> TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
+                // First transfer inside the setup flow: one tap to try, one tap to skip.
+                s is PairState.Done -> Button(onClick = { onTryPhoto(s.macIdHex) }) { Text(stringResource(R.string.try_photo)) }
+                else -> TextButton(onClick = onClose) { Text(stringResource(R.string.close)) }
+            }
         },
+        dismissButton = if (s is PairState.Done) {
+            { TextButton(onClick = onClose) { Text(stringResource(R.string.not_now)) } }
+        } else null,
     )
 }
 

@@ -10,9 +10,12 @@
 
     <!-- Main screen -->
     <string name="paired_macs">已配對的 Mac</string>
-    <string name="empty_install">第一步：在 Mac 上安裝 ATA。用 Mac 的瀏覽器打開 %1$s 就能下載。</string>
-    <string name="empty_pair">第二步：打開 Mac 上的 ATA，按「配對手機…」，再按下面的「與 Mac 配對」掃描 Mac 上的 QR code。</string>
-    <string name="send_link_to_self">把網址傳給自己</string>
+    <string name="empty_install">你的 Mac 裝好 ATA 了嗎？還沒的話，把下載連結傳給自己，用 Mac 打開就能安裝。</string>
+    <string name="empty_pair">裝好了就按「與 Mac 配對」，掃描 Mac 上 ATA 顯示的 QR code（沒看到的話，在 Mac 的 ATA 按「配對手機…」）。</string>
+    <string name="send_install_link">把下載連結傳給自己</string>
+    <!-- Mac download page in this language; sent with the share sheet so the person can open it on their Mac. -->
+    <string name="install_url">https://magiclin99.github.io/ata/zh-tw/install/</string>
+    <string name="install_share_text">用 Mac 打開這個連結，就能下載 ATA：%1$s</string>
     <string name="paired_on">%1$s 配對</string>
     <string name="pair_button">與 Mac 配對</string>
     <string name="remove_pairing">移除配對</string>
@@ -48,6 +51,9 @@
     <string name="pairing_connecting">正在和「%1$s」配對…</string>
     <string name="pairing_done">已經和「%1$s」配對好了。之後在任何 app 按「分享」，選「傳到 Mac」就能傳檔案。</string>
     <string name="pairing_failed">配對沒有成功</string>
+    <string name="try_photo_text">要不要現在傳一張照片到 Mac 試試看？</string>
+    <string name="try_photo">傳一張照片試試</string>
+    <string name="not_now">先不用</string>
 
     <!-- Permissions: one plain line before each system prompt -->
     <string name="perm_ble_title">允許「附近的裝置」</string>

@@ -16,7 +16,7 @@ sealed interface PairState {
     data object Idle : PairState
     data class Searching(val macName: String) : PairState
     data class Connecting(val macName: String) : PairState
-    data class Done(val macName: String) : PairState
+    data class Done(val macName: String, val macIdHex: String) : PairState
     data class Failed(val code: ErrorCode, val detail: String) : PairState
 }
 
@@ -72,7 +72,7 @@ class PairingManager(private val app: AtaApp) {
                     app.pairings.save(info.macIdHex, name, info.key)
                     runCatching { session.send(Msg.bye(true, null, null)) }
                     log.i("PAIR ok=true mac=${info.macIdHex} ms=${System.currentTimeMillis() - t0}")
-                    _state.value = PairState.Done(name)
+                    _state.value = PairState.Done(name, info.macIdHex)
                 } finally {
                     match.link.close()
                 }
