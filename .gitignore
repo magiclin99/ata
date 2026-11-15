@@ -1,15 +1,11 @@
-# --- Not part of the public repository ---
-# Internal material (release decisions, store listing, launch drafts, Play Console notes):
-# private repository magiclin99/ata-internal, checked out here as its own git root.
+# --- Not part of this repository ---
 /internal/
-# Old locations of that material, in case a copy reappears.
 /marketing/
 /RELEASE.md
 /android-app/PLAY_CONSOLE_NOTES.md
 /android-app/docs/
 /android-app/marketing/
 /android-app/spec/
-# Lab prototypes.
 /mac/
 /android/
 /PROTOCOL.md

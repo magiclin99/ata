@@ -1,6 +1,6 @@
 # ATA 正式版規格（v2）
 
-Android → Mac 的隔空傳檔。這份文件是 `mac-app/` 與 `android-app/` 的共同契約；`PROTOCOL.md`、`mac/`、`android/` 是已在實機驗證過的實驗版（v1），可以參考與複製程式碼，但不要修改。
+Android → Mac 的隔空傳檔。這份文件是 `mac-app/` 與 `android-app/` 的共同契約；測試向量在 `spec/vectors.json`。
 
 ## 1. 範圍
 

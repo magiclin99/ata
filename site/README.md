@@ -17,7 +17,8 @@ links are relative except in `404.html`, which uses `/ata/...` because GitHub se
 ## Hidden slots
 
 No `[[…]]` placeholder is visible on any page. The only one left, `[[SUPPORT_URL]]`, sits inside a `hidden` block.
-Three blocks are hidden until they're needed. Each has an HTML comment above it.
+Three blocks are hidden until they're needed. This file is the only place they're documented: the published
+pages carry no maintainer comments, and this README is left out of the Pages deployment.
 
 ### Google Play button (switch on at Android launch)
 
@@ -33,14 +34,16 @@ currently in closed testing" and invite testers to email `magiclin99@gmail.com`.
 
 ### Demo video (switch on when a real recording exists)
 
-In both landing pages, put the video (self-hosted under `assets/`; the commented `<video>` tag shows the form) inside
+In both landing pages, put the video (self-hosted under `assets/`, for example
+`<video controls playsinline preload="metadata" poster="assets/demo-poster.jpg" src="assets/demo.mp4"></video>`,
+with `../assets/` in `zh-tw/`) inside
 `<section id="demo-slot" hidden>` and delete `hidden`. Use only real screen recordings or real footage of a Mac.
 Don't embed YouTube unless you also add it to the privacy policy.
 
 ## Support slot (disabled)
 
 A voluntary-support link (platform: Recur) is reserved but not enabled. Both landing pages contain
-a `<section id="support-slot" hidden>` block, preceded by an HTML comment, with the link `[[SUPPORT_URL]]`. Because
+a `<section id="support-slot" hidden>` block, preceded by a one-line neutral comment, with the link `[[SUPPORT_URL]]`. Because
 of the `hidden` attribute, browsers render nothing and the placeholder never shows.
 
 To switch it on once the support URL exists:
