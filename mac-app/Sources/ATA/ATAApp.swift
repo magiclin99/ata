@@ -22,11 +22,8 @@ struct ATAApp: App {
     }
 }
 
-/// Dock / activation policy: ATA stays an agent app (`LSUIElement`, no Dock icon) while it runs in the background,
-/// because it is a receiver that is meant to be always on. The menu bar item is not a reliable entry point (a full
-/// menu bar or the notch can hide it), so opening ATA again from Finder, Spotlight or Launchpad shows the main
-/// window, and while that window is open ATA switches to a regular app (Dock icon, ⌘-Tab) so the window cannot get
-/// lost behind others. Closing the window returns it to the background.
+/// App lifecycle. The Dock icon policy is in `ActivationPolicy`. Opening ATA again (Dock icon, Finder, Spotlight,
+/// Launchpad) shows the main window, because the menu bar item can be hidden behind the camera notch.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static let showWindowNotification = Notification.Name("io.github.magiclin99.ata.mac.show-main-window")
 
@@ -36,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DistributedNotificationCenter.default().addObserver(forName: Self.showWindowNotification, object: nil, queue: .main) { _ in
                 MainActor.assumeIsolated { MainWindowController.shared.show() }
             }
+            ActivationPolicy.applyAtLaunch()
             AppModel.shared.start()
             Self.quitOnSIGTERM()
         }
@@ -51,7 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         sigterm = s
     }
 
-    /// Opening ATA while it is already running (double-click in Finder, Spotlight, `open`) lands here.
+    /// Opening ATA while it is already running (Dock click, double-click in Finder, Spotlight, `open`) lands here.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         MainActor.assumeIsolated { MainWindowController.shared.show() }
         return false
@@ -86,28 +84,31 @@ struct MenuContent: View {
     var body: some View {
         Button {} label: { Label(model.statusLine, systemImage: model.statusSymbol) }
             .disabled(true)
-        if case .unauthorized = model.bluetooth {
-            Button("Open Bluetooth Privacy Settings…") { model.openBluetoothSettings() }
+        switch model.bluetooth {
+        case .unauthorized:
+            Button("Allow Bluetooth for ATA…") { model.openBluetoothPrivacySettings() }
+        case .off:
+            Button("Open Bluetooth Settings…") { model.openBluetoothSettings() }
+        default:
+            EmptyView()
         }
         if model.localNetworkBlocked {
             Button { model.openFirewallHelp() } label: {
-                Label("Local network connection was blocked — check the macOS firewall", systemImage: "exclamationmark.triangle")
+                Label("Your Mac's firewall is blocking your phone. How to Fix…", systemImage: "exclamationmark.triangle")
             }
         }
 
         Divider()
 
         Button("Open ATA Window") { MainWindowController.shared.show() }
-        Button("Pair New Device…") { PairingWindowController.shared.show() }
+        Button("Pair a Phone…") { PairingWindowController.shared.show() }
             .keyboardShortcut("n")
 
-        if model.devices.isEmpty {
-            Button("No Paired Devices") {}.disabled(true)
-        } else {
-            Menu("Paired Devices") {
+        if !model.devices.isEmpty {
+            Menu("Paired Phones") {
                 ForEach(model.devices) { d in
                     Menu {
-                        Text("Paired \(d.pairedAt.formatted(date: .abbreviated, time: .omitted))")
+                        Text("Paired on \(d.pairedAt.formatted(date: .abbreviated, time: .omitted))")
                         Divider()
                         Button("Remove “\(d.name)”") { model.remove(d) }
                     } label: {
@@ -119,24 +120,20 @@ struct MenuContent: View {
 
         Divider()
 
-        if model.recentFiles.isEmpty {
-            Button("No Recent Files") {}.disabled(true)
-        } else {
-            Section("Recent Files") {
+        if !model.recentFiles.isEmpty {
+            Section("Recently Received — Click to Show in Finder") {
                 ForEach(model.recentFiles, id: \.self) { url in
                     Button { model.reveal(url) } label: {
                         Label { Text(verbatim: url.lastPathComponent) } icon: { Image(nsImage: fileIcon(url)) }
                     }
                 }
-                Button("Clear Recent Files") { model.clearRecent() }
             }
+            Divider()
         }
-
-        Divider()
 
         Button("Save to “\(model.saveDirName)”…") { model.chooseSaveFolder() }
         Button("Open Save Folder") { model.openSaveFolder() }
-        Toggle("Launch at Login", isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
+        Toggle("Open at Login", isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
 
         Divider()
 
@@ -166,11 +163,28 @@ enum MenuBarIcon {
     }()
 }
 
-// MARK: - Activation policy
+// MARK: - Dock icon
 
-/// Regular app (Dock icon) while any ATA window is open, agent app otherwise. See `AppDelegate`.
+/// Dock icon policy. ATA's audience is non-technical, and the menu bar item can be hidden behind the camera notch,
+/// so by default ATA shows a normal Dock icon: people can see that it is running and click it to get the window back.
+/// "Show ATA in the Dock" (main window → Settings) can turn that off, after which ATA lives in the menu bar and only
+/// shows a Dock icon while one of its windows is open (so the window can't get lost behind others).
 @MainActor
 enum ActivationPolicy {
+    static let showInDockKey = "showInDock"
+    static var showInDock: Bool { UserDefaults.standard.object(forKey: showInDockKey) as? Bool ?? true }
+
+    /// At launch (Info.plist keeps LSUIElement, so nothing flashes in the Dock when the setting is off).
+    static func applyAtLaunch() {
+        if showInDock { NSApp.setActivationPolicy(.regular) }
+    }
+
+    static func setShowInDock(_ on: Bool) {
+        UserDefaults.standard.set(on, forKey: showInDockKey)
+        if on { NSApp.setActivationPolicy(.regular) }
+        else if !anyWindowVisible(except: nil) { NSApp.setActivationPolicy(.accessory) }
+    }
+
     static func windowWillShow() {
         if NSApp.activationPolicy() != .regular { NSApp.setActivationPolicy(.regular) }
         NSApp.activate(ignoringOtherApps: true)
@@ -178,15 +192,20 @@ enum ActivationPolicy {
 
     static func windowDidClose(_ closing: NSWindow) {
         DispatchQueue.main.async {
-            let others = NSApp.windows.contains { $0 !== closing && $0.isVisible && $0.styleMask.contains(.titled) && $0.level == .normal }
-            if !others, NSApp.activationPolicy() != .accessory { NSApp.setActivationPolicy(.accessory) }
+            if !showInDock, !anyWindowVisible(except: closing), NSApp.activationPolicy() != .accessory {
+                NSApp.setActivationPolicy(.accessory)
+            }
         }
+    }
+
+    private static func anyWindowVisible(except w: NSWindow?) -> Bool {
+        NSApp.windows.contains { $0 !== w && $0.isVisible && $0.styleMask.contains(.titled) && $0.level == .normal }
     }
 }
 
 // MARK: - Pairing window
 
-/// AppKit-owned window so nothing opens at launch and the window can be brought to front from a menu bar app.
+/// AppKit-owned window so it can be brought to front from a menu bar app.
 @MainActor
 final class PairingWindowController: NSObject, NSWindowDelegate {
     static let shared = PairingWindowController()
@@ -196,9 +215,9 @@ final class PairingWindowController: NSObject, NSWindowDelegate {
         let model = AppModel.shared
         if model.pairing == nil || model.pairing?.phase != .waiting { model.beginPairing() }
         if window == nil {
-            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 360, height: 480),
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 380, height: 520),
                              styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
-            w.title = String(localized: "Pair New Device")
+            w.title = String(localized: "Pair a Phone")
             w.titlebarAppearsTransparent = true
             w.titleVisibility = .hidden
             w.isReleasedWhenClosed = false
@@ -234,18 +253,22 @@ struct PairingView: View {
         .padding(.horizontal, 28)
         .padding(.top, 34)
         .padding(.bottom, 22)
-        .frame(width: 360)
+        .frame(width: 380)
         .fixedSize(horizontal: false, vertical: true)
     }
 
     @ViewBuilder private func header(_ p: PairingUIState) -> some View {
         VStack(spacing: 6) {
             Text("Pair a Phone").font(.title2.weight(.semibold))
-            Text("Open ATA on your Android phone and scan this code.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+            if case .success = p.phase {
+                EmptyView()
+            } else {
+                Text("On your phone, open ATA, tap “Pair with a Mac”, and scan this QR code.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -290,25 +313,41 @@ struct PairingView: View {
                     let left = max(0, Int(p.expiresAt.timeIntervalSince(ctx.date).rounded(.up)))
                     HStack(spacing: 8) {
                         ProgressView().controlSize(.small)
-                        Text("Waiting for phone · expires in \(left / 60):\(String(format: "%02d", left % 60))")
+                        Text("Waiting for your phone… This QR code works for \(left / 60):\(String(format: "%02d", left % 60)) more.")
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
                     .font(.callout)
                 }
             case .success(let name):
-                Text("Paired with \(name)").font(.headline)
-            case .failed(let reason):
+                VStack(spacing: 8) {
+                    Text("Paired with “\(name)”").font(.headline)
+                    Text("Now share photos or files on your phone and choose ATA. They'll arrive on this Mac.")
+                        .font(.callout).multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if model.showFirewallTip {
+                        Text("If your Mac asks whether ATA may accept incoming network connections, click “Allow” so your phone can deliver files.")
+                            .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            case .failed:
                 VStack(spacing: 4) {
-                    Text("Pairing failed").font(.headline)
-                    Text(verbatim: Self.explain(reason)).font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    Text("Pairing didn't work").font(.headline)
+                    Text("Show a new QR code and scan it again with your phone.")
+                        .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
             case .expired:
-                Text("This code has expired").font(.headline)
+                VStack(spacing: 4) {
+                    Text("This QR code no longer works").font(.headline)
+                    Text("Show a new QR code and scan it again with your phone.")
+                        .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                }
             }
             HStack {
                 if p.phase != .waiting, !isSuccess(p.phase) {
-                    Button("New Code") { model.beginPairing() }
+                    Button("Show a New QR Code") { model.beginPairing() }
+                        .keyboardShortcut(.defaultAction)
                 }
                 Spacer()
                 Button(isSuccess(p.phase) ? "Done" : "Cancel") { close() }
@@ -320,14 +359,6 @@ struct PairingView: View {
     }
 
     private func isSuccess(_ p: PairingUIState.Phase) -> Bool { if case .success = p { return true }; return false }
-
-    static func explain(_ reason: String) -> String {
-        switch reason {
-        case "bad_mac": return String(localized: "The phone's response didn't match this code. Scan the code again.")
-        case "pairing_expired": return String(localized: "The code was no longer valid.")
-        default: return reason
-        }
-    }
 }
 
 enum QRCode {

@@ -34,10 +34,10 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>ATA uses Bluetooth to let your paired Android phone find this Mac and start a file transfer.</string>
+	<string>ATA needs Bluetooth so your phone can find this Mac.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 magiclin99. Released under the MIT License.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>ATA receives files from your phone over the local network.</string>
+	<string>ATA uses this to receive files from your phone quickly over the same Wi-Fi.</string>
 </dict>
 </plist>

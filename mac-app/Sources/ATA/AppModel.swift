@@ -11,6 +11,9 @@ struct LaunchOptions {
     var saveDir: URL?
     var signalPort: UInt16?
     var showPairingWindow = false
+    /// Debug only: don't start Bluetooth at all (screenshots / UI checks next to a running ATA without a second
+    /// advertising Mac and without a permission question).
+    var noBluetooth = false
 
     static func parse(_ args: [String] = CommandLine.arguments) -> LaunchOptions {
         var o = LaunchOptions()
@@ -27,6 +30,7 @@ struct LaunchOptions {
         o.saveDir = url("--save-dir")
         o.signalPort = value("--debug-signal-port").flatMap { UInt16($0) }
         o.showPairingWindow = args.contains("--debug-show-pairing")
+        o.noBluetooth = args.contains("--debug-no-bluetooth")
         #else
         if args.contains(where: { $0.hasPrefix("--pairing-uri-file") || $0.hasPrefix("--log-file") || $0.hasPrefix("--save-dir") || $0.hasPrefix("--debug-signal-port") }) {
             Log.info("debug flags ignored: this is a release build")
@@ -64,10 +68,15 @@ final class AppModel: ObservableObject {
     /// The last transfer offered the local network, nothing connected, and the macOS firewall is on: show a hint.
     /// Cleared by the next transfer that arrives over the local network.
     @Published private(set) var localNetworkBlocked = false
+    /// macOS hasn't asked about Bluetooth yet: the window explains the coming prompt before ATA triggers it.
+    @Published private(set) var bluetoothNotAskedYet = CBManager.authorization == .notDetermined
+    /// A transfer has arrived over the same Wi-Fi at least once (so the firewall question was answered "Allow").
+    @Published private(set) var hadWiFiTransfer = UserDefaults.standard.bool(forKey: "hadWiFiTransfer")
 
     private let options = LaunchOptions.parse()
     private let defaults = UserDefaults.standard
-    private let store = FilePairingStore()
+    /// Per bundle id, so a renamed test copy never touches the real pairings.
+    private let store = FilePairingStore(url: FilePairingStore.defaultURL(bundleId: Bundle.main.bundleIdentifier ?? "io.github.magiclin99.ata.mac"))
     private(set) var engine: ReceiverEngine!
     private var ble: BLEPeripheral?
     #if ATA_DEBUG_HOOKS
@@ -112,6 +121,7 @@ final class AppModel: ObservableObject {
         b.onStateChange = { [weak self] st in
             DispatchQueue.main.async {
                 guard let self else { return }
+                if CBManager.authorization != .notDetermined { self.bluetoothNotAskedYet = false }
                 switch st {
                 case .poweredOn: self.bluetooth = .on
                 case .poweredOff: self.bluetooth = .off
@@ -123,7 +133,15 @@ final class AppModel: ObservableObject {
             }
         }
         ble = b
-        b.start()
+        if options.noBluetooth {
+            Log.info("DEBUG Bluetooth not started (--debug-no-bluetooth)")
+        } else if bluetoothNotAskedYet {
+            // First launch: show the window (with a line about the coming Bluetooth question) a moment before macOS
+            // asks, so the question doesn't appear out of nowhere.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { b.start() }
+        } else {
+            b.start()
+        }
 
         #if ATA_DEBUG_HOOKS
         if let port = options.signalPort {
@@ -189,34 +207,42 @@ final class AppModel: ObservableObject {
         case .sessionEnded(let s):
             receiving = nil
             connectedPhone = nil
-            if s.via == "lan" { localNetworkBlocked = false }
+            if s.via == "lan" {
+                localNetworkBlocked = false
+                if !hadWiFiTransfer { hadWiFiTransfer = true; defaults.set(true, forKey: "hadWiFiTransfer") }
+            }
             else if s.lanUnreached && Firewall.isEnabled() {
                 Log.info("local network connection looked blocked (firewall is on); showing the firewall hint")
                 localNetworkBlocked = true
             }
             if s.announcedFiles > 0 {
-                if let err = s.error { lastError = Self.localizedEngineError(err) }
-                else if s.failedFiles > 0 { lastError = String(localized: "\(s.failedFiles) file(s) failed verification") }
-                notifier.transferEnded(s)
+                if let err = s.error { lastError = Self.plainError(err) }
+                else if s.failedFiles > 0 { lastError = Self.incompleteFiles(s.failedFiles) }
+                notifier.transferEnded(s, savedIn: saveDirName)
             }
         }
     }
 
-    /// Engine errors are English protocol-level strings; translate the ones ATA itself produces. Text that came
-    /// from the phone (a `bye` error) is shown as is.
-    nonisolated static func localizedEngineError(_ e: String) -> String {
-        if e == "phone disconnected" { return String(localized: "The phone disconnected before the transfer finished") }
-        if e == "device removed" { return String(localized: "The device was removed") }
-        if e == "BLE message failed to decrypt" { return String(localized: "A Bluetooth message could not be decrypted") }
-        if e == "phone reported failure" { return String(localized: "The phone reported a failure") }
-        if e == "phone ended the session before the transfer finished" {
-            return String(localized: "The phone ended the session before the transfer finished")
+    /// Engine and phone error strings are technical; users get one plain sentence saying what happened and one
+    /// thing to try (TERMS.md). The original text goes to the log only.
+    nonisolated static func plainError(_ e: String) -> String {
+        Log.info("transfer error shown to the user as plain text; detail: \(e)")
+        switch e {
+        case "cancelled": return String(localized: "The phone cancelled sending.")
+        case "phone disconnected", "phone ended the session before the transfer finished":
+            return String(localized: "The phone stopped before finishing. Send again.")
+        case "device removed": return String(localized: "Sending stopped because this phone was removed. Pair it again to send.")
+        default:
+            if e.hasPrefix("timed out") {
+                return String(localized: "Sending stopped partway. Move your phone closer to your Mac and send again.")
+            }
+            return String(localized: "Something went wrong. Send again. If it keeps happening, update ATA on both your phone and your Mac.")
         }
-        if e.hasPrefix("timed out") { return String(localized: "The transfer timed out") }
-        if let r = e.range(of: "transfer failed: ") {
-            return String(localized: "Transfer failed: \(String(e[r.upperBound...]))")
-        }
-        return e
+    }
+
+    nonisolated static func incompleteFiles(_ n: Int) -> String {
+        n == 1 ? String(localized: "1 file didn't arrive completely. Send it again.")
+               : String(localized: "\(n) files didn't arrive completely. Send them again.")
     }
 
     /// Drops recent-file entries whose file was moved or deleted.
@@ -239,20 +265,21 @@ final class AppModel: ObservableObject {
     var statusLine: String {
         if let r = receiving {
             let pct = Int((r.fraction * 100).rounded(.down))
-            return r.file.isEmpty ? String(localized: "Receiving from \(r.phone)…") : String(localized: "Receiving “\(r.file)” \(pct)%")
+            return r.file.isEmpty ? String(localized: "Receiving files from “\(r.phone)”…") : String(localized: "Receiving “\(r.file)” (\(pct)%)")
         }
-        if let p = connectedPhone { return String(localized: "Connected to \(p)") }
+        if let p = connectedPhone { return String(localized: "“\(p)” is connected") }
         switch bluetooth {
         case .starting:
-            return CBManager.authorization == .notDetermined ? String(localized: "Waiting for Bluetooth permission…") : String(localized: "Starting…")
-        case .off: return String(localized: "Bluetooth is off")
-        case .unauthorized: return String(localized: "Bluetooth access not allowed")
-        case .unsupported: return String(localized: "Bluetooth LE not supported")
-        case .other(let s): return String(localized: "Bluetooth: \(s)")
+            return bluetoothNotAskedYet ? String(localized: "Waiting for you to allow Bluetooth…") : String(localized: "Starting…")
+        case .off: return String(localized: "Bluetooth is off. Turn it on to receive files.")
+        case .unauthorized: return String(localized: "ATA isn't allowed to use Bluetooth yet.")
+        case .unsupported: return String(localized: "This Mac's Bluetooth can't be used with ATA.")
+        case .other: return String(localized: "Bluetooth isn't available right now. Try again in a moment.")
         case .on: break
         }
-        if let e = lastError { return String(localized: "Error: \(e)") }
-        return String(localized: "Ready")
+        if let e = lastError { return e }
+        if devices.isEmpty { return String(localized: "No phone paired yet") }
+        return String(localized: "Ready. Send from your phone any time.")
     }
 
     var statusSymbol: String {
@@ -274,8 +301,7 @@ final class AppModel: ObservableObject {
     var saveDirName: String { FileManager.default.displayName(atPath: saveDir.path) }
 
     var versionString: String {
-        let info = Bundle.main.infoDictionary
-        return "\(info?["CFBundleShortVersionString"] as? String ?? "?") (\(info?["CFBundleVersion"] as? String ?? "?"))"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
     }
 
     func checkForUpdates() { NSWorkspace.shared.open(Self.releasesURL) }
@@ -293,8 +319,22 @@ final class AppModel: ObservableObject {
 
     func openSupport() { if let u = supportURL { NSWorkspace.shared.open(u) } }
 
-    func openBluetoothSettings() {
+    /// System Settings → Privacy & Security → Bluetooth (where ATA's permission is switched on).
+    func openBluetoothPrivacySettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Bluetooth")!)
+    }
+
+    /// System Settings → Bluetooth (to turn Bluetooth on).
+    func openBluetoothSettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.BluetoothSettings")!)
+    }
+
+    /// Tell people about the firewall question until a transfer over the same Wi-Fi has worked once.
+    var showFirewallTip: Bool { !hadWiFiTransfer && Firewall.isEnabled() }
+
+    var showInDock: Bool {
+        get { ActivationPolicy.showInDock }
+        set { objectWillChange.send(); ActivationPolicy.setShowInDock(newValue) }
     }
 
     func beginPairing() {
@@ -352,7 +392,7 @@ final class AppModel: ObservableObject {
             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
         } catch {
             Log.err("launch at login: \(error)")
-            lastError = String(localized: "Launch at login: \(error.localizedDescription)")
+            lastError = String(localized: "Couldn't turn on Open at Login. Move ATA to the Applications folder and try again.")
         }
         refreshLaunchAtLogin()
     }

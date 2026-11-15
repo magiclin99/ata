@@ -1,4 +1,4 @@
-/* Usage descriptions shown in the macOS permission prompts. English source strings live in Info.plist. */
-"NSBluetoothAlwaysUsageDescription" = "ATA uses Bluetooth to let your paired Android phone find this Mac and start a file transfer.";
-"NSLocalNetworkUsageDescription" = "ATA receives files from your phone over the local network.";
+/* Text in the macOS permission questions. Same as the source strings in Info.plist. */
+"NSBluetoothAlwaysUsageDescription" = "ATA needs Bluetooth so your phone can find this Mac.";
+"NSLocalNetworkUsageDescription" = "ATA uses this to receive files from your phone quickly over the same Wi-Fi.";
 "NSHumanReadableCopyright" = "© 2026 magiclin99. Released under the MIT License.";

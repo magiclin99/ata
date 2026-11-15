@@ -48,36 +48,41 @@ settings: delete `~/Library/Application Support/io.github.magiclin99.ata.mac` an
 
 ## Using ATA
 
-1. Open ATA. The first time, the ATA window opens; click **Pair New Device…** and scan the QR code with the ATA app
-   on your Android phone.
-2. Share photos or files to ATA on the phone. They are saved to your Downloads folder (changeable in the window).
+1. Open ATA. The first time, a welcome window explains what ATA does; click **Pair a Phone…**. On your phone, open
+   ATA, tap **Pair with a Mac**, and scan the QR code. The window then shows the phone's name and what to do next.
+2. On your phone, share photos or files and choose ATA. They arrive in your Downloads folder (you can change that in
+   the window). A notification says where they were saved; click it to see the file in Finder. The window also lists
+   the latest files with a **Show in Finder** button.
 
-ATA keeps running in the background with an icon in the menu bar. **If the menu bar is full, macOS hides icons
-behind the camera notch** — so everything is also in the ATA window: open ATA again from Applications, Spotlight
-or Launchpad to show it. The window has the status, pairing, paired devices (with Remove), recent files, the save
-folder, Launch at Login, Check for Updates… and Quit. While the window is open ATA also appears in the Dock; when
-you close it, ATA goes back to running quietly in the background.
+ATA keeps running in the background after you close its window, and it shows a normal icon in the Dock: click it (or
+open ATA again from Applications, Spotlight or Launchpad) to get the window back. It also has an icon in the menu
+bar, but when the menu bar is full macOS hides icons behind the camera notch, so the Dock icon and the window are the
+dependable way back. If you prefer ATA only in the menu bar, turn off **Show ATA in the Dock** in the window's
+settings; ATA then shows a Dock icon only while one of its windows is open.
 
-The interface is in English and Traditional Chinese (follows your macOS language).
+The interface is in English and Traditional Chinese (it follows your macOS language). Its wording follows the
+project's plain-language glossary: no technical terms, and every problem is one sentence about what happened plus one
+thing to try.
 
 **Updates:** ATA 1.0 does not update itself. **Check for Updates…** opens the Releases page; run the install command
 again (or download the new dmg) to update. Pairings and settings are kept.
 
 ## Permissions
 
-macOS asks for these the first time they are needed:
+macOS asks for these the first time they are needed. ATA explains each one in plain words just before it is asked.
 
-- **Bluetooth** — required; that is how the phone finds this Mac. If you clicked Don't Allow, the window and menu show
-  a button that opens the Bluetooth privacy settings. Releases are all signed with the same certificate, so updating
-  ATA is expected not to ask again (see "Signing" below).
-- **Incoming network connections** (only if the macOS firewall is on) — click **Allow**, otherwise the phone cannot
-  send over Wi-Fi and falls back to a much slower path. If a transfer had to fall back while the firewall is on, ATA
-  shows "Local network connection was blocked — check the macOS firewall" in its window and menu. It links to the
-  [FAQ entry](https://magiclin99.github.io/ata/faq/#firewall): allow ATA in System Settings → Network → Firewall →
-  Options, remove duplicate ATA entries left by older versions, then quit and reopen ATA. ATA never changes firewall
-  settings itself.
+- **Bluetooth** — required; it's how your phone finds this Mac. On first launch the window says that macOS is about
+  to ask and why, then macOS asks. If you clicked Don't Allow, the window shows the steps (System Settings →
+  Privacy & Security → Bluetooth → turn on ATA) and a button that opens that page. Releases are all signed with the
+  same certificate, so updating ATA doesn't ask again.
+- **Incoming network connections** (only if the macOS firewall is on) — click **Allow** so your phone can deliver
+  files over the same Wi-Fi. Until the first such transfer works, the welcome and pairing windows mention this
+  question. If the firewall blocked a transfer, ATA says "Your Mac's firewall is blocking your phone, so sending is
+  slower." with a **How to Fix…** link to the [FAQ entry](https://magiclin99.github.io/ata/faq/#firewall): allow ATA
+  in System Settings → Network → Firewall → Options, remove duplicate ATA entries left by older versions, then quit
+  and reopen ATA. ATA never changes firewall settings itself.
 - **Notifications** — asked after the first transfer; optional.
-- **Launch at Login** works best when ATA is in /Applications.
+- **Open at Login** works best when ATA is in /Applications.
 
 ATA does not use the Keychain, so there is no Keychain password prompt, also not after updates.
 
@@ -108,12 +113,12 @@ paired again.
 | Path | What |
 |---|---|
 | `Sources/ATACore` | No UI. Crypto + codecs (`Crypto.swift`, `Framing.swift`), pairing + file store and one-time Keychain import (`Pairing.swift`), session state machine (`Engine.swift`), BLE peripheral, LAN TCP receiver (`Transfer.swift`), WebRTC receiver, record → file writer (`FileReceiver.swift`), debug loopback signaling (`LoopbackSignal.swift`). |
-| `Sources/ATA` | SwiftUI app: menu bar extra and pairing window (`ATAApp.swift`), main window (`MainWindow.swift`), state and actions (`AppModel.swift`), notifications (`Notifier.swift`). |
+| `Sources/ATA` | SwiftUI app: menu bar extra, Dock icon policy and pairing window (`ATAApp.swift`), main window with the first-launch welcome (`MainWindow.swift`), state, actions and the plain-language error mapping (`AppModel.swift`), notifications (`Notifier.swift`), read-only firewall check (`Firewall.swift`). |
 | `Resources` | `Info.plist`, icon, `en.lproj` / `zh-Hant.lproj` (`Localizable.strings`, `InfoPlist.strings`; keys are the English source strings). |
 | `Sources/ATAFakePhone` | Scripted phone (handshake, encrypted messages, LAN TCP and WebRTC sender, tamper switches). Used by tests and the CLI. |
 | `Sources/ata-fakephone` | CLI around `ATAFakePhone` for regression runs against a running debug app. |
 | `Tests/ATACoreTests` | Vectors (`../spec/vectors.json` read in place), framing, end-to-end engine tests, WebRTC loopback. |
-| `scripts/` | `build-app.sh` (build + bundle + sign), `release.sh` (signed release + zip/dmg/checksums), `make-signing-identity.sh` (one-time certificate), `make-icon.sh`, `test-install.sh` (installer authenticity test). |
+| `scripts/` | `build-app.sh` (build + bundle + sign), `release.sh` (signed release + zip/dmg/checksums), `make-signing-identity.sh` (one-time certificate), `make-icon.sh`, `test-install.sh` (installer authenticity test), `check-strings.py` (every UI string translated, no glossary "never show" words). |
 | `signing/ata-signing-cert.pem` | Public half of the release certificate (pinned by `release.sh`). |
 | `install.sh` | The `curl … \| sh` installer (also attached to every release). |
 | `../.github/workflows/release-mac.yml` | (repository root) Tag `v*` → test, sign, publish the release. |

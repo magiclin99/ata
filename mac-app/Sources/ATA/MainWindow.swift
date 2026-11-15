@@ -49,86 +49,94 @@ struct MainView: View {
                         Text(verbatim: "ATA").font(.title2.weight(.semibold))
                         Label(model.statusLine, systemImage: model.statusSymbol)
                             .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
                 }
-                if case .unauthorized = model.bluetooth {
-                    Button("Open Bluetooth Privacy Settings…") { model.openBluetoothSettings() }
-                }
+                bluetoothNotice
                 if model.localNetworkBlocked {
                     HStack(alignment: .firstTextBaseline) {
-                        Label("Local network connection was blocked — check the macOS firewall", systemImage: "exclamationmark.triangle")
+                        Label("Your Mac's firewall is blocking your phone, so sending is slower.", systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.orange)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer()
-                        Button("Learn More…") { model.openFirewallHelp() }
+                        Button("How to Fix…") { model.openFirewallHelp() }
                     }
-                }
-            } footer: {
-                Text("ATA keeps running in the background after you close this window. To open it again, open ATA from the Applications folder or use the ATA icon in the menu bar.")
-                    .font(.footnote).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Section("Paired Devices") {
-                if model.devices.isEmpty {
-                    Text("No paired devices yet. Pair your Android phone to start receiving files.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(model.devices) { d in
-                        HStack {
-                            Label { Text(verbatim: d.name) } icon: { Image(systemName: "iphone") }
-                            Spacer()
-                            Text("Paired \(d.pairedAt.formatted(date: .abbreviated, time: .omitted))")
-                                .font(.callout).foregroundStyle(.secondary)
-                            Button("Remove") { confirmRemove = d }
-                        }
-                    }
-                }
-                HStack {
-                    Spacer()
-                    Button("Pair New Device…") { PairingWindowController.shared.show() }
-                        .keyboardShortcut("n")
                 }
             }
 
-            Section("Recent Files") {
-                if model.recentFiles.isEmpty {
-                    Text("No recent files").foregroundStyle(.secondary)
-                } else {
-                    ForEach(model.recentFiles, id: \.self) { url in
-                        Button { model.reveal(url) } label: {
+            if model.devices.isEmpty {
+                welcome
+            }
+
+            if !model.recentFiles.isEmpty || !model.devices.isEmpty {
+                Section {
+                    if model.recentFiles.isEmpty {
+                        Text("Nothing received yet. On your phone, share a photo or file and choose ATA.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(model.recentFiles, id: \.self) { url in
                             HStack {
                                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path)).resizable().frame(width: 16, height: 16)
                                 Text(verbatim: url.lastPathComponent).lineLimit(1).truncationMode(.middle)
                                 Spacer()
+                                Button("Show in Finder") { model.reveal(url) }
                             }
-                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
-                        .help(Text("Show in Finder"))
+                    }
+                } header: {
+                    Text("Recently Received")
+                } footer: {
+                    HStack {
+                        Text("Files are saved in “\(model.saveDirName)”.")
+                        Spacer()
+                        Button("Open Save Folder") { model.openSaveFolder() }
+                        if !model.recentFiles.isEmpty {
+                            Button("Clear List") { model.clearRecent() }
+                        }
+                    }
+                    .font(.callout).foregroundStyle(.secondary)
+                }
+            }
+
+            if !model.devices.isEmpty {
+                Section("Paired Phones") {
+                    ForEach(model.devices) { d in
+                        HStack {
+                            Label { Text(verbatim: d.name) } icon: { Image(systemName: "iphone") }
+                            Spacer()
+                            Text("Paired on \(d.pairedAt.formatted(date: .abbreviated, time: .omitted))")
+                                .font(.callout).foregroundStyle(.secondary)
+                            Button("Remove") { confirmRemove = d }
+                        }
                     }
                     HStack {
                         Spacer()
-                        Button("Clear Recent Files") { model.clearRecent() }
+                        Button("Pair a Phone…") { PairingWindowController.shared.show() }
+                            .keyboardShortcut("n")
                     }
                 }
             }
 
             Section("Settings") {
                 LabeledContent {
-                    HStack {
-                        Button("Change…") { model.chooseSaveFolder() }
-                        Button("Open") { model.openSaveFolder() }
-                    }
+                    Button("Change…") { model.chooseSaveFolder() }
                 } label: {
+                    HStack(spacing: 6) {
+                        Text("Save received files in")
+                        Image(nsImage: NSWorkspace.shared.icon(forFile: model.saveDir.path)).resizable().frame(width: 16, height: 16)
+                        Text(verbatim: model.saveDirName).foregroundStyle(.secondary)
+                    }
+                    .help(Text(verbatim: model.saveDir.path(percentEncoded: false)))
+                }
+                Toggle("Open at Login", isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
+                Toggle(isOn: Binding(get: { model.showInDock }, set: { model.showInDock = $0 })) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Save folder")
-                        Text(verbatim: model.saveDir.path(percentEncoded: false))
-                            .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                        Text("Show ATA in the Dock")
+                        Text("If you turn this off, ATA is only in the menu bar at the top of the screen.")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                Toggle("Launch at Login", isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
             }
 
             Section {
@@ -144,12 +152,57 @@ struct MainView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(minWidth: 420, minHeight: 460)
+        .frame(minWidth: 440, minHeight: 460)
         .confirmationDialog(confirmTitle, isPresented: Binding(get: { confirmRemove != nil }, set: { if !$0 { confirmRemove = nil } })) {
             Button("Remove", role: .destructive) { if let d = confirmRemove { model.remove(d) }; confirmRemove = nil }
             Button("Cancel", role: .cancel) { confirmRemove = nil }
         } message: {
-            Text("The phone will have to be paired again before it can send files to this Mac.")
+            Text("To send from this phone again, you'll need to pair it again.")
+        }
+    }
+
+    /// First launch: what ATA is, that it keeps running, how to get this window back, and one button.
+    private var welcome: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Welcome to ATA").font(.title3.weight(.semibold))
+                Text("ATA lets you send photos and files from your Android phone to this Mac.")
+                Text("It keeps running in the background, even after you close this window. To see this window again, open ATA again, or click its icon in the Dock.")
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Spacer()
+                    Button("Pair a Phone…") { PairingWindowController.shared.show() }
+                        .keyboardShortcut(.defaultAction)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.vertical, 4)
+        }
+    }
+
+    @ViewBuilder private var bluetoothNotice: some View {
+        if model.bluetoothNotAskedYet {
+            Text("Your Mac will ask whether ATA can use Bluetooth. Click “Allow” so your phone can find this Mac. Without it, ATA can't receive files.")
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            switch model.bluetooth {
+            case .unauthorized:
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("To receive files, ATA needs Bluetooth. Open System Settings → Privacy & Security → Bluetooth, and turn on ATA.")
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack { Spacer(); Button("Open Bluetooth Permissions…") { model.openBluetoothPrivacySettings() } }
+                }
+            case .off:
+                HStack {
+                    Text("Turn on Bluetooth so your phone can find this Mac.")
+                    Spacer()
+                    Button("Open Bluetooth Settings…") { model.openBluetoothSettings() }
+                }
+            default:
+                EmptyView()
+            }
         }
     }
 

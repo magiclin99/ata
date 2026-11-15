@@ -16,21 +16,27 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         center?.delegate = self
     }
 
-    func transferEnded(_ s: SessionSummary) {
+    /// Result first, then where the files are (TERMS.md: a finished transfer reads like a result). Clicking the
+    /// notification shows the first file in Finder.
+    func transferEnded(_ s: SessionSummary, savedIn folder: String) {
         let n = s.saved.count
         let title: String
         var body: String
         let phone = s.phoneName
         if n > 0 {
-            title = n == 1 ? String(localized: "Received 1 file from \(phone)") : String(localized: "Received \(n) files from \(phone)")
-            body = ListFormatter.localizedString(byJoining: s.saved.prefix(3).map(\.lastPathComponent))
-            if n > 3 { body = String(localized: "\(body) and \(n - 3) more") }
-            if s.failedFiles > 0 { body = String(localized: "\(body) — \(s.failedFiles) failed") }
+            title = n == 1 ? String(localized: "1 file from “\(phone)”") : String(localized: "\(n) files from “\(phone)”")
+            var names = ListFormatter.localizedString(byJoining: s.saved.prefix(3).map(\.lastPathComponent))
+            if n > 3 { names = String(localized: "\(names) and \(n - 3) more") }
+            body = String(localized: "Saved in “\(folder)”: \(names). Click to show in Finder.")
+            if s.failedFiles > 0 { body += " " + AppModel.incompleteFiles(s.failedFiles) }
+        } else if s.error == "cancelled" {
+            title = String(localized: "Sending from “\(phone)” was cancelled")
+            body = String(localized: "Nothing was saved. Send again whenever you're ready.")
         } else {
-            title = String(localized: "Transfer from \(phone) failed")
-            if let e = s.error { body = AppModel.localizedEngineError(e) }
-            else if s.failedFiles > 0 { body = String(localized: "\(s.failedFiles) file(s) failed verification") }
-            else { body = String(localized: "No files were received") }
+            title = String(localized: "Nothing arrived from “\(phone)”")
+            if let e = s.error { body = AppModel.plainError(e) }
+            else if s.failedFiles > 0 { body = AppModel.incompleteFiles(s.failedFiles) }
+            else { body = String(localized: "Send again from your phone.") }
         }
         post(title: title, body: body, reveal: s.saved.first?.path)
     }

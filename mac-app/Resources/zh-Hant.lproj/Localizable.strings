@@ -1,86 +1,96 @@
 /* ATA for Mac — Traditional Chinese (Taiwan). Keys are the English source strings.
-   Wording rules (trademark guidelines): "Android" only as a descriptor before a noun (Android 手機); "Mac" only as a
-   reference (這台 Mac). */
+   Wording follows the shared glossary (internal TERMS.md): plain words for non-technical people, no jargon,
+   errors say what happened and one thing to try. "Android" only before a noun (Android 手機); "Mac" only as a
+   reference (這台 Mac). Use 「QR code」, never 「QR 碼」. */
 
 /* Menu */
-"Open Bluetooth Privacy Settings…" = "打開藍牙隱私權設定…";
+"Allow Bluetooth for ATA…" = "允許 ATA 使用藍牙…";
+"Open Bluetooth Settings…" = "打開藍牙設定…";
+"Your Mac's firewall is blocking your phone. How to Fix…" = "Mac 的防火牆擋住了手機。怎麼修正…";
 "Open ATA Window" = "打開 ATA 視窗";
-"Pair New Device…" = "配對新裝置…";
-"No Paired Devices" = "沒有已配對的裝置";
-"Paired Devices" = "已配對的裝置";
-"Paired %@" = "配對於 %@";
+"Pair a Phone…" = "配對手機…";
+"Paired Phones" = "已配對的手機";
+"Paired on %@" = "配對日期：%@";
 "Remove “%@”" = "移除「%@」";
-"No Recent Files" = "沒有最近的檔案";
-"Recent Files" = "最近的檔案";
-"Clear Recent Files" = "清除最近的檔案";
+"Recently Received — Click to Show in Finder" = "最近收到的檔案（點一下在 Finder 中顯示）";
 "Save to “%@”…" = "儲存到「%@」…";
 "Open Save Folder" = "打開儲存檔案夾";
-"Launch at Login" = "登入時啟動";
+"Open at Login" = "登入時打開";
 "Check for Updates…" = "檢查更新…";
 "Support ATA…" = "支持 ATA…";
 "Quit ATA" = "結束 ATA";
 
 /* Pairing window */
-"Pair New Device" = "配對新裝置";
 "Pair a Phone" = "配對手機";
-"Open ATA on your Android phone and scan this code." = "在 Android 手機上打開 ATA，掃描這個 QR 碼。";
-"Pairing QR code" = "配對 QR 碼";
-"Waiting for phone · expires in %lld:%@" = "等待手機中 · %lld:%@ 後失效";
-"Paired with %@" = "已與「%@」配對";
-"Pairing failed" = "配對失敗";
-"This code has expired" = "這個 QR 碼已失效";
-"New Code" = "產生新的 QR 碼";
+"On your phone, open ATA, tap “Pair with a Mac”, and scan this QR code." = "在手機上打開 ATA，點「與 Mac 配對」，再掃描這個 QR code。";
+"Pairing QR code" = "配對用的 QR code";
+"Waiting for your phone… This QR code works for %lld:%@ more." = "等待手機掃描…這個 QR code 還可以用 %lld:%@。";
+"Paired with “%@”" = "已和「%@」配對";
+"Now share photos or files on your phone and choose ATA. They'll arrive on this Mac." = "現在在手機上分享照片或檔案，選 ATA，就會傳到這台 Mac。";
+"If your Mac asks whether ATA may accept incoming network connections, click “Allow” so your phone can deliver files." = "如果 Mac 詢問是否讓 ATA「接受傳入的網路連線」，請按「允許」，手機才能把檔案送進來。";
+"Pairing didn't work" = "配對沒有成功";
+"This QR code no longer works" = "這個 QR code 已經失效";
+"Show a new QR code and scan it again with your phone." = "請產生新的 QR code，再用手機掃一次。";
+"Show a New QR Code" = "產生新的 QR code";
 "Done" = "完成";
 "Cancel" = "取消";
-"The phone's response didn't match this code. Scan the code again." = "手機的回應與這個 QR 碼不符，請重新掃描。";
-"The code was no longer valid." = "這個 QR 碼已經無效。";
 
 /* Main window */
-"ATA keeps running in the background after you close this window. To open it again, open ATA from the Applications folder or use the ATA icon in the menu bar." = "關閉這個視窗後，ATA 會繼續在背景執行。要再次打開，請從「應用程式」檔案夾打開 ATA，或使用選單列中的 ATA 圖像。";
-"No paired devices yet. Pair your Android phone to start receiving files." = "尚未配對任何裝置。配對你的 Android 手機後，就可以開始接收檔案。";
-"Remove" = "移除";
-"No recent files" = "沒有最近的檔案";
+"Welcome to ATA" = "歡迎使用 ATA";
+"ATA lets you send photos and files from your Android phone to this Mac." = "ATA 讓你把 Android 手機上的照片和檔案傳到這台 Mac。";
+"It keeps running in the background, even after you close this window. To see this window again, open ATA again, or click its icon in the Dock." = "關掉這個視窗後，ATA 會繼續在背景執行。想再看到這個視窗，再打開一次 ATA，或按 Dock 上的 ATA 圖像就可以。";
+"Your Mac will ask whether ATA can use Bluetooth. Click “Allow” so your phone can find this Mac. Without it, ATA can't receive files." = "Mac 會詢問 ATA 能不能使用藍牙。請按「允許」，手機才能找到這台 Mac；不允許的話，ATA 就收不到檔案。";
+"To receive files, ATA needs Bluetooth. Open System Settings → Privacy & Security → Bluetooth, and turn on ATA." = "ATA 需要藍牙才能接收檔案。請打開「系統設定」→「隱私權與安全性」→「藍牙」，把 ATA 打開。";
+"Open Bluetooth Permissions…" = "打開藍牙權限設定…";
+"Turn on Bluetooth so your phone can find this Mac." = "請打開藍牙，手機才能找到這台 Mac。";
+"Your Mac's firewall is blocking your phone, so sending is slower." = "Mac 的防火牆擋住了手機，所以傳得比較慢。";
+"How to Fix…" = "怎麼修正…";
+"Recently Received" = "最近收到的檔案";
+"Nothing received yet. On your phone, share a photo or file and choose ATA." = "還沒有收到檔案。在手機上分享照片或檔案，選 ATA 就可以。";
 "Show in Finder" = "在 Finder 中顯示";
-"Settings" = "設定";
-"Change…" = "更改…";
-"Open" = "打開";
-"Save folder" = "儲存位置";
-"Version %@" = "版本 %@";
+"Files are saved in “%@”." = "檔案會存在「%@」。";
+"Clear List" = "清除列表";
+"Remove" = "移除";
 "Remove “%@”?" = "要移除「%@」嗎？";
-"The phone will have to be paired again before it can send files to this Mac." = "移除後，這支手機必須重新配對，才能再傳送檔案到這台 Mac。";
+"To send from this phone again, you'll need to pair it again." = "移除後，這支手機要重新配對，才能再傳檔案過來。";
+"Settings" = "設定";
+"Save received files in" = "收到的檔案存在";
+"Change…" = "更改…";
+"Show ATA in the Dock" = "在 Dock 顯示 ATA";
+"If you turn this off, ATA is only in the menu bar at the top of the screen." = "關掉的話，ATA 只會出現在螢幕最上方的選單列。";
+"Version %@" = "版本 %@";
+"Choose where ATA saves received files" = "選擇 ATA 要把收到的檔案存在哪裡";
+"Choose" = "選擇";
 
 /* Status */
-"Receiving from %@…" = "正在從「%@」接收…";
-"Receiving “%@” %lld%%" = "正在接收「%@」%lld%%";
-"Connected to %@" = "已連線到「%@」";
+"Receiving files from “%@”…" = "正在接收「%@」傳來的檔案…";
+"Receiving “%@” (%lld%%)" = "正在接收「%@」（%lld%%）";
+"“%@” is connected" = "「%@」已連上";
+"Waiting for you to allow Bluetooth…" = "等待你允許 ATA 使用藍牙…";
 "Starting…" = "啟動中…";
-"Local network connection was blocked — check the macOS firewall" = "區域網路連線被擋下了，請檢查 macOS 防火牆";
-"Learn More…" = "了解更多…";
-"Waiting for Bluetooth permission…" = "等待藍牙權限…";
-"Bluetooth is off" = "藍牙已關閉";
-"Bluetooth access not allowed" = "未允許 ATA 使用藍牙";
-"Bluetooth LE not supported" = "這台 Mac 不支援藍牙低功耗";
-"Bluetooth: %@" = "藍牙：%@";
-"Error: %@" = "錯誤：%@";
-"Ready" = "就緒";
-"Choose where ATA saves received files" = "選擇 ATA 儲存接收檔案的位置";
-"Choose" = "選擇";
-"Launch at login: %@" = "登入時啟動：%@";
+"Bluetooth is off. Turn it on to receive files." = "藍牙已關閉，請打開藍牙才能接收檔案。";
+"ATA isn't allowed to use Bluetooth yet." = "ATA 還沒有使用藍牙的權限。";
+"This Mac's Bluetooth can't be used with ATA." = "這台 Mac 的藍牙無法和 ATA 配合使用。";
+"Bluetooth isn't available right now. Try again in a moment." = "藍牙暫時無法使用，請稍後再試。";
+"No phone paired yet" = "還沒有配對手機";
+"Ready. Send from your phone any time." = "準備好了，隨時可以從手機傳送。";
+"Couldn't turn on Open at Login. Move ATA to the Applications folder and try again." = "無法設定登入時打開。請把 ATA 移到「應用程式」檔案夾，再試一次。";
 
-/* Errors */
-"%lld file(s) failed verification" = "%lld 個檔案驗證失敗";
-"The phone disconnected before the transfer finished" = "傳送完成前，手機已中斷連線";
-"The device was removed" = "裝置已被移除";
-"A Bluetooth message could not be decrypted" = "無法解密藍牙訊息";
-"The phone reported a failure" = "手機回報傳送失敗";
-"The phone ended the session before the transfer finished" = "手機在傳送完成前結束了連線";
-"The transfer timed out" = "傳送逾時";
-"Transfer failed: %@" = "傳送失敗：%@";
+/* Errors: what happened, then one thing to try */
+"The phone cancelled sending." = "手機取消了傳送。";
+"The phone stopped before finishing. Send again." = "手機在傳完之前中斷了，請再傳一次。";
+"Sending stopped because this phone was removed. Pair it again to send." = "這支手機的配對已經移除，所以傳送停止了。要再傳的話，請重新配對。";
+"Sending stopped partway. Move your phone closer to your Mac and send again." = "傳到一半停住了。請把手機拿近 Mac 一點，再傳一次。";
+"Something went wrong. Send again. If it keeps happening, update ATA on both your phone and your Mac." = "傳送失敗了，請再傳一次。一直這樣的話，請把手機和 Mac 上的 ATA 都更新到最新版。";
+"1 file didn't arrive completely. Send it again." = "有 1 個檔案沒有完整收到，請再傳一次。";
+"%lld files didn't arrive completely. Send them again." = "有 %lld 個檔案沒有完整收到，請再傳一次。";
 
 /* Notifications */
-"Received 1 file from %@" = "已從「%@」收到 1 個檔案";
-"Received %lld files from %@" = "已從「%2$@」收到 %1$lld 個檔案";
-"%@ and %lld more" = "%1$@，以及另外 %2$lld 個";
-"%@ — %lld failed" = "%1$@ — %2$lld 個失敗";
-"Transfer from %@ failed" = "從「%@」傳送失敗";
-"No files were received" = "沒有收到任何檔案";
+"1 file from “%@”" = "收到「%@」傳來的 1 個檔案";
+"%lld files from “%@”" = "收到「%2$@」傳來的 %1$lld 個檔案";
+"%@ and %lld more" = "%1$@，還有另外 %2$lld 個";
+"Saved in “%@”: %@. Click to show in Finder." = "已存到「%1$@」：%2$@。點一下在 Finder 中顯示。";
+"Sending from “%@” was cancelled" = "「%@」取消了傳送";
+"Nothing was saved. Send again whenever you're ready." = "沒有存下任何檔案，準備好再傳一次就可以。";
+"Nothing arrived from “%@”" = "沒有收到「%@」傳來的檔案";
+"Send again from your phone." = "請從手機再傳一次。";
