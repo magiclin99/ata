@@ -22,7 +22,7 @@ Android → Mac 的隔空傳檔。這份文件是 `mac-app/` 與 `android-app/` 
 
 - QR code 有效 5 分鐘，或被成功使用一次後失效。
 - 手機掃描後立刻經 BLE 連線並完成第 4 節的握手（`pairing`:true）。握手成功後雙方才把 `K` 存起來：Mac 以 `phoneId` 為索引，手機以 `macId` 為索引。
-- 金鑰儲存：Mac 用 Keychain；Android 用 Keystore 保護的儲存（例如 EncryptedSharedPreferences 或以 Keystore 金鑰包裝）。
+- 金鑰儲存：Mac 存成檔案 `~/Library/Application Support/io.github.magiclin99.ata.mac/pairings.json`，只有目前的使用者帳號能讀寫（資料夾 0700、檔案 0600），資料夾排除在備份之外；不用 Keychain，因為沒有 Apple Team ID 的 app 每次更新都會要使用者重新輸入密碼。1.0 之前的版本存在 Keychain，第一次啟動時會在不跳出提示的情況下匯入一次，匯入後刪除 Keychain 項目。Android 用 Keystore 保護的儲存（例如 EncryptedSharedPreferences 或以 Keystore 金鑰包裝）。
 - 任一方都可以在 UI 上移除配對；移除後對方握手會收到 `auth_fail`。
 
 ## 3. BLE 傳輸層
