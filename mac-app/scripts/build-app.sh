@@ -15,6 +15,8 @@
 #                            right after, so macOS never needs to ask for its password.
 #   ATA_APP_OUT              output path of the .app (default build/ATA.app)
 #   ATA_UNIVERSAL=1          build arm64 + x86_64 (what releases ship)
+#   ATA_VERSION, ATA_BUILD_NUMBER   override CFBundleShortVersionString / CFBundleVersion in the built app (CI sets
+#                            both from the run number; default: the values in Resources/Info.plist)
 #
 # Ad-hoc signatures change with every build, so macOS treats each build as a new app (Bluetooth prompt again). Signing with the stable self-signed identity keeps the designated requirement
 # `identifier "io.github.magiclin99.ata.mac" and certificate leaf = H"<cert sha1>"` identical across builds.
@@ -39,6 +41,12 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Frameworks" "$APP/Contents/Resources"
 cp "$BIN/ATA" "$APP/Contents/MacOS/ATA"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
+if [ -n "${ATA_VERSION:-}" ]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $ATA_VERSION" "$APP/Contents/Info.plist"
+fi
+if [ -n "${ATA_BUILD_NUMBER:-}" ]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $ATA_BUILD_NUMBER" "$APP/Contents/Info.plist"
+fi
 cp "$ROOT/Resources/AppIcon.icns" "$ROOT"/Resources/MenuBarIcon*.png "$APP/Contents/Resources/"
 for l in "$ROOT"/Resources/*.lproj; do ditto "$l" "$APP/Contents/Resources/$(basename "$l")"; done
 cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"

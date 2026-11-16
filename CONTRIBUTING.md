@@ -46,14 +46,17 @@ export JAVA_HOME=/path/to/jdk                             # if `java -version` i
 ```
 
 `core/` is plain Kotlin/JVM, so most protocol work can be tested without a phone. A real phone (Android 9 or later)
-with Bluetooth LE is needed for end-to-end tests. `./gradlew bundleRelease` works without keys too and produces an
-unsigned bundle. More in [`android-app/README.md`](android-app/README.md).
+with Bluetooth LE is needed for end-to-end tests. `./gradlew assembleRelease` works without keys too and produces an
+unsigned APK. More in [`android-app/README.md`](android-app/README.md).
 
 ### CI
 
 Pull requests run [Android CI](.github/workflows/android-ci.yml) (`:core:test` and `assembleDebug`) and
 [Mac CI](.github/workflows/mac-ci.yml) (`swift build` and `swift test`), each when its app, the spec or the
-vectors change. Neither needs secrets.
+vectors change. Neither needs secrets. After a change is merged into `main`,
+[Release](.github/workflows/release.yml) runs the tests again, builds and signs both apps with the project's keys
+(repository secrets, never available to pull requests) and publishes them as the new latest release. So anything
+merged is shipped to users within minutes: keep `main` releasable.
 
 ## Protocol changes
 

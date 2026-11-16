@@ -3,9 +3,10 @@
 #
 #   scripts/release.sh
 #
-# Output in dist/ (VERSION from Resources/Info.plist):
-#   ATA-VERSION.zip  ATA-VERSION.dmg  ATA.dmg (same file, fixed name for the website)  *.sha256  SHA256SUMS.txt
-#   install.sh (unchanged installer; it uses the versioned zip)
+# Output in dist/ (VERSION from env ATA_VERSION, else Resources/Info.plist):
+#   ATA.dmg (fixed name, so the website can always link releases/latest/download/ATA.dmg)
+#   ATA-VERSION.zip (what install.sh downloads)  install.sh  *.sha256  SHA256SUMS.txt
+# Published releases are built by CI (.github/workflows/release.yml), which sets ATA_VERSION and ATA_BUILD_NUMBER.
 #
 # Signing identity: the self-signed certificate in signing/ata-signing-cert.pem (public part, in the repo). The
 # script refuses to publish anything signed by a different certificate, because a different certificate means a
@@ -14,13 +15,15 @@
 # Environment (defaults are the local secrets layout created by scripts/make-signing-identity.sh):
 #   ATA_SIGN_KEYCHAIN                 default ~/ata-secrets/mac/ata-signing.keychain-db
 #   ATA_SIGN_KEYCHAIN_PASSWORD_FILE   default ~/ata-secrets/mac/keychain-password.txt (if it exists)
-# CI (.github/workflows/release-mac.yml at the repository root) imports the .p12 into a temporary keychain and sets both.
+#   ATA_VERSION, ATA_BUILD_NUMBER     version / build number to stamp into the app (see scripts/build-app.sh)
+# CI (.github/workflows/release.yml at the repository root) imports the .p12 into a temporary keychain and sets both.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)"
-BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/Info.plist)"
+VERSION="${ATA_VERSION:-$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)}"
+BUILD="${ATA_BUILD_NUMBER:-$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/Info.plist)}"
+case "$VERSION" in *[!0-9A-Za-z.-]*|"") echo "bad version: $VERSION" >&2; exit 2 ;; esac
 BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Resources/Info.plist)"
 CERT="$ROOT/signing/ata-signing-cert.pem"
 CERT_SHA1="$(openssl x509 -in "$CERT" -noout -fingerprint -sha1 | sed 's/.*=//; s/://g')"
@@ -36,7 +39,7 @@ echo "== ATA $VERSION ($BUILD), signing with certificate SHA-1 $CERT_SHA1"
 STAGE="$ROOT/build/release"
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
-ATA_UNIVERSAL=1 ATA_APP_OUT="$STAGE/ATA.app" scripts/build-app.sh release
+ATA_VERSION="$VERSION" ATA_BUILD_NUMBER="$BUILD" ATA_UNIVERSAL=1 ATA_APP_OUT="$STAGE/ATA.app" scripts/build-app.sh release
 APP="$STAGE/ATA.app"
 
 echo "== checks"
@@ -54,6 +57,7 @@ if strings "$APP/Contents/MacOS/ATA" | grep -q -e '--debug-show-pairing' -e 'Loo
     echo "release binary still contains debug hooks" >&2; exit 1
 fi
 [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")" = "$VERSION" ]
+[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")" = "$BUILD" ]
 for b in "$APP/Contents/MacOS/ATA" "$APP/Contents/Frameworks/WebRTC.framework/WebRTC"; do
     lipo "$b" -verify_arch arm64 x86_64 || { echo "$b is not universal (arm64 + x86_64)" >&2; exit 1; }
 done
@@ -64,7 +68,7 @@ DIST="$ROOT/dist"
 rm -rf "$DIST"
 mkdir -p "$DIST"
 ZIP="ATA-$VERSION.zip"
-DMG="ATA-$VERSION.dmg"
+DMG="ATA.dmg"   # fixed name: the website links releases/latest/download/ATA.dmg
 # No resource forks / extended attributes: the zip holds only the bundle (no __MACOSX/ entries).
 ditto -c -k --norsrc --noextattr --noqtn --keepParent "$APP" "$DIST/$ZIP"
 if unzip -Z1 "$DIST/$ZIP" | grep -q '^__MACOSX/'; then echo "$ZIP contains __MACOSX entries" >&2; exit 1; fi
@@ -88,15 +92,11 @@ signing_keychain_open
 codesign --force --sign "$CERT_SHA1" --keychain "$KC" --timestamp=none --identifier "$BUNDLE_ID.dmg" "$DIST/$DMG"
 signing_keychain_close
 
-# Same disk image under a fixed name, so the website can always link releases/latest/download/ATA.dmg.
-cp "$DIST/$DMG" "$DIST/ATA.dmg"
-cmp -s "$DIST/$DMG" "$DIST/ATA.dmg"
-
 cp "$ROOT/install.sh" "$DIST/install.sh"
 (
     cd "$DIST"
-    for f in "$ZIP" "$DMG" ATA.dmg install.sh; do shasum -a 256 "$f" > "$f.sha256"; done
-    shasum -a 256 "$ZIP" "$DMG" ATA.dmg install.sh > SHA256SUMS.txt
+    for f in "$DMG" "$ZIP" install.sh; do shasum -a 256 "$f" > "$f.sha256"; done
+    shasum -a 256 "$DMG" "$ZIP" install.sh > SHA256SUMS.txt
 )
 
 echo "== verify dmg"

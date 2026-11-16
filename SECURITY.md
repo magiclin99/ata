@@ -12,13 +12,13 @@ Please report security problems **privately**, not in a public issue:
 Include the app (Android or Mac) and version, what an attacker needs (being in Bluetooth range, on the same network,
 code running on the Mac, …), and the steps to reproduce. Don't send real pairing links, QR codes, pairing keys or
 private files; a description or a made-up example is enough. ATA is maintained by one person in spare time: expect a
-first reply within about a week. Fixes ship as a new Mac release and a new Android version, and the report is
-credited in the release notes unless you prefer otherwise.
+first reply within about a week. Fixes ship in a new release (both apps are published together on
+GitHub Releases), and the report is credited in the release notes unless you prefer otherwise.
 
 ## Supported versions
 
-Only the latest release of each app gets fixes: the latest Mac release on
-[GitHub Releases](https://github.com/magiclin99/ata/releases/latest), and the current Android version.
+Only the [latest release](https://github.com/magiclin99/ata/releases/latest) gets fixes. It contains both apps
+(`ATA.apk`, `ATA.dmg`) and is built automatically from `main`.
 
 ## Scope
 
@@ -27,7 +27,9 @@ In scope:
 - The Android app (`android-app/`) and the Mac app (`mac-app/`), including pairing, the Bluetooth LE handshake, the
   local-network and WebRTC transfer paths, and how pairing keys and received files are stored.
 - The protocol itself ([`SPEC.md`](SPEC.md)): a design flaw is in scope even if both apps implement it faithfully.
-- The Mac installer (`mac-app/install.sh`) and its signature check, and the release workflow in `.github/workflows/`.
+- The Mac installer (`mac-app/install.sh`) and its signature check, and the release workflow
+  (`.github/workflows/release.yml`): it runs only for pushes to `main` and manual runs by the owner, never for pull
+  requests, and checks both apps' signatures against the pinned certificates before publishing.
 
 Out of scope: denial of service by someone in radio range (jamming, flooding advertisements), attacks that need the
 phone unlocked in hand or full control of your macOS user account, the public STUN servers ATA contacts, and the
@@ -57,5 +59,11 @@ website's hosting (GitHub Pages).
   `3DA39545619D4949FA758C6BECC77F9E2E3CE65E`, SHA-256
   `B7C994A86BB61C91BB8A2F94CBAA33B9BC1C7FE97E646CA3DF38A49E964C9387`. If a "new" ATA ever presents a different
   certificate, don't install it.
+- **Android builds** are not on Google Play; they are published as `ATA.apk` on GitHub Releases. Every release is
+  signed with the same key, so Android refuses to install an update signed by anyone else over your copy. The
+  certificate's SHA-256 is
+  `E1242C2CEC30236063FDBE708E9DD97791C3849F2F5932AB963EFD11012D036D`
+  ([`android-app/signing/release-cert.sha256`](android-app/signing/release-cert.sha256)). To check a download:
+  `apksigner verify --print-certs ATA.apk`.
 - **Debug hooks** (SPEC §9) exist only in debug builds. Release builds compile them out, and the Mac release script
   refuses a binary that still contains them.

@@ -4,8 +4,9 @@ ATA receives photos and files sent from your Android phone to your Mac computer.
 within Bluetooth range of each other; the files themselves travel over your local network. ATA for Mac is free and
 open source (MIT). It needs macOS 14 or later and runs on Apple silicon and Intel Macs.
 
-To send files you need the ATA app on your Android phone (coming soon to Google Play, with a closed test
-before release; see the [main README](../README.md#get-the-android-app)). Both apps are completely free: no
+To send files you need the ATA app on your Android phone: download
+[`ATA.apk`](https://github.com/magiclin99/ata/releases/latest/download/ATA.apk) on the phone (see the
+[main README](../README.md#get-the-android-app)). Both apps are completely free: no
 purchases, no subscriptions, no ads, no limits.
 
 ## Install
@@ -25,8 +26,8 @@ quits ATA if it is running, replaces `/Applications/ATA.app` and opens it. Read 
 `sh` to only download and verify. Because Terminal downloads are not marked as "downloaded from the internet", macOS
 opens the app without the Gatekeeper warning described below.
 
-**Or download it with your browser:** get `ATA-<version>.dmg` (or `.zip`) from
-[Releases](https://github.com/magiclin99/ata/releases), drag **ATA** into **Applications**, then open it the first
+**Or download it with your browser:** get [`ATA.dmg`](https://github.com/magiclin99/ata/releases/latest/download/ATA.dmg)
+(always the latest release), open it, drag **ATA** into **Applications**, then open it the first
 time like this (ATA is signed with its own certificate, not by an Apple Developer ID, and is not notarized by Apple):
 
 - **macOS 15 (Sequoia) and later:** double-click ATA. macOS says it can't verify the app — click **Done**. Open
@@ -35,7 +36,7 @@ time like this (ATA is signed with its own certificate, not by an Apple Develope
 - **macOS 14 (Sonoma):** in Applications, **Control-click** (right-click) ATA, choose **Open**, then click **Open**
   in the dialog.
 
-This is needed once per download. To check what you downloaded, compare `shasum -a 256 ATA-<version>.dmg` with
+This is needed once per download. To check what you downloaded, compare `shasum -a 256 ATA.dmg` with
 `SHA256SUMS.txt` on the release page. To check who signed the app:
 
 ```sh
@@ -50,8 +51,7 @@ settings: delete `~/Library/Application Support/io.github.magiclin99.ata.mac` an
 
 1. Open ATA. The first time, the window shows a short welcome and the pairing QR code right away. On your phone,
    open ATA, tap **Pair with a Mac**, and scan it. If the phone doesn't have ATA yet, a second, separate QR code in
-   the same window opens the page to get it (one constant, `Links.getAndroidApp`, to switch to the Play Store at
-   launch). After pairing, the window shows the phone's name and what to do next.
+   the same window opens the page to get it (one constant, `Links.getAndroidApp`). After pairing, the window shows the phone's name and what to do next.
    - The first pairing turns on **Open at Login** (only for the copy in /Applications, and never if you already set
      it yourself), and says so in one sentence with the switch right there. If you turn it off, ATA never turns it
      back on. Without it, after a restart ATA isn't running and the phone can't find the Mac.
@@ -72,7 +72,7 @@ The interface is in English and Traditional Chinese (it follows your macOS langu
 project's plain-language glossary: no technical terms, and every problem is one sentence about what happened plus one
 thing to try.
 
-**Updates:** ATA 1.0 does not update itself. **Check for Updates…** opens the Releases page; run the install command
+**Updates:** ATA does not update itself. A new release is published whenever the app changes. **Check for Updates…** opens the Releases page; run the install command
 again (or download the new dmg) to update. Pairings and settings are kept.
 
 ## Permissions
@@ -134,10 +134,10 @@ paired again.
 | `scripts/` | `build-app.sh` (build + bundle + sign), `release.sh` (signed release + zip/dmg/checksums), `make-signing-identity.sh` (one-time certificate), `make-icon.sh`, `test-install.sh` (installer authenticity test), `check-strings.py` (every UI string translated, no glossary "never show" words). |
 | `signing/ata-signing-cert.pem` | Public half of the release certificate (pinned by `release.sh`). |
 | `install.sh` | The `curl … \| sh` installer (also attached to every release). |
-| `../.github/workflows/release-mac.yml` | (repository root) Tag `v*` → test, sign, publish the release. |
+| `../.github/workflows/release.yml` | (repository root) Every app change on `main` → test, sign, publish one release with both apps. |
 
-Bundle id `io.github.magiclin99.ata.mac`, version in `Resources/Info.plist` (`CFBundleShortVersionString` /
-`CFBundleVersion`). Pairing keys in `~/Library/Application Support/io.github.magiclin99.ata.mac/pairings.json`;
+Bundle id `io.github.magiclin99.ata.mac`. Published builds get their version from the release workflow
+(`1.1.<n>`, build `1000 + <n>`); `Resources/Info.plist` holds the version used by local builds. Pairing keys in `~/Library/Application Support/io.github.magiclin99.ata.mac/pairings.json`;
 settings in the `io.github.magiclin99.ata.mac` defaults domain.
 
 **Reserved support link.** `ATASupportURL` in `Resources/Info.plist` is empty, so there is no "Support ATA…" item
@@ -171,7 +171,7 @@ or logo.
 ### Release
 
 ```sh
-scripts/release.sh     # → dist/ATA-<v>.zip, ATA-<v>.dmg, ATA.dmg, *.sha256, SHA256SUMS.txt, install.sh
+scripts/release.sh     # → dist/ATA.dmg, ATA-<v>.zip, *.sha256, SHA256SUMS.txt, install.sh
 ```
 
 Builds a universal (arm64 + x86_64) release with the debug hooks compiled out, signs it with the release certificate,
@@ -183,7 +183,8 @@ arrow from ATA to Applications (`scripts/make-dmg-background.swift` → `Resourc
 layout is a stored file, `Resources/dmg/DS_Store`, made once by `scripts/make-dmg-layout.sh` (dmgbuild from a throwaway
 venv, hash-pinned in `scripts/requirements-dmg.txt`, settings in `scripts/dmg-settings.py`). Releases then need only
 `hdiutil create`. That avoids copying the app onto a writable mounted image, which a security scanner can keep busy.
-`ATA.dmg` is the same file under a fixed name, so the website can link `releases/latest/download/ATA.dmg`. The zip carries no resource forks or
+The dmg is always named `ATA.dmg`, so the website can link `releases/latest/download/ATA.dmg`; the zip is versioned
+(`ATA-<v>.zip`) because `install.sh` downloads it by version. The zip carries no resource forks or
 `__MACOSX/` entries. The signing keychain is locked again as soon as signing is done.
 
 `scripts/test-install.sh` checks the installer's authenticity check with `--dry-run` against local fake releases.
@@ -191,9 +192,11 @@ It touches neither /Applications nor a running ATA. The release-signed app must 
 an ad-hoc re-signed copy, a copy signed by another self-signed certificate with the same name, a modified copy, and a
 bad checksum.
 
+`ATA_VERSION` and `ATA_BUILD_NUMBER` set the version stamped into the app (default: `Resources/Info.plist`).
 Locally it uses `~/ata-secrets/mac/ata-signing.keychain-db` (created once by `scripts/make-signing-identity.sh`).
-In CI, pushing a tag `v<version>` that matches `CFBundleShortVersionString` runs
-`.github/workflows/release-mac.yml` (at the repository root), which needs two repository secrets:
+Published releases are built by `.github/workflows/release.yml` (at the repository root) on every app change pushed
+to `main`; it runs `release.sh` and `test-install.sh` and publishes together with the Android APK. For the Mac side it
+needs two repository secrets (`internal/set-ci-secrets.sh` on the owner's Mac sets them and the Android ones):
 
 | Secret | Value |
 |---|---|

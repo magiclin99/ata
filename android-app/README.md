@@ -3,7 +3,10 @@
 Shares files from an Android phone to a paired Mac. Contract: [`../SPEC.md`](../SPEC.md) (protocol v2). Free and open
 source under the MIT License ([`LICENSE`](LICENSE)); third-party notices are in
 `app/src/main/res/raw/third_party_notices.txt` (also shown in the app).
-applicationId/namespace `io.github.magiclin99.ata`, versionName 1.0.0 (versionCode 1), minSdk 28, targetSdk 36.
+applicationId/namespace `io.github.magiclin99.ata`, minSdk 28, targetSdk 36. Distributed as an APK from GitHub
+Releases (`releases/latest/download/ATA.apk`), not Google Play. Version: published builds are `1.1.<n>` with
+versionCode `1000 + <n>` (set by the release workflow); local builds default to 1.0.0 (versionCode 1), override with
+`-Pata.versionName=… -Pata.versionCode=…`.
 The protocol core keeps its own package `com.ata.core`.
 
 ## Layout
@@ -22,7 +25,7 @@ export JAVA_HOME=/path/to/jdk   # JDK 17 or newer
 ./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew lintDebug          # app/build/reports/lint-results-debug.txt
 ./gradlew lintRelease
-./gradlew bundleRelease      # R8-minified AAB signed with the upload key: app/build/outputs/bundle/release/app-release.aab
+./gradlew assembleRelease    # R8-minified APK signed with ATA's key: app/build/outputs/apk/release/app-release.apk
 ```
 
 Layout screenshots (opt-in; Robolectric downloads an Android runtime the first time): the empty screen, pairing and
@@ -38,12 +41,22 @@ Needs the Android SDK: set `sdk.dir` in `local.properties` (not committed) or `A
 
 ### Release signing
 
-`bundleRelease` signs with the upload key described by a properties file outside the repo: Gradle property
-`-Pata.signing=<file>`, else env `ATA_SIGNING_PROPERTIES`, else `~/ata-secrets/android/signing.properties`
-(keys `storeFile`, `storePassword`, `keyAlias`, `keyPassword`). Without it the AAB is built unsigned, so anyone can
-build it. Play App Signing holds the app signing key. Never commit the keystore or that file.
+The release build is signed with ATA's signing key (created as "ATA Android upload key"; since ATA is not on Google
+Play it is the app's only signing key). Android installs an update only if it is signed with the same key as the
+installed app, so **every release must use this key, and losing it means users have to uninstall and pair again**.
+Its certificate's SHA-256 is pinned in [`signing/release-cert.sha256`](signing/release-cert.sha256); the release
+workflow refuses an APK signed with anything else. To check a downloaded APK:
+`apksigner verify --print-certs ATA.apk` and compare the "certificate SHA-256 digest".
 
-ABIs: arm64-v8a (16 KB-aligned `libjingle_peerconnection_so.so`) and armeabi-v7a; Play serves one per device.
+Where Gradle finds the key, in order: env `ATA_SIGNING_STORE_FILE`, `ATA_SIGNING_STORE_PASSWORD`,
+`ATA_SIGNING_KEY_ALIAS`, `ATA_SIGNING_KEY_PASSWORD` (CI, from repository secrets); else a properties file: Gradle
+property `-Pata.signing=<file>`, env `ATA_SIGNING_PROPERTIES`, or `~/ata-secrets/android/signing.properties` (keys
+`storeFile`, `storePassword`, `keyAlias`, `keyPassword`). Without either, the APK is built unsigned
+(`app-release-unsigned.apk`), so anyone can build it. Never commit the keystore or that file. Published releases come
+only from `.github/workflows/release.yml` (repository root), which runs `:core:test` and `:app:testDebugUnitTest`
+first.
+
+ABIs: arm64-v8a (16 KB-aligned `libjingle_peerconnection_so.so`) and armeabi-v7a, both in the one APK.
 x86/x86_64 are left out (emulators/Chromebooks; the BLE-to-Mac use case is phones).
 
 ### Launcher icon
@@ -121,7 +134,7 @@ happened plus one thing to try (`Texts.kt`, `res/values*/strings.xml`). Specific
 - Reserved voluntary-donation entry, off by default. Two build-config values in `app/build.gradle.kts`:
   `SUPPORT_URL` (string, empty by default; Gradle property `ata.supportUrl`) and `SHOW_SUPPORT_LINK` (boolean, false
   by default; `ata.showSupportLink`). A "Support ATA" row appears in the About section only when the URL is
-  non-empty **and** the flag is true; it just opens the URL in the browser. Keep the flag false for Google Play
-  builds: Google Play's Payments policy restricts in-app links to outside payment pages, so it has to be re-checked
-  before the row is ever enabled there. A donation never unlocks anything.
+  non-empty **and** the flag is true; it just opens the URL in the browser. Turning it on is the owner's decision
+  (if ATA is ever offered on Google Play, Play's Payments policy on links to outside payment pages must be checked
+  first). A donation never unlocks anything.
 - The About section's "Help and feedback" link (`help_url` string, per language) opens the site's Help page.

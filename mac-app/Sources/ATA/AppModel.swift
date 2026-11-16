@@ -7,10 +7,10 @@ import ATACore
 
 /// Web addresses the app links to, in one place.
 enum Links {
-    /// Where to get the Android app. Before the Google Play launch this is the closed-test page; at launch, switch both
-    /// to the Play Store listing (https://play.google.com/store/apps/details?id=io.github.magiclin99.ata).
-    static let getAndroidAppEnglish = URL(string: "https://magiclin99.github.io/ata/beta/")!
-    static let getAndroidAppChinese = URL(string: "https://magiclin99.github.io/ata/zh-tw/beta/")!
+    /// Where to get the Android app: the website's download page (the APK is published on GitHub Releases, not Google
+    /// Play). Mac 1.0.3 and earlier link /beta/ instead; the website keeps that address working.
+    static let getAndroidAppEnglish = URL(string: "https://magiclin99.github.io/ata/android/")!
+    static let getAndroidAppChinese = URL(string: "https://magiclin99.github.io/ata/zh-tw/android/")!
 
     static var prefersChinese: Bool { Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true }
     static var getAndroidApp: URL { prefersChinese ? getAndroidAppChinese : getAndroidAppEnglish }

@@ -8,8 +8,7 @@
 Share from any app, pick your Mac, and the file lands in Downloads. The devices connect directly, everything is encrypted end to end, and there's no account and no cloud.</p>
 
 <p align="center">
-  <!-- At Android launch, replace the next line with: <a href="https://play.google.com/store/apps/details?id=io.github.magiclin99.ata">Android app (Google Play)</a> · -->
-  Android app: coming soon to Google Play ·
+  <a href="https://github.com/magiclin99/ata/releases/latest/download/ATA.apk">Download the Android app</a> ·
   <a href="https://magiclin99.github.io/ata/install/">Install the Mac app</a> ·
   <a href="https://magiclin99.github.io/ata/">Website</a> ·
   <a href="https://magiclin99.github.io/ata/support/">Help</a> ·
@@ -22,30 +21,28 @@ This repository contains the **Android app**, the **Mac app**, and the **protoco
 `spec/vectors.json`, written in Traditional Chinese), all MIT licensed. Both apps are completely free (no in-app
 purchases, no limits, no ads) and collect nothing. You can read the code to check that.
 
+Both apps are downloaded from this repository's [latest release](https://github.com/magiclin99/ata/releases/latest),
+which is built automatically from the code here every time an app changes. The [website](https://magiclin99.github.io/ata/)
+walks you through it step by step.
+
 ## Install (Mac)
 
 ```sh
 curl -fsSL https://github.com/magiclin99/ata/releases/latest/download/install.sh | sh
 ```
 
-The latest release is **ATA 1.0.3 for Mac** ([release notes](https://github.com/magiclin99/ata/releases/latest)).
-The command installs whatever the latest release is, verifies its checksum and its signing certificate, and is also
-how you update. Or [download `ATA.dmg`](https://github.com/magiclin99/ata/releases/latest/download/ATA.dmg) (always
-the latest release). The app
-isn't notarized, so the first launch needs one **Open Anyway** step. See the
+The command installs the latest release, verifies its checksum and its signing certificate, and is also how you
+update. Or [download `ATA.dmg`](https://github.com/magiclin99/ata/releases/latest/download/ATA.dmg) (always the
+latest release). The app isn't notarized, so the first launch needs one **Open Anyway** step. See the
 [install guide](https://magiclin99.github.io/ata/install/). macOS 14 or later, Apple silicon and Intel.
 
 ## Get the Android app
 
-**Android app: coming soon to Google Play** (Android 9 or later). Before release it goes through a
-[closed test](https://magiclin99.github.io/ata/beta/), and you can join it: email [magiclin99@gmail.com](mailto:magiclin99@gmail.com?subject=ATA%20closed%20test) and include the Google
-account address you use on your phone. The app is built from [`android-app/`](android-app/). To build it yourself,
-see [Build from source](#build-from-source).
-
-<!-- At Android launch, replace the paragraph above with:
-Get ATA from [Google Play](https://play.google.com/store/apps/details?id=io.github.magiclin99.ata) (Android 9 or later). It's the same code as [`android-app/`](android-app/).
-To build it yourself, see [Build from source](#build-from-source).
--->
+[Download `ATA.apk`](https://github.com/magiclin99/ata/releases/latest/download/ATA.apk) on your phone and open it
+(Android 9 or later). ATA isn't on Google Play, so your phone asks once whether to allow installing apps from your
+browser. To update, download and open the newest `ATA.apk` the same way: it installs over the old version and keeps
+your pairings. The app is built from [`android-app/`](android-app/); to build it yourself, see
+[Build from source](#build-from-source).
 
 ## How it works
 
@@ -68,6 +65,9 @@ back to a server. Files never pass through any server.
   (its fingerprints travel inside the encrypted Bluetooth channel). There is no server and no relay.
 - Mac releases are signed with one fixed self-signed certificate. The installer refuses any other signature, and
   [`SECURITY.md`](SECURITY.md) shows how to check it yourself.
+- Android releases are always signed with the same key (certificate SHA-256 in
+  [`android-app/signing/release-cert.sha256`](android-app/signing/release-cert.sha256)), so your phone only installs
+  an update that comes from the same publisher.
 
 The full protocol, with test vectors both apps must pass, is in [`SPEC.md`](SPEC.md) (Traditional Chinese) and
 [`spec/vectors.json`](spec/vectors.json). Found a problem? Please report it privately as described in
@@ -75,8 +75,10 @@ The full protocol, with test vectors both apps must pass, is in [`SPEC.md`](SPEC
 
 ## Limits, plainly
 
+ATA is made for sending from your phone to your own Mac next to you, so the two devices need to be within Bluetooth
+range (about the same room). It can't send to a Mac somewhere else.
+
 - Android phone → Mac only. Not Mac → phone, not iPhone or iPad.
-- The devices must be within Bluetooth range (about the same room). No remote sending.
 - Fastest on the same Wi-Fi: about 60 MB in about 6 s in our tests, including setup. Across networks, roughly
   1 MB/s on mobile data, and it uses mobile data.
 - No resume for interrupted transfers yet.
@@ -105,7 +107,7 @@ ATA is free and stays free. If it saves you time and you'd like to support its d
 | [`SPEC.md`](SPEC.md) | Protocol specification v2 (Traditional Chinese). |
 | [`spec/vectors.json`](spec/vectors.json) | Test vectors for the specification; both apps' tests read them in place. |
 | [`site/`](site/) | The website at https://magiclin99.github.io/ata/. |
-| [`.github/workflows/`](.github/workflows/) | Android CI and Mac CI (tests + builds), Mac release on tag `v*`, website deployment. |
+| [`.github/workflows/`](.github/workflows/) | Android CI and Mac CI (tests + builds), the release (every app change on `main` → signed `ATA.apk` + `ATA.dmg`), website deployment. |
 
 ## Build from source
 
@@ -130,8 +132,17 @@ echo "sdk.dir=/path/to/Android/sdk" > local.properties   # or export ANDROID_HOM
 ```
 
 Release builds are signed with keys kept outside the repository; without them the Mac release script stops and the
-Android release bundle is built unsigned. See each app's README, and [`CONTRIBUTING.md`](CONTRIBUTING.md) before
+Android release APK is built unsigned. See each app's README, and [`CONTRIBUTING.md`](CONTRIBUTING.md) before
 opening a pull request.
+
+### How releases are made
+
+Every push to `main` that changes an app or the spec runs [`release.yml`](.github/workflows/release.yml): it runs
+both apps' tests, builds the Android APK and the Mac app, signs them with the project's keys (kept as repository
+secrets), checks both signatures against the pinned certificates, and publishes one release `v1.1.<n>` with `ATA.apk`,
+`ATA.dmg`, the zip `install.sh` uses, and SHA-256 checksums. `<n>` is the workflow run number, so each release
+installs over the previous one (Android `versionCode` and Mac `CFBundleVersion` are `1000 + <n>`). Pull requests
+never get the keys and never publish.
 
 ## Help and feedback
 

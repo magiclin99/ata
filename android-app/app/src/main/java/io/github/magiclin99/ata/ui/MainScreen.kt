@@ -346,9 +346,9 @@ private const val PRIVACY_URL = "https://magiclin99.github.io/ata/privacy/" // o
 
 /**
  * Reserved voluntary-donation entry: shown only when BuildConfig.SUPPORT_URL is non-empty AND
- * BuildConfig.SHOW_SUPPORT_LINK is true. Both default to off, and SHOW_SUPPORT_LINK must stay false for Google Play
- * builds: Play's Payments policy has been enforced against in-app links to outside payment pages, so re-check the
- * policy before enabling. A donation never unlocks anything.
+ * BuildConfig.SHOW_SUPPORT_LINK is true. Both default to off; turning it on is an owner decision (if ATA is ever offered
+ * on Google Play, re-check Play's Payments policy on links to outside payment pages first). A donation never
+ * unlocks anything.
  */
 private val donationUrl: String? =
     BuildConfig.SUPPORT_URL.takeIf { BuildConfig.SHOW_SUPPORT_LINK && it.isNotBlank() }

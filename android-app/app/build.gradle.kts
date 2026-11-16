@@ -8,12 +8,28 @@ plugins {
 }
 
 /*
- * Upload-key signing. The keystore and its passwords live outside the repo and are never committed. The properties file
- * is found through, in order: Gradle property `ata.signing`, env ATA_SIGNING_PROPERTIES, then
- * ~/ata-secrets/android/signing.properties. Keys: storeFile, storePassword, keyAlias, keyPassword.
- * Without the file the release build is produced unsigned (CI and other machines still build).
+ * Release signing. ATA is distributed as an APK from GitHub Releases (not Google Play), so this key is the app's
+ * signing key: every release must be signed with it, or phones refuse to install the update over the old version.
+ * The keystore and its passwords live outside the repo and are never committed. They are found through, in order:
+ *   1. env ATA_SIGNING_STORE_FILE, ATA_SIGNING_STORE_PASSWORD, ATA_SIGNING_KEY_ALIAS, ATA_SIGNING_KEY_PASSWORD
+ *      (CI: .github/workflows/release.yml, from repository secrets; no password is written to disk);
+ *   2. a properties file (keys: storeFile, storePassword, keyAlias, keyPassword): Gradle property `ata.signing`,
+ *      env ATA_SIGNING_PROPERTIES, then ~/ata-secrets/android/signing.properties.
+ * Without either, the release build is produced unsigned (CI test builds and other machines still build).
+ *
+ * Version: -Pata.versionCode=<n> -Pata.versionName=<x.y.z> (CI sets both from the run number, so every published
+ * build has a higher versionCode than the one before). Local builds default to 1 / "1.0.0".
  */
 val signingProps: Properties? = run {
+    val env = System.getenv()
+    if (!env["ATA_SIGNING_STORE_FILE"].isNullOrEmpty()) {
+        return@run Properties().apply {
+            setProperty("storeFile", env.getValue("ATA_SIGNING_STORE_FILE"))
+            setProperty("storePassword", env["ATA_SIGNING_STORE_PASSWORD"].orEmpty())
+            setProperty("keyAlias", env["ATA_SIGNING_KEY_ALIAS"].orEmpty())
+            setProperty("keyPassword", env["ATA_SIGNING_KEY_PASSWORD"].orEmpty())
+        }
+    }
     val path = (findProperty("ata.signing") as String?)
         ?: System.getenv("ATA_SIGNING_PROPERTIES")
         ?: "${System.getProperty("user.home")}/ata-secrets/android/signing.properties"
@@ -30,26 +46,24 @@ android {
         applicationId = "io.github.magiclin99.ata"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = (findProperty("ata.versionCode") as String?)?.toInt() ?: 1
+        versionName = (findProperty("ata.versionName") as String?) ?: "1.0.0"
         // libwebrtc is native. The artifact ships arm64-v8a (16 KB-aligned) and armeabi-v7a; x86/x86_64 are
-        // emulator/Chromebook only and are left out. Play delivers one ABI per device from the AAB.
+        // emulator/Chromebook only and are left out. The published APK carries both.
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
 
         // Reserved voluntary-donation entry. SUPPORT_URL is empty by default, and while it
         // is empty nothing is shown anywhere. Even with a URL, the "Support ATA" row stays hidden unless
-        // SHOW_SUPPORT_LINK is true. Keep it false for every Google Play build: Google Play's Payments policy has
-        // been enforced against in-app links that send users to outside payment pages, donations included, so the
-        // policy must be re-checked before this is ever turned on.
-        // A donation never unlocks anything. Override for a non-Play build with
-        // -Pata.supportUrl=https://… -Pata.showSupportLink=true.
+        // SHOW_SUPPORT_LINK is true. Off by default; it is an owner decision to turn on (and if ATA is ever offered on
+        // Google Play, its Payments policy on in-app links to outside payment pages must be re-checked first).
+        // A donation never unlocks anything. Override with -Pata.supportUrl=https://… -Pata.showSupportLink=true.
         buildConfigField("String", "SUPPORT_URL", "\"${(findProperty("ata.supportUrl") as String?).orEmpty()}\"")
         buildConfigField("boolean", "SHOW_SUPPORT_LINK", (findProperty("ata.showSupportLink") as String?)?.toBoolean()?.toString() ?: "false")
     }
 
     signingConfigs {
         if (signingProps != null) {
-            create("upload") {
+            create("release") {
                 storeFile = file(signingProps.getProperty("storeFile"))
                 storePassword = signingProps.getProperty("storePassword")
                 keyAlias = signingProps.getProperty("keyAlias")
@@ -63,7 +77,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.findByName("upload")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 
