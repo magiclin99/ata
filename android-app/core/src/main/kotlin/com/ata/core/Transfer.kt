@@ -1,5 +1,6 @@
 package com.ata.core
 
+import com.ata.core.Msg.bool
 import com.ata.core.Msg.int
 import com.ata.core.Msg.str
 import com.ata.core.Msg.strList
@@ -9,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -20,12 +22,14 @@ import java.security.MessageDigest
 /** A file to send. [size] is declared up front in `send` and `0x01`; the stream must yield exactly that many bytes. */
 class SourceFile(val name: String, val size: Long, val open: () -> InputStream)
 
-enum class Path(val wire: String) { LAN("lan"), RTC("rtc") }
+enum class Path(val wire: String) { LAN("lan"), RTC("rtc"), HOTSPOT("hotspot") }
 
 sealed interface Stage {
     data object WaitingAccept : Stage
     data object ConnectingLan : Stage
     data object ConnectingRtc : Stage
+    /** SPEC §7c: starting this phone's temporary hotspot and waiting for the Mac to join it. */
+    data object ConnectingHotspot : Stage
     data class Sending(val path: Path) : Stage
 }
 
@@ -45,6 +49,8 @@ data class TransferOutcome(
     val path: Path?,
     val files: List<FileOutcome>,
     val error: AtaException?,
+    /** The Mac said it can join this phone's temporary hotspot (`accept.hotspot`) and this phone can open one. */
+    val hotspotPossible: Boolean = false,
 ) {
     val filesOk: Int get() = files.count { it.ok }
     val bytesOk: Long get() = files.filter { it.ok }.sumOf { it.size }
@@ -70,12 +76,32 @@ fun interface RtcPeerFactory {
     fun create(): RtcPeer
 }
 
+class HotspotCredentials(val ssid: String, val psk: String) {
+    override fun toString() = "HotspotCredentials(ssid=$ssid, psk=<redacted>)"
+}
+
+/** SPEC §7c: this phone's temporary hotspot. Android implements it with LocalOnlyHotspot; tests with a fake. */
+interface HotspotProvider {
+    /** Starts the hotspot (at most [timeoutMs]) and returns its name and password. Throws if it cannot. */
+    suspend fun start(timeoutMs: Long): HotspotCredentials
+
+    /** Connects to the Mac on the hotspot network; null if no address answered. */
+    suspend fun dial(ips: List<String>, port: Int): java.net.Socket?
+
+    /** Closes the hotspot. Safe to call more than once, and when [start] failed. */
+    fun stop()
+}
+
 class Timeouts(
     val accept: Long = 60_000,
     val rtcAnswer: Long = 30_000,
     val rtcGather: Long = 5_000,
     val rtcOpen: Long = 20_000,
     val fileResult: Long = 60_000,
+    val hotspotStart: Long = 15_000,
+    /** The Mac scans up to 30 s and waits up to 15 s for an address (SPEC §7c). */
+    val hotspotReady: Long = 60_000,
+    val hotspotDial: Long = 15_000,
 )
 
 /**
@@ -89,6 +115,10 @@ class TransferEngine(
     private val rtc: RtcPeerFactory?,
     private val forceRtc: Boolean = false,
     private val timeouts: Timeouts = Timeouts(),
+    /** Null when this phone cannot open a temporary hotspot; then `send` does not offer it. */
+    private val hotspot: HotspotProvider? = null,
+    /** The user chose "send using this phone's Wi-Fi": skip LAN and WebRTC and go straight to the hotspot. */
+    private val viaHotspot: Boolean = false,
 ) {
     suspend fun run(session: SecureSession, files: List<SourceFile>, listener: TransferListener): TransferOutcome {
         val outcomes = files.map { FileOutcome(it.name, it.size, ok = false, error = null) }.toMutableList()
@@ -96,8 +126,11 @@ class TransferEngine(
         var channel: RecordChannel? = null
         var peer: RtcPeer? = null
         var finishedNormally = false
+        var hotspotPossible = false
+        var hotspotStarted = false
 
-        fun outcome(error: AtaException?) = TransferOutcome(error == null && outcomes.all { it.ok }, path, outcomes.toList(), error)
+        fun outcome(error: AtaException?) =
+            TransferOutcome(error == null && outcomes.all { it.ok }, path, outcomes.toList(), error, hotspotPossible)
 
         return try {
             coroutineScope {
@@ -112,7 +145,8 @@ class TransferEngine(
                     }
                 }
                 val result = try {
-                    session.send(Msg.send(files.map { Msg.FileEntry(it.name, it.size) }))
+                    val caps = if (hotspot != null) listOf(Msg.CAP_HOTSPOT) else emptyList()
+                    session.send(Msg.send(files.map { Msg.FileEntry(it.name, it.size) }, caps))
                     listener.onStage(Stage.WaitingAccept)
                     val reply = awaitType(session, setOf("accept", "reject"), timeouts.accept)
                     if (reply.type == "reject") {
@@ -120,8 +154,23 @@ class TransferEngine(
                     }
                     val port = reply.int("tcpPort") ?: 0
                     val ips = reply.strList("lan")
+                    hotspotPossible = hotspot != null && reply.bool("hotspot") == true && port in 1..65535
 
-                    if (forceRtc) log.i("LAN skipped (debugForceRtc)")
+                    if (viaHotspot) {
+                        val h = hotspot
+                        if (h == null || !hotspotPossible) throw AtaException(ErrorCode.NO_PATH, "the Mac cannot join this phone's hotspot")
+                        listener.onStage(Stage.ConnectingHotspot)
+                        hotspotStarted = true
+                        val sock = connectHotspot(session, h, port)
+                        val ch = TcpRecordChannel(sock, session.keys)
+                        channel = ch
+                        try {
+                            ch.open()
+                        } catch (e: IOException) {
+                            throw AtaException(ErrorCode.HOTSPOT_FAILED, "TCP sid write failed: ${e.message}", e)
+                        }
+                        path = Path.HOTSPOT
+                    } else if (forceRtc) log.i("LAN skipped (debugForceRtc)")
                     else if (ips.isEmpty() || port !in 1..65535) log.i("LAN skipped: accept has no usable lan/tcpPort")
                     else {
                         listener.onStage(Stage.ConnectingLan)
@@ -187,6 +236,33 @@ class TransferEngine(
         } finally {
             channel?.close()
             peer?.close()
+            // After `bye`: the Mac goes back to its own Wi-Fi once the session ends, then the hotspot can go.
+            if (hotspotStarted) hotspot?.stop()
+        }
+    }
+
+    /** SPEC §7c steps 2–4. Returns a socket to the Mac on the hotspot network. */
+    private suspend fun connectHotspot(session: SecureSession, h: HotspotProvider, port: Int): java.net.Socket {
+        val creds = try {
+            h.start(timeouts.hotspotStart)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: AtaException) {
+            throw e
+        } catch (e: Exception) {
+            throw AtaException(ErrorCode.HOTSPOT_FAILED, "hotspot did not start: ${e.javaClass.simpleName} ${e.message}", e)
+        }
+        log.i("hotspot started")
+        session.send(Msg.hotspot(creds.ssid, creds.psk))
+        val r = awaitType(session, setOf("hotspot_ready", "hotspot_error"), timeouts.hotspotReady)
+        if (r.type == "hotspot_error") throw AtaException(ErrorCode.HOTSPOT_FAILED, "Mac could not join: ${r.str("error")}")
+        val ips = r.strList("lan")
+        val p = r.int("tcpPort")?.takeIf { it in 1..65535 } ?: port
+        val deadline = System.nanoTime() + timeouts.hotspotDial * 1_000_000
+        while (true) {
+            h.dial(ips, p)?.let { return it }
+            if (System.nanoTime() > deadline) throw AtaException(ErrorCode.HOTSPOT_FAILED, "could not reach the Mac on the hotspot")
+            delay(500)
         }
     }
 

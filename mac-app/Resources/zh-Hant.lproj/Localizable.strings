@@ -104,3 +104,11 @@
 "Nothing was saved. Send again whenever you're ready." = "沒有存下任何檔案，準備好再傳一次就可以。";
 "Nothing arrived from “%@”" = "沒有收到「%@」傳來的檔案";
 "Send again from your phone." = "請從手機再傳一次。";
+
+/* Temporary hotspot (SPEC §7c) */
+"Joining “%@”’s Wi-Fi for a moment. Your Mac will go back to its own Wi-Fi when done." = "Mac 正暫時連上「%@」的 Wi-Fi，傳完會自動連回原本的 Wi-Fi。";
+"Receiving over “%@”’s Wi-Fi. Your Mac will go back to its own Wi-Fi when done." = "正在透過「%@」的 Wi-Fi 接收檔案，傳完 Mac 會自動連回原本的 Wi-Fi。";
+"Your Mac will go back to its own Wi-Fi when done." = "傳完 Mac 會自動連回原本的 Wi-Fi。";
+"Going back to your Wi-Fi…" = "正在連回原本的 Wi-Fi…";
+"Your Mac may not be back on its usual Wi-Fi. Choose your network from the Wi-Fi menu in the menu bar." = "Mac 可能還沒連回平常的 Wi-Fi。請從選單列的 Wi-Fi 圖示選回你的網路。";
+"Check your Mac's Wi-Fi" = "請檢查 Mac 的 Wi-Fi";

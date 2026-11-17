@@ -42,6 +42,7 @@ class ShareActivity : ComponentActivity() {
                     onPick = ::start,
                     onRetry = { TransferHub.clearFinished(); picking = true },
                     onClose = { finish() },
+                    onHotspot = { mac, address -> start(mac, address, viaHotspot = true) },
                 )
             }
         }
@@ -71,11 +72,11 @@ class ShareActivity : ComponentActivity() {
     }
 
     /** The user tapped a nearby Mac (permissions already granted by the picker). Transfers are unlimited. */
-    private fun start(macIdHex: String, address: String?) {
+    private fun start(macIdHex: String, address: String?, viaHotspot: Boolean = false) {
         if (uris.isEmpty() || TransferHub.busy) return
         scanner.stop()
         TransferHub.clearFinished()
-        TransferService.start(this, uris, macIdHex, address)
+        TransferService.start(this, uris, macIdHex, address, viaHotspot = viaHotspot)
         picking = false
     }
 

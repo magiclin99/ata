@@ -7,10 +7,10 @@ Android → Mac 的隔空傳檔。這份文件是 `mac-app/` 與 `android-app/` 
 做：
 - Mac 選單列 app（接收端）、Android app（傳送端，從系統分享選單進入）。
 - 首次用 QR code 配對；之後所有訊號與檔案都經過驗證與加密。
-- 連線順序：BLE 找到 Mac → 區網 TCP 直連 → 失敗則 WebRTC data channel（只用公開 STUN，永不使用 TURN 或任何中繼）→ 都失敗就明確告知「沒有直連路徑」。
+- 連線順序：BLE 找到 Mac → 區網 TCP 直連 → 失敗則 WebRTC data channel（只用公開 STUN，永不使用 TURN 或任何中繼）→ 都失敗就明確告知「沒有直連路徑」；雙方都支援時，同時提議改用手機的臨時熱點（第 7c 節），由使用者按下才開始。
 - 一次可傳多個檔案。
 
-不做（v2 範圍外）：臨時熱點、Mac → Android、續傳、多台 Mac 同時接收。
+不做（v2 範圍外）：Mac → Android、續傳、多台 Mac 同時接收。
 
 ## 2. 身分與配對
 
@@ -85,13 +85,18 @@ HMAC 輸入的串接：標籤是 ASCII bytes（不含結尾 0），macId / phone
 
 | `t` | 方向 | 欄位 | 說明 |
 |---|---|---|---|
-| `send` | 手機 → Mac | `files`:[{`name`,`size`}], `total`:總 bytes | 要傳的檔案清單 |
-| `accept` | Mac → 手機 | `tcpPort`, `lan`:[IPv4 字串] | Mac 已開始監聽 TCP |
+| `send` | 手機 → Mac | `files`:[{`name`,`size`}], `total`:總 bytes, `caps`:[字串]（可省略） | 要傳的檔案清單；`caps` 含 `"hotspot"` 表示手機能開臨時熱點 |
+| `accept` | Mac → 手機 | `tcpPort`, `lan`:[IPv4 字串], `hotspot`:bool（可省略） | Mac 已開始監聽 TCP；`hotspot`:true 只在 `send.caps` 含 `"hotspot"` 且 Mac 有 Wi-Fi 介面時出現 |
 | `reject` | Mac → 手機 | `reason` | 例如磁碟空間不足 |
 | `rtc_offer` | 手機 → Mac | `sdp` | 區網 TCP 連不上時才送；完整 SDP，不做 trickle |
 | `rtc_answer` | Mac → 手機 | `sdp` | |
 | `rtc_error` | Mac → 手機 | `error` | |
-| `bye` | 手機 → Mac | `ok`:bool, `via`:"lan"\|"rtc"\|null, `error`:字串或 null | 傳輸結束，雙方清理 session |
+| `hotspot` | 手機 → Mac | `ssid`, `psk` | 第 7c 節；只在 `accept.hotspot` 為 true 時、尚未送 `rtc_offer` 前送 |
+| `hotspot_ready` | Mac → 手機 | `lan`:[IPv4 字串], `tcpPort` | Mac 已加入熱點並取得位址；`tcpPort` 與 `accept` 相同 |
+| `hotspot_error` | Mac → 手機 | `error` | `bad_request`、`unsupported`、`not_found`、`join_failed`、`no_address`、`busy` |
+| `bye` | 手機 → Mac | `ok`:bool, `via`:"lan"\|"rtc"\|"hotspot"\|null, `error`:字串或 null | 傳輸結束，雙方清理 session |
+
+未知欄位一律忽略，未知 `t` 記 log 後忽略；所以舊版 Mac 看不到 `caps`、不回 `accept.hotspot`，新版手機就照舊只走區網與 WebRTC。
 
 已配對的手機送來的 `send` 預設自動接受（Mac 端設定可改成每次詢問，v2 可先不做詢問 UI）。
 
@@ -123,6 +128,29 @@ HMAC 輸入的串接：標籤是 ASCII bytes（不含結尾 0），macId / phone
 - ICE 只設 `stun:stun.l.google.com:19302` 與 `stun:stun.cloudflare.com:3478`，關閉 ICE-TCP，不做 trickle（gathering 最多等 5 秒）。Data channel 由手機建立：label `ata-file`、ordered、reliable。20 秒內沒開啟算失敗。
 - 每筆紀錄是一則 binary 訊息，不再額外加密（DTLS 已加密，且 SDP 的指紋是經過加密的 BLE 通道交換的）。
 - `0x02` 資料紀錄內容最多 16 KiB；傳送端依 `bufferedAmount` 做背壓（高水位 1 MiB）。
+
+### 7c. 臨時熱點（手機與 Mac 的網路互相連不到時）
+
+情境：手機和 Mac 各自在不同的網路（例如訪客 Wi-Fi 與公司 Wi-Fi），區網 TCP 跳過、WebRTC 的 ICE 失敗（實測：兩邊在同一個 NAT 後面、NAT 不做 hairpin）。
+
+觸發與同意：
+- 一般傳送照舊（區網 → WebRTC）。結果是「沒有直連路徑」、且這次的 `accept.hotspot` 為 true、手機也支援時，手機的失敗畫面多一個選項，說明 Mac 會暫時離開目前的 Wi-Fi、傳完自動連回，由使用者按下才開始。不自動切換 Mac 的網路。
+- 按下後手機先要權限（Android 12/12L：位置；Android 13 以上：附近裝置），再重新開始一次傳送（重新 BLE 握手），這次在 `accept` 之後直接走熱點，不試區網與 WebRTC。
+
+流程（同一個 session）：
+1. 手機 `send`（`caps`:["hotspot"]）→ Mac `accept`（`hotspot`:true，照常開 TCP 監聽，`0.0.0.0`）。
+2. 手機用 `WifiManager.startLocalOnlyHotspot` 開熱點（名稱與密碼由系統決定；最多等 15 秒），把名稱與密碼用 `hotspot` 送出。這則訊息只走加密後的 BLE；密碼不得寫進任何 log。
+3. Mac 記下目前 Wi-Fi 狀態（是否開啟、是否連著網路），並把這份狀態寫到 `~/Library/Application Support/io.github.magiclin99.ata.mac/wifi-restore.json`，然後用 CoreWLAN 掃描這個名稱並加入（Wi-Fi 關著就先打開）；掃不到每 3 秒重試，總共最多 30 秒；加入後等 Wi-Fi 介面拿到 IPv4 位址，最多 15 秒。成功送 `hotspot_ready`，失敗送 `hotspot_error`（之後照常等手機的 `bye`）。加入期間不計 session 的閒置逾時。
+4. 手機收 `hotspot_ready`（最多等 60 秒），對 `lan` 的位址連 TCP（socket 不綁網路，走熱點介面；每次 3 秒，最多 15 秒），之後完全照第 7a 節（`sid`、`kFile` 加密的紀錄）。
+5. 傳完照常 `0x05` → `bye`（`via`:"hotspot"）。手機送出 `bye` 後才關熱點。
+
+Mac 一定要回到原本的網路（session 用任何方式結束都一樣：完成、失敗、手機取消、BLE 斷線、逾時、Mac app 結束）：
+- 斷開熱點；原本 Wi-Fi 是關的就關掉；原本連著網路就等 macOS 自動連回已知網路（最多 10 秒），沒連回就把 Wi-Fi 關掉再打開（之後最多等 20 秒）；原本開著但沒連網路就只斷開。
+- 判斷「連著網路」只看 Wi-Fi 介面有沒有 IPv4 位址，不讀網路名稱（macOS 讀網路名稱需要定位權限）。
+- 結果寫 log；沒能確認連回時，Mac 畫面告訴使用者從選單列的 Wi-Fi 圖示選回自己的網路。
+- App 結束時（含 SIGTERM）先做完這一步再結束，最多等 20 秒。App 當掉時，下次啟動看到 `wifi-restore.json` 就檢查：Wi-Fi 介面的位址還在熱點的網段就照上面的步驟恢復，然後刪檔。
+
+版本相容：舊版手機不送 `caps`，Mac 不提熱點；舊版 Mac 不回 `accept.hotspot`，手機不顯示這個選項，失敗訊息與現在相同（請讓手機和 Mac 連上同一個 Wi-Fi）。`hello.v` 維持 2。
 
 ## 8. 測試向量
 

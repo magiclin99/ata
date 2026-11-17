@@ -79,6 +79,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var receiving: (phone: String, file: String, fraction: Double)?
     @Published private(set) var connectedPhone: String?
     @Published private(set) var lastError: String?
+    /// SPEC §7c: the Mac is on (or leaving) a phone's temporary hotspot; shown above everything else.
+    @Published private(set) var wifiNote: WiFiNote?
+    enum WiFiNote: Equatable { case joining(String), onPhone(String), restoring, notRestored }
     @Published private(set) var devices: [PairedDevice] = []
     @Published private(set) var recentFiles: [URL] = []
     @Published private(set) var saveDir: URL
@@ -110,6 +113,7 @@ final class AppModel: ObservableObject {
     /// Per bundle id, so a renamed test copy never touches the real pairings.
     private let store = FilePairingStore(url: FilePairingStore.defaultURL(bundleId: Bundle.main.bundleIdentifier ?? "io.github.magiclin99.ata.mac"))
     private(set) var engine: ReceiverEngine!
+    private var hotspot: HotspotJoiner?
     private var ble: BLEPeripheral?
     #if ATA_DEBUG_HOOKS
     private var signal: LoopbackSignalServer?
@@ -151,7 +155,18 @@ final class AppModel: ObservableObject {
         // One time: bring over pairings an earlier build kept in the Keychain (never prompts).
         if !store.fileExists { KeychainPairingImport.run(into: store) }
 
-        let cfg = EngineConfig(macId: DeviceIdentity.loadOrCreate(), macName: DeviceIdentity.computerName(), saveDir: saveDir)
+        var cfg = EngineConfig(macId: DeviceIdentity.loadOrCreate(), macName: DeviceIdentity.computerName(), saveDir: saveDir)
+        // SPEC §7c. The restore note sits next to the pairings file (same per-bundle folder).
+        let marker = FilePairingStore.defaultURL(bundleId: Bundle.main.bundleIdentifier ?? "io.github.magiclin99.ata.mac")
+            .deletingLastPathComponent().appendingPathComponent("wifi-restore.json")
+        let joiner = HotspotJoiner(radio: CoreWLANRadio(), markerURL: marker)
+        if joiner.available {
+            cfg.hotspot = joiner
+            hotspot = joiner
+            joiner.recoverAfterCrash { [weak self] ok in
+                if !ok { DispatchQueue.main.async { self?.wifiNotRestored() } }
+            }
+        }
         let e = ReceiverEngine(config: cfg, store: store)
         e.onEvent = { [weak self] ev in DispatchQueue.main.async { self?.handle(ev) } }
         engine = e
@@ -216,6 +231,11 @@ final class AppModel: ObservableObject {
     }
 
     func shutdown() {
+        // SPEC §7c: never leave the Mac on a phone's hotspot. Ends the session and waits (bounded) for the restore.
+        if let hotspot, let engine {
+            engine.endActiveSession(reason: "Mac app quit")
+            if !hotspot.waitUntilIdle(timeout: 20) { Log.info("Wi-Fi restore still running at quit", public: true) }
+        }
         ble?.stop()
         #if ATA_DEBUG_HOOKS
         signal?.stop()
@@ -247,11 +267,21 @@ final class AppModel: ObservableObject {
             connectedPhone = name
         case .transferAccepted(let name, _, _):
             lastError = nil
+            if wifiNote == .notRestored { wifiNote = nil }
             receiving = (name, "", 0)
         case .progress(let file, let got, let total):
             receiving = (receiving?.phone ?? connectedPhone ?? "", file, total > 0 ? Double(got) / Double(total) : 1)
         case .fileSaved(let url):
             addRecent(url)
+        case .hotspotJoining(let name):
+            wifiNote = .joining(name)
+        case .hotspotJoined(let name):
+            wifiNote = .onPhone(name)
+        case .wifiRestoring:
+            wifiNote = .restoring
+        case .wifiRestored(let ok):
+            wifiNote = nil
+            if !ok { wifiNotRestored() }
         case .sessionEnded(let s):
             receiving = nil
             connectedPhone = nil
@@ -266,7 +296,10 @@ final class AppModel: ObservableObject {
             if s.announcedFiles > 0 {
                 if let err = s.error { lastError = Self.plainError(err) }
                 else if s.failedFiles > 0 { lastError = Self.incompleteFiles(s.failedFiles) }
-                notifier.transferEnded(s, savedIn: saveDirName)
+                // The phone is offering to send through its own Wi-Fi (SPEC §7c): the menu shows the reason, but a
+                // "nothing arrived" notification now would contradict what the phone is asking the user.
+                let phoneOffersHotspot = s.hotspotOffered && s.saved.isEmpty && s.error.map { TransferErrorKind.classify($0) == .noPath } == true
+                if !phoneOffersHotspot { notifier.transferEnded(s, savedIn: saveDirName) }
             }
         }
     }
@@ -284,6 +317,13 @@ final class AppModel: ObservableObject {
         case .other:
             return String(localized: "Something went wrong. Send again. If it keeps happening, update ATA on both your phone and your Mac.")
         }
+    }
+
+    nonisolated static let wifiNotRestoredText = String(localized: "Your Mac may not be back on its usual Wi-Fi. Choose your network from the Wi-Fi menu in the menu bar.")
+
+    private func wifiNotRestored() {
+        wifiNote = .notRestored
+        notifier.wifiNotRestored()
     }
 
     nonisolated static func incompleteFiles(_ n: Int) -> String {
@@ -309,9 +349,20 @@ final class AppModel: ObservableObject {
     // MARK: menu actions
 
     var statusLine: String {
+        switch wifiNote {
+        case .joining(let p):
+            return String(localized: "Joining “\(p)”’s Wi-Fi for a moment. Your Mac will go back to its own Wi-Fi when done.")
+        case .onPhone(let p) where receiving == nil || receiving?.file.isEmpty == true:
+            return String(localized: "Receiving over “\(p)”’s Wi-Fi. Your Mac will go back to its own Wi-Fi when done.")
+        case .restoring: return String(localized: "Going back to your Wi-Fi…")
+        case .notRestored: return Self.wifiNotRestoredText
+        default: break
+        }
         if let r = receiving {
             let pct = Int((r.fraction * 100).rounded(.down))
-            return r.file.isEmpty ? String(localized: "Receiving files from “\(r.phone)”…") : String(localized: "Receiving “\(r.file)” (\(pct)%)")
+            let line = r.file.isEmpty ? String(localized: "Receiving files from “\(r.phone)”…") : String(localized: "Receiving “\(r.file)” (\(pct)%)")
+            if case .onPhone = wifiNote { return line + " " + String(localized: "Your Mac will go back to its own Wi-Fi when done.") }
+            return line
         }
         if let p = connectedPhone { return String(localized: "“\(p)” is connected") }
         switch bluetooth {

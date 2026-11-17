@@ -27,6 +27,7 @@ fun errorText(ctx: Context, code: ErrorCode?, detail: String? = null, macName: S
         }
     )
     ErrorCode.NO_PATH -> ctx.getString(R.string.err_no_path)
+    ErrorCode.HOTSPOT_FAILED -> ctx.getString(R.string.err_hotspot_failed)
     ErrorCode.INTERRUPTED -> ctx.getString(R.string.err_interrupted)
     ErrorCode.FILE_FAILED -> ctx.getString(R.string.err_file_failed)
     ErrorCode.FILE_UNREADABLE -> ctx.getString(R.string.err_file_unreadable)
@@ -68,6 +69,7 @@ fun phaseText(ctx: Context, s: TransferState): String {
         Phase.WAITING -> ctx.getString(R.string.phase_waiting, mac)
         Phase.LAN -> ctx.getString(R.string.phase_lan)
         Phase.RTC -> ctx.getString(R.string.phase_rtc)
+        Phase.HOTSPOT -> ctx.getString(R.string.phase_hotspot, mac)
         Phase.SENDING -> ctx.getString(R.string.phase_sending, mac)
         Phase.DONE -> if (s.cellularBytes > 0) ctx.getString(R.string.phase_done_cellular, mac, mobileDataText(ctx, s.cellularBytes))
         else ctx.getString(R.string.phase_done, mac)

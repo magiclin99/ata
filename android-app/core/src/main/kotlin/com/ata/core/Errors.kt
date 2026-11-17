@@ -20,6 +20,8 @@ enum class ErrorCode {
     REJECTED,
     /** Neither LAN TCP nor WebRTC could be established. */
     NO_PATH,
+    /** SPEC §7c: the phone's temporary hotspot could not be started, or the Mac could not join it. */
+    HOTSPOT_FAILED,
     /** A path was established but the transfer broke (disconnect, timeout, bad record, decrypt failure). */
     INTERRUPTED,
     /** One or more files were reported `ok:false` by the Mac. */

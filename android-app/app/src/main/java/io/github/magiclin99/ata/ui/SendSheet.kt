@@ -54,6 +54,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import io.github.magiclin99.ata.AndroidHotspot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -84,6 +90,7 @@ fun SendSheet(
     onPick: (macIdHex: String, address: String?) -> Unit,
     onRetry: () -> Unit,
     onClose: () -> Unit,
+    onHotspot: (macIdHex: String, address: String?) -> Unit = { _, _ -> },
 ) {
     val state by TransferHub.state.collectAsState()
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -110,7 +117,7 @@ fun SendSheet(
                 }
                 else -> {
                     SheetTitle(stringResource(R.string.send_title))
-                    TransferBody(s, canRetry = uris.isNotEmpty(), onRetry = onRetry, onClose = onClose)
+                    TransferBody(s, canRetry = uris.isNotEmpty(), onRetry = onRetry, onClose = onClose, onHotspot = onHotspot)
                 }
             }
         }
@@ -375,7 +382,7 @@ private fun StatusLine(text: String, working: Boolean, ok: Boolean? = null) {
 }
 
 @Composable
-private fun TransferBody(s: TransferState, canRetry: Boolean, onRetry: () -> Unit, onClose: () -> Unit) {
+private fun TransferBody(s: TransferState, canRetry: Boolean, onRetry: () -> Unit, onClose: () -> Unit, onHotspot: (String, String?) -> Unit) {
     val ctx = LocalContext.current
     val terminal = s.phase.terminal
     StatusLine(
@@ -387,6 +394,11 @@ private fun TransferBody(s: TransferState, canRetry: Boolean, onRetry: () -> Uni
         Spacer(Modifier.size(12.dp))
         Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
             Text(errorText(ctx, s.error, s.errorDetail, s.macName), color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(16.dp))
+        }
+        val mac = s.macIdHex
+        if (s.hotspotOffer && canRetry && mac != null) {
+            Spacer(Modifier.size(12.dp))
+            HotspotOffer(onGo = { onHotspot(mac, s.address) })
         }
     }
 
@@ -422,6 +434,37 @@ private fun TransferBody(s: TransferState, canRetry: Boolean, onRetry: () -> Uni
             Button(onClick = { TransferHub.clearFinished(); onClose() }) {
                 Text(stringResource(if (s.phase == Phase.DONE) R.string.done else R.string.close))
             }
+        }
+    }
+}
+
+/**
+ * SPEC §7c: after "couldn't reach your Mac", offer the phone's temporary Wi-Fi. Says plainly that the Mac leaves its
+ * Wi-Fi for a moment, and (when Android will ask) why the permission is needed, before the system dialog appears.
+ */
+@Composable
+private fun HotspotOffer(onGo: () -> Unit) {
+    val ctx = LocalContext.current
+    var denied by remember { mutableStateOf(false) }
+    val needsPermission = !AndroidHotspot.hasPermission(ctx)
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        if (AndroidHotspot.hasPermission(ctx)) onGo() else denied = true
+    }
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Text(stringResource(R.string.hotspot_offer_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Spacer(Modifier.size(6.dp))
+            Text(stringResource(R.string.hotspot_offer_text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            if (needsPermission) {
+                Spacer(Modifier.size(6.dp))
+                Text(stringResource(if (denied) R.string.hotspot_permission_denied else R.string.hotspot_permission_note),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            }
+            Spacer(Modifier.size(10.dp))
+            Button(
+                onClick = { if (AndroidHotspot.hasPermission(ctx)) onGo() else launcher.launch(AndroidHotspot.permissions()) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) { Text(stringResource(R.string.hotspot_offer_button)) }
         }
     }
 }

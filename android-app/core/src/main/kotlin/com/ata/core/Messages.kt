@@ -51,16 +51,28 @@ object Msg {
 
     data class FileEntry(val name: String, val size: Long)
 
-    fun send(files: List<FileEntry>) = buildJsonObject {
+    fun send(files: List<FileEntry>, caps: List<String> = emptyList()) = buildJsonObject {
         put("t", "send")
         put("files", buildJsonArray {
             for (f in files) add(buildJsonObject { put("name", f.name); put("size", f.size) })
         })
         put("total", files.sumOf { it.size })
+        if (caps.isNotEmpty()) put("caps", JsonArray(caps.map { JsonPrimitive(it) }))
     }
 
-    fun accept(tcpPort: Int, lan: List<String>) = buildJsonObject {
+    /** Capability in `send.caps`: this phone can open a temporary hotspot (SPEC §7c). */
+    const val CAP_HOTSPOT = "hotspot"
+
+    /** SPEC §7c. Only ever sent over the encrypted session; [summary] redacts the password. */
+    fun hotspot(ssid: String, psk: String) = buildJsonObject { put("t", "hotspot"); put("ssid", ssid); put("psk", psk) }
+    fun hotspotReady(lan: List<String>, tcpPort: Int) = buildJsonObject {
+        put("t", "hotspot_ready"); put("lan", JsonArray(lan.map { JsonPrimitive(it) })); put("tcpPort", tcpPort)
+    }
+    fun hotspotError(error: String) = buildJsonObject { put("t", "hotspot_error"); put("error", error) }
+
+    fun accept(tcpPort: Int, lan: List<String>, hotspot: Boolean = false) = buildJsonObject {
         put("t", "accept"); put("tcpPort", tcpPort); put("lan", JsonArray(lan.map { JsonPrimitive(it) }))
+        if (hotspot) put("hotspot", true)
     }
 
     fun reject(reason: String) = buildJsonObject { put("t", "reject"); put("reason", reason) }
@@ -92,6 +104,7 @@ object Msg {
             if (k == "t") continue
             append(' ').append(k).append('=')
             when {
+                k == "psk" -> append("<redacted>")
                 k == "mac" || k == "n" -> append("<").append((v as? JsonPrimitive)?.content?.length ?: 0).append(" chars>")
                 k == "sdp" -> append("<").append((v as? JsonPrimitive)?.content?.length ?: 0).append(" B sdp>")
                 else -> append(v.short())

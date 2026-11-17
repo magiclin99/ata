@@ -41,6 +41,11 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         post(title: title, body: body, reveal: s.saved.first?.path)
     }
 
+    /// SPEC §7c: ATA could not confirm the Mac went back to its own Wi-Fi after using a phone's hotspot.
+    func wifiNotRestored() {
+        post(title: String(localized: "Check your Mac's Wi-Fi"), body: AppModel.wifiNotRestoredText, reveal: nil)
+    }
+
     private func post(title: String, body: String, reveal: String?) {
         guard let center else { return }
         let deliver = {

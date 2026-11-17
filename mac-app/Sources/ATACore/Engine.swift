@@ -23,6 +23,9 @@ public struct SessionSummary {
     /// files came over WebRTC instead. Typical cause: the macOS application firewall dropping the phone's connection.
     /// (Also true if the phone simply wasn't on the same network, so the app pairs it with the firewall state.)
     public var lanUnreached: Bool = false
+    /// The Mac told this phone it could use the phone's temporary hotspot (SPEC §7c), so after a "no path" failure
+    /// the phone itself offers that choice; the Mac need not announce the failure as loudly.
+    public var hotspotOffered: Bool = false
 }
 
 public enum EngineEvent {
@@ -36,6 +39,14 @@ public enum EngineEvent {
     case progress(fileName: String, received: Int64, total: Int64)
     case fileSaved(URL)
     case sessionEnded(SessionSummary)
+    /// SPEC §7c: the Mac is leaving its Wi-Fi to join the phone's temporary hotspot.
+    case hotspotJoining(phoneName: String)
+    /// The Mac is on the phone's hotspot.
+    case hotspotJoined(phoneName: String)
+    /// The Mac is going back to its own Wi-Fi.
+    case wifiRestoring
+    /// `ok` false: could not confirm the Mac is back on a network (the user should pick their Wi-Fi).
+    case wifiRestored(ok: Bool)
 }
 
 public struct EngineConfig {
@@ -48,6 +59,8 @@ public struct EngineConfig {
     /// After 0x05, how long to wait for the phone's `bye` before ending the session anyway.
     public var finishGrace: TimeInterval = 10
     public var lanAddresses: () -> [String] = { lanIPv4Addresses().map(\.ip) }
+    /// Joins a phone's temporary hotspot (SPEC §7c); nil = this Mac never offers it.
+    public var hotspot: HotspotJoiner?
 
     public init(macId: Data, macName: String, saveDir: URL) {
         self.macId = macId; self.macName = macName; self.saveDir = saveDir
@@ -99,6 +112,9 @@ public final class ReceiverEngine {
         /// `bye` arrived while the file channel was still delivering the tail of the stream.
         var pendingBye: (at: Date, ok: Bool, error: String?)?
         var ended = false
+        /// `accept` said `hotspot`:true (SPEC §7c).
+        var hotspotOffered = false
+        var hotspot: HotspotPhase = .none
 
         init(link: LinkState, phoneId: String, phoneName: String, keys: ATACrypto.SessionKeys) {
             self.link = link; self.phoneId = phoneId; self.phoneName = phoneName; self.keys = keys
@@ -106,6 +122,8 @@ public final class ReceiverEngine {
             txCipher = CounterCipher(key: keys.kM2P, prefix: CounterCipher.bleM2PPrefix)
         }
     }
+
+    private enum HotspotPhase { case none, joining, joined, failed }
 
     private var links: [ObjectIdentifier: LinkState] = [:]
     private var active: Session?
@@ -140,6 +158,12 @@ public final class ReceiverEngine {
     public var saveDir: URL { queue.sync { config.saveDir } }
 
     public var isBusy: Bool { queue.sync { active != nil } }
+
+    /// Ends the current session (if any) now, e.g. because the app is quitting; this also starts putting the Wi-Fi
+    /// back if the Mac is on a phone's hotspot. Wait with `config.hotspot?.waitUntilIdle()`.
+    public func endActiveSession(reason: String) {
+        queue.sync { if let s = active { endSession(s, error: reason) } }
+    }
 
     /// Starts (or restarts) pairing mode and returns the `ata://pair` URI. Do not log the result.
     public func startPairing(lifetime: TimeInterval = PairingOffer.lifetime) -> (uri: String, expiresAt: Date) {
@@ -376,6 +400,7 @@ public final class ReceiverEngine {
         switch t {
         case "send": handleSend(s, m)
         case "rtc_offer": handleRTCOffer(s, m)
+        case "hotspot": handleHotspot(s, m)
         case "bye":
             let ok = jsonBool(m["ok"]) ?? false
             let err = m["error"] as? String
@@ -437,9 +462,55 @@ public final class ReceiverEngine {
         } catch {
             Log.err("TCP listener failed: \(error); phone will have to use WebRTC")
         }
-        Log.session("accepting \(files.count) file(s), \(sum) B", public: true)
+        let caps = (m["caps"] as? [Any])?.compactMap { $0 as? String } ?? []
+        s.hotspotOffered = caps.contains("hotspot") && port != 0 && config.hotspot?.available == true
+        Log.session("accepting \(files.count) file(s), \(sum) B\(s.hotspotOffered ? "; hotspot possible" : "")", public: true)
         emit(.transferAccepted(phoneName: s.phoneName, files: files.count, totalBytes: sum))
-        sendEncrypted(s, ["t": "accept", "tcpPort": port, "lan": lan])
+        var reply: [String: Any] = ["t": "accept", "tcpPort": port, "lan": lan]
+        if s.hotspotOffered { reply["hotspot"] = true }
+        sendEncrypted(s, reply)
+    }
+
+    /// SPEC §7c: join the phone's temporary hotspot, then tell the phone where to connect.
+    private func handleHotspot(_ s: Session, _ m: [String: Any]) {
+        func refuse(_ e: String) {
+            Log.session("hotspot refused: \(e)", public: true)
+            sendEncrypted(s, ["t": "hotspot_error", "error": e])
+        }
+        guard let joiner = config.hotspot, s.hotspotOffered else { refuse("unsupported"); return }
+        guard s.accepted, s.hotspot == .none, s.claim.current == nil, s.rtc == nil, let tcp = s.tcp else { refuse("busy"); return }
+        guard let ssid = m["ssid"] as? String, !ssid.isEmpty, ssid.utf8.count <= 32,
+              let psk = m["psk"] as? String, (8...63).contains(psk.utf8.count) else { refuse("bad_request"); return }
+        s.hotspot = .joining
+        emit(.hotspotJoining(phoneName: s.phoneName))
+        let port = Int(tcp.port)
+        joiner.join(ssid: ssid, password: psk) { [weak self, weak s] result in
+            guard let self else { return }
+            self.queue.async {
+                guard let s, !s.ended else { return }   // endSession already asked for the restore
+                s.lastActivity = Date()
+                switch result {
+                case .success(let ip):
+                    s.hotspot = .joined
+                    self.emit(.hotspotJoined(phoneName: s.phoneName))
+                    self.sendEncrypted(s, ["t": "hotspot_ready", "lan": [ip], "tcpPort": port])
+                case .failure(let e):
+                    s.hotspot = .failed
+                    Log.session("hotspot join failed: \(e.wire)", public: true)
+                    self.sendEncrypted(s, ["t": "hotspot_error", "error": e.wire])
+                    // Go back right away; the phone will send `bye`.
+                    self.restoreWiFi()
+                }
+            }
+        }
+    }
+
+    private func restoreWiFi() {
+        guard let joiner = config.hotspot else { return }
+        emit(.wifiRestoring)
+        joiner.restore { [weak self] ok in
+            self?.queue.async { self?.emit(.wifiRestored(ok: ok)) }
+        }
     }
 
     private func handleRTCOffer(_ s: Session, _ m: [String: Any]) {
@@ -517,6 +588,8 @@ public final class ReceiverEngine {
         s.rtc?.cancel(); s.rtc = nil
         if active === s { active = nil }
         if close { closeLink(s.link) }
+        if s.hotspot == .joining || s.hotspot == .joined { restoreWiFi() }
+        if s.finishedVia == "lan" && s.hotspot == .joined { s.finishedVia = "hotspot" }
         // Success = the file stream finished, or the session ended cleanly without a transfer (pairing only).
         let ok = error == nil && (s.finishedAt != nil || !s.accepted)
         let kind = s.accepted ? "" : " (no transfer)"
@@ -527,6 +600,7 @@ public final class ReceiverEngine {
                     + (error.map { " error kind=\(TransferErrorKind.classify($0))" } ?? ""), public: true)
         var summary = SessionSummary(phoneName: s.phoneName, announcedFiles: s.fileCount, saved: s.saved, failedFiles: s.failedFiles, ok: ok,
                                      via: s.finishedVia, error: error)
+        summary.hotspotOffered = s.hotspotOffered
         if s.finishedVia == "rtc", let l = s.lanListener, !l.sawConnection {
             summary.lanUnreached = true
             Log.session("LAN was offered but no TCP connection ever arrived; the files came over WebRTC (firewall?)", public: true)
@@ -548,6 +622,8 @@ public final class ReceiverEngine {
                     Log.session("no bye within \(Int(config.finishGrace)) s after 0x05; ending session", public: true)
                     endSession(s, error: nil)
                 }
+            } else if s.hotspot == .joining {
+                s.lastActivity = now   // joining has its own time limits (SPEC §7c)
             } else if now.timeIntervalSince(s.lastActivity) > config.idleTimeout {
                 endSession(s, error: "timed out (no activity for \(Int(config.idleTimeout)) s)")
             }

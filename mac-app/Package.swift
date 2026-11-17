@@ -29,7 +29,7 @@ let package = Package(
             dependencies: ["WebRTC"],
             swiftSettings: debugHooks,
             linkerSettings: [.linkedFramework("CoreBluetooth"), .linkedFramework("Security"),
-                             .linkedFramework("SystemConfiguration")]
+                             .linkedFramework("SystemConfiguration"), .linkedFramework("CoreWLAN")]
         ),
         .target(
             name: "ATAFakePhone",

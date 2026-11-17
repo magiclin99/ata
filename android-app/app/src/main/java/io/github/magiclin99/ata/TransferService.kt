@@ -40,7 +40,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Phase { PREPARING, SEARCHING, CONNECTING, WAITING, LAN, RTC, SENDING, DONE, FAILED, CANCELLED;
+enum class Phase { PREPARING, SEARCHING, CONNECTING, WAITING, LAN, RTC, HOTSPOT, SENDING, DONE, FAILED, CANCELLED;
     val terminal get() = this == DONE || this == FAILED || this == CANCELLED
 }
 
@@ -58,6 +58,11 @@ data class TransferState(
     val errorDetail: String? = null,
     /** File bytes sent while the active connection ran over mobile data (0 on Wi-Fi). */
     val cellularBytes: Long = 0,
+    /** The Mac this transfer went to, and where the phone last saw it (for "send using this phone's Wi-Fi"). */
+    val macIdHex: String? = null,
+    val address: String? = null,
+    /** Failed with no path, but both sides can use this phone's temporary hotspot (SPEC §7c): offer it. */
+    val hotspotOffer: Boolean = false,
 ) {
     val totalSize: Long get() = files.sumOf { it.size }
     val active: Boolean get() = !phase.terminal
@@ -91,6 +96,7 @@ class TransferService : Service() {
         private const val EXTRA_MAC = "mac"
         private const val EXTRA_ADDRESS = "address"
         private const val EXTRA_FORCE_RTC = "forceRtc"
+        private const val EXTRA_VIA_HOTSPOT = "viaHotspot"
         private const val CHANNEL_PROGRESS = "transfer"
         private const val CHANNEL_RESULT = "result"
         private const val NOTIF_PROGRESS = 1
@@ -100,13 +106,14 @@ class TransferService : Service() {
          * Sends [uris] to the paired Mac [macIdHex]. [address] is where the picker last saw it; when it is null or
          * stale the service scans for that Mac (name hint first, then `hello` probes).
          */
-        fun start(ctx: Context, uris: List<Uri>, macIdHex: String, address: String? = null, forceRtc: Boolean = false) {
+        fun start(ctx: Context, uris: List<Uri>, macIdHex: String, address: String? = null, forceRtc: Boolean = false, viaHotspot: Boolean = false) {
             val macName = (ctx.applicationContext as AtaApp).pairings.macs.value.firstOrNull { it.idHex == macIdHex }?.name
             val i = Intent(ctx, TransferService::class.java).setAction(ACTION_START)
                 .putParcelableArrayListExtra(EXTRA_URIS, ArrayList(uris))
                 .putExtra(EXTRA_MAC, macIdHex)
                 .putExtra(EXTRA_ADDRESS, address)
                 .putExtra(EXTRA_FORCE_RTC, forceRtc)
+                .putExtra(EXTRA_VIA_HOTSPOT, viaHotspot)
             // Re-grant read access to the service for content:// URIs we were given by the sharing app. Only URIs
             // this app actually holds a grant for can be passed on: granting one we do not hold throws a
             // SecurityException and would crash the share sheet. URIs left out here are still opened by the
@@ -122,7 +129,7 @@ class TransferService : Service() {
                 i.clipData = clip
                 i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            TransferHub.set(TransferState(Phase.PREPARING, macName = macName))
+            TransferHub.set(TransferState(Phase.PREPARING, macName = macName, macIdHex = macIdHex, address = address))
             try {
                 ContextCompat.startForegroundService(ctx, i)
             } catch (e: SecurityException) {
@@ -171,7 +178,8 @@ class TransferService : Service() {
                 val mac = intent.getStringExtra(EXTRA_MAC)
                 val address = intent.getStringExtra(EXTRA_ADDRESS)
                 val forceRtc = intent.getBooleanExtra(EXTRA_FORCE_RTC, false)
-                job = scope.launch { runTransfer(uris, mac, address, forceRtc) }
+                val viaHotspot = intent.getBooleanExtra(EXTRA_VIA_HOTSPOT, false)
+                job = scope.launch { runTransfer(uris, mac, address, forceRtc, viaHotspot) }
             }
             ACTION_CANCEL -> {
                 log.i("service: cancel requested")
@@ -204,7 +212,7 @@ class TransferService : Service() {
     private var lastTotalSent = 0L
     private var cellularBytes = 0L
 
-    private suspend fun runTransfer(uris: List<Uri>, macIdHex: String?, address: String?, forceRtc: Boolean) {
+    private suspend fun runTransfer(uris: List<Uri>, macIdHex: String?, address: String?, forceRtc: Boolean, viaHotspot: Boolean) {
         rtcPeer = null; lastTotalSent = 0L; cellularBytes = 0L
         val t0 = SystemClock.elapsedRealtime()
         var sendStart = 0L
@@ -214,8 +222,11 @@ class TransferService : Service() {
         val app = application as AtaApp
         val target = app.pairings.macs.value.firstOrNull { it.idHex == macIdHex }
         var macName: String? = target?.name
+        var hotspotPossible = false
         try {
-            TransferHub.set(TransferState(Phase.PREPARING, macName = macName))
+            TransferHub.set(TransferState(Phase.PREPARING, macName = macName, macIdHex = macIdHex, address = address))
+            // The sheet asked for this before starting; it can only be missing if revoked in between.
+            if (viaHotspot && !AndroidHotspot.hasPermission(this)) throw AtaException(ErrorCode.PERMISSION_DENIED, "no permission for the hotspot")
             val sources: List<SourceFile> = withContext(Dispatchers.IO) { resolveSources(this@TransferService, uris, log) }
             if (sources.isEmpty()) throw AtaException(ErrorCode.FILE_UNREADABLE, "nothing to send")
             log.i("transfer: ${sources.size} file(s), ${sources.sumOf { it.size }} B to Mac $macIdHex")
@@ -263,10 +274,15 @@ class TransferService : Service() {
                 TransferHub.update { it.copy(macName = macName) }
             }
 
-            val engine = TransferEngine(log, androidLanDialer(this, log), { AndroidRtcPeer(this, log).also { rtcPeer = it } }, forceRtc)
+            val hotspot = if (AndroidHotspot.supported(this)) AndroidHotspot(this, log) else null
+            val engine = TransferEngine(
+                log, androidLanDialer(this, log), { AndroidRtcPeer(this, log).also { rtcPeer = it } }, forceRtc,
+                hotspot = hotspot, viaHotspot = viaHotspot,
+            )
             sendStart = SystemClock.elapsedRealtime()
             outcome = engine.run(session, sources, listener)
             failure = outcome.error
+            hotspotPossible = outcome.hotspotPossible && !viaHotspot
         } catch (e: CancellationException) {
             failure = AtaException(ErrorCode.CANCELLED, "cancelled by user")
         } catch (e: AtaException) {
@@ -278,7 +294,7 @@ class TransferService : Service() {
         } finally {
             link?.close()
         }
-        finish(outcome, failure, macName, t0, sendStart)
+        finish(outcome, failure, macName, t0, sendStart, hotspotOffer = hotspotPossible && failure?.code == ErrorCode.NO_PATH)
     }
 
     private val listener = object : TransferListener {
@@ -288,6 +304,7 @@ class TransferService : Service() {
                     Stage.WaitingAccept -> it.copy(phase = Phase.WAITING)
                     Stage.ConnectingLan -> it.copy(phase = Phase.LAN)
                     Stage.ConnectingRtc -> it.copy(phase = Phase.RTC)
+                    Stage.ConnectingHotspot -> it.copy(phase = Phase.HOTSPOT)
                     is Stage.Sending -> it.copy(phase = Phase.SENDING, path = stage.path)
                 }
             }
@@ -315,7 +332,7 @@ class TransferService : Service() {
         }
     }
 
-    private fun finish(outcome: TransferOutcome?, failure: AtaException?, macName: String?, t0: Long, sendStart: Long) {
+    private fun finish(outcome: TransferOutcome?, failure: AtaException?, macName: String?, t0: Long, sendStart: Long, hotspotOffer: Boolean = false) {
         val ok = outcome?.ok == true && failure == null
         val now = SystemClock.elapsedRealtime()
         val via = outcome?.path
@@ -336,6 +353,7 @@ class TransferService : Service() {
                 },
                 path = via ?: s.path,
                 cellularBytes = cellularBytes,
+                hotspotOffer = !ok && hotspotOffer,
                 error = if (ok) null else failure?.code,
                 errorDetail = failure?.detail,
                 files = s.files.mapIndexed { i, f ->

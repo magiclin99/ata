@@ -3,6 +3,7 @@ package com.ata.core
 import com.ata.core.Msg.bool
 import com.ata.core.Msg.long
 import com.ata.core.Msg.str
+import com.ata.core.Msg.strList
 import com.ata.core.Msg.type
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -116,6 +117,10 @@ class FakeMac(
     var dropAfterBytes = -1L
     var tamperBleReply = false
     var rtcError: String? = null
+    /** SPEC §7c: answer `accept.hotspot`:true to phones that offer it. */
+    var hotspotSupported = false
+    /** Reply `hotspot_error` with this instead of joining. */
+    var hotspotError: String? = null
 
     // ---- observations
     val received = LinkedHashMap<String, ByteArray>()
@@ -124,6 +129,8 @@ class FakeMac(
     var lastPhoneName: String? = null
     var sidOk: Boolean? = null
     var allDoneSeen = false
+    var sendCaps: List<String> = emptyList()
+    var hotspotMsg: JsonObject? = null
     val finished = CompletableDeferred<Unit>()
 
     private val server = ServerSocket(0, 50, InetAddress.getLoopbackAddress())
@@ -192,7 +199,9 @@ class FakeMac(
                     if (rejectReason != null) {
                         sendMsg(Msg.reject(rejectReason!!)); continue
                     }
-                    sendMsg(Msg.accept(advertisedPort ?: server.localPort, lanIps ?: listOf("127.0.0.1")))
+                    sendCaps = m.strList("caps")
+                    sendMsg(Msg.accept(advertisedPort ?: server.localPort, lanIps ?: listOf("127.0.0.1"),
+                        hotspot = hotspotSupported && Msg.CAP_HOTSPOT in sendCaps))
                     transfer = CoroutineScope(Dispatchers.IO).launch {
                         val sock = withContext(Dispatchers.IO) { server.accept() }
                         try {
@@ -203,6 +212,11 @@ class FakeMac(
                             sock.close()
                         }
                     }
+                }
+                "hotspot" -> {
+                    hotspotMsg = m
+                    if (hotspotError != null) sendMsg(Msg.hotspotError(hotspotError!!))
+                    else sendMsg(Msg.hotspotReady(listOf("127.0.0.1"), server.localPort))
                 }
                 "rtc_offer" -> {
                     transfer?.cancel(); runCatching { server.close() }

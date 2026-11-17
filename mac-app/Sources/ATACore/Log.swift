@@ -69,6 +69,7 @@ public func logSummary(_ obj: [String: Any]) -> String {
     var o = obj
     if let sdp = o["sdp"] as? String { o["sdp"] = "<\(sdp.utf8.count) B sdp>" }
     if o["mac"] is String { o["mac"] = "<mac>" }
+    if o["psk"] != nil { o["psk"] = "<redacted>" }   // the phone's hotspot password (SPEC §7c)
     return jsonString(o)
 }
 
