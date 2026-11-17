@@ -37,6 +37,15 @@ public enum RTCSupport {
         }
     }
 
+    /// Candidate types only ("host udp", "srflx udp"), no addresses: safe for the public unified log.
+    public static func candidateTypes(inSDP sdp: String) -> [String] {
+        sdp.split(whereSeparator: \.isNewline).compactMap { line -> String? in
+            guard line.hasPrefix("a=candidate:") else { return nil }
+            let f = line.split(separator: " ")
+            return f.count >= 8 ? "\(f[7]) \(f[2].lowercased())" : "?"
+        }
+    }
+
     public static func name(_ s: RTCIceConnectionState) -> String {
         switch s {
         case .new: return "new"; case .checking: return "checking"; case .connected: return "connected"
@@ -81,7 +90,9 @@ final class RTCFileReceiver: NSObject, RTCPeerConnectionDelegate, RTCDataChannel
         super.init()
     }
 
-    private func log(_ m: String) { Log.rtc(String(format: "+%.0fms %@", Date().timeIntervalSince(t0) * 1000, m)) }
+    private func log(_ m: String, public p: Bool = false) {
+        Log.rtc(String(format: "+%.0fms %@", Date().timeIntervalSince(t0) * 1000, m), public: p)
+    }
 
     /// `reply` gets the complete answer SDP, or an error. Called on an arbitrary queue.
     func answer(offer: String, reply: @escaping (Result<String, Error>) -> Void) {
@@ -91,6 +102,7 @@ final class RTCFileReceiver: NSObject, RTCPeerConnectionDelegate, RTCDataChannel
             }
             self.pc = pc
             log("offer \(offer.utf8.count) B, candidates \(RTCSupport.candidates(inSDP: offer))")
+            log("offer candidate types \(RTCSupport.candidateTypes(inSDP: offer))", public: true)
             pc.setRemoteDescription(RTCSessionDescription(type: .offer, sdp: offer)) { [self] err in
                 if let err { reply(.failure(RTCSupport.Err("setRemoteDescription: \(err.localizedDescription)"))); return }
                 pc.answer(for: RTCSupport.noConstraints) { [self] sdp, err in
@@ -105,15 +117,16 @@ final class RTCFileReceiver: NSObject, RTCPeerConnectionDelegate, RTCDataChannel
                                 gatheringDone = nil
                                 let full = pc.localDescription?.sdp ?? sdp.sdp
                                 log("answer ready \(full.utf8.count) B, candidates \(RTCSupport.candidates(inSDP: full))")
+                                log("answer candidate types \(RTCSupport.candidateTypes(inSDP: full))", public: true)
                                 reply(.success(full))
                                 armOpenTimeout()
                             }
-                            log("local description set; gathering state \(pc.iceGatheringState.rawValue)")
+                            log("local description set; gathering state \(pc.iceGatheringState.rawValue)", public: true)
                             if pc.iceGatheringState == .complete { finish(); return }
                             gatheringDone = finish
                             q.asyncAfter(deadline: .now() + RTCSupport.gatheringTimeout) { [self] in
                                 guard gatheringDone != nil else { return }
-                                log("ICE gathering not complete after \(Int(RTCSupport.gatheringTimeout)) s; answering with what we have")
+                                log("ICE gathering not complete after \(Int(RTCSupport.gatheringTimeout)) s; answering with what we have", public: true)
                                 gatheringDone?()
                             }
                         }
@@ -167,14 +180,14 @@ final class RTCFileReceiver: NSObject, RTCPeerConnectionDelegate, RTCDataChannel
 
     func peerConnection(_ p: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
         q.async { [self] in
-            log("ICE \(RTCSupport.name(newState))")
+            log("ICE \(RTCSupport.name(newState))", public: true)
             if newState == .failed { fail("ICE failed") }
         }
     }
 
     func peerConnection(_ p: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
         q.async { [self] in
-            log("ICE gathering \(newState == .complete ? "complete" : newState == .gathering ? "gathering" : "new")")
+            log("ICE gathering \(newState == .complete ? "complete" : newState == .gathering ? "gathering" : "new")", public: true)
             if newState == .complete { gatheringDone?() }
         }
     }
@@ -201,7 +214,7 @@ final class RTCFileReceiver: NSObject, RTCPeerConnectionDelegate, RTCDataChannel
     private func channelOpened() {
         guard rx == nil, !done else { return }
         guard claim.tryClaim("rtc") else { fail("transfer already running on \(claim.current ?? "?")"); return }
-        log("data channel open; receiving records")
+        log("data channel open; receiving records", public: true)
         let r = RecordStreamReceiver(saveDir: saveDir, maxDataRecord: RTCSupport.maxDataRecord)
         r.onProgress = cb.progress
         r.onFileSaved = cb.fileSaved
@@ -215,7 +228,7 @@ final class RTCFileReceiver: NSObject, RTCPeerConnectionDelegate, RTCDataChannel
         let st = dc.readyState
         q.async { [self] in
             guard dc === channel else { return }
-            log("data channel \(RTCSupport.name(st))")
+            log("data channel \(RTCSupport.name(st))", public: true)
             if st == .open { channelOpened() }
             if st == .closed || st == .closing { if !done { fail("data channel closed before 0x05") } }
         }
@@ -238,7 +251,7 @@ final class RTCFileReceiver: NSObject, RTCPeerConnectionDelegate, RTCDataChannel
                 }
                 if rx.finished {
                     done = true
-                    log("0x05 received; stream complete")
+                    log("0x05 received; stream complete", public: true)
                     cb.finished("rtc", rx.saved, rx.failedCount)
                 }
             } catch {

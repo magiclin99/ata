@@ -45,7 +45,7 @@ public final class BLEPeripheral: NSObject, CBPeripheralManagerDelegate {
 
     public func stop() {
         queue.sync {
-            if pm?.isAdvertising == true { pm?.stopAdvertising(); Log.ble("advertising stopped") }
+            if pm?.isAdvertising == true { pm?.stopAdvertising(); Log.ble("advertising stopped", public: true) }
             pm?.removeAllServices()
         }
     }
@@ -106,7 +106,7 @@ public final class BLEPeripheral: NSObject, CBPeripheralManagerDelegate {
         case .unknown: st = .other("unknown")
         @unknown default: st = .other("?")
         }
-        Log.ble("state = \(st) (authorization=\(Self.authString(CBManager.authorization)))")
+        Log.ble("state = \(st) (authorization=\(Self.authString(CBManager.authorization)))", public: true)
         if p.state == .poweredOn {
             let svc = CBMutableService(type: Self.serviceUUID, primary: true)
             svc.characteristics = [rx, tx]

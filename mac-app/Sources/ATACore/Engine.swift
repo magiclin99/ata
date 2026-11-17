@@ -156,7 +156,7 @@ public final class ReceiverEngine {
 
     public func cancelPairing() {
         queue.async { [self] in
-            if offer != nil { Log.pair("pairing mode off") }
+            if offer != nil { Log.pair("pairing mode off", public: true) }
             offer = nil
         }
     }
@@ -437,7 +437,7 @@ public final class ReceiverEngine {
         } catch {
             Log.err("TCP listener failed: \(error); phone will have to use WebRTC")
         }
-        Log.session("accepting \(files.count) file(s), \(sum) B")
+        Log.session("accepting \(files.count) file(s), \(sum) B", public: true)
         emit(.transferAccepted(phoneName: s.phoneName, files: files.count, totalBytes: sum))
         sendEncrypted(s, ["t": "accept", "tcpPort": port, "lan": lan])
     }
@@ -496,7 +496,7 @@ public final class ReceiverEngine {
                     s.finishedVia = via
                     s.failedFiles = failed
                     s.finishedAt = Date()
-                    Log.session("transfer over \(via) finished: \(saved.count) saved, \(failed) failed")
+                    Log.session("transfer over \(via) finished: \(saved.count) saved, \(failed) failed", public: true)
                     if s.pendingBye != nil { self?.endSession(s, error: nil) }
                 }
             },
@@ -521,11 +521,15 @@ public final class ReceiverEngine {
         let ok = error == nil && (s.finishedAt != nil || !s.accepted)
         let kind = s.accepted ? "" : " (no transfer)"
         Log.session("session with \"\(s.phoneName)\" ended\(kind): ok=\(ok) via=\(s.finishedVia ?? "none") saved=\(s.saved.count) failed=\(s.failedFiles)\(error.map { " error=\($0)" } ?? "")")
+        // The line above names the phone and may quote file names, so it is redacted in the unified log; this one
+        // carries only the outcome.
+        Log.session("session ended\(kind): ok=\(ok) via=\(s.finishedVia ?? "none") saved=\(s.saved.count) failed=\(s.failedFiles)"
+                    + (error.map { " error kind=\(TransferErrorKind.classify($0))" } ?? ""), public: true)
         var summary = SessionSummary(phoneName: s.phoneName, announcedFiles: s.fileCount, saved: s.saved, failedFiles: s.failedFiles, ok: ok,
                                      via: s.finishedVia, error: error)
         if s.finishedVia == "rtc", let l = s.lanListener, !l.sawConnection {
             summary.lanUnreached = true
-            Log.session("LAN was offered but no TCP connection ever arrived; the files came over WebRTC (firewall?)")
+            Log.session("LAN was offered but no TCP connection ever arrived; the files came over WebRTC (firewall?)", public: true)
         }
         emit(.sessionEnded(summary))
     }
@@ -541,7 +545,7 @@ public final class ReceiverEngine {
                 endSession(s, error: byeError(ok: b.ok, b.error))
             } else if let f = s.finishedAt {
                 if now.timeIntervalSince(f) > config.finishGrace {
-                    Log.session("no bye within \(Int(config.finishGrace)) s after 0x05; ending session")
+                    Log.session("no bye within \(Int(config.finishGrace)) s after 0x05; ending session", public: true)
                     endSession(s, error: nil)
                 }
             } else if now.timeIntervalSince(s.lastActivity) > config.idleTimeout {
@@ -550,7 +554,7 @@ public final class ReceiverEngine {
         }
         if let o = offer, !o.used, now >= o.expiresAt, !offerExpiryReported {
             offerExpiryReported = true
-            Log.pair("pairing code expired")
+            Log.pair("pairing code expired", public: true)
             emit(.pairingExpired)
         }
     }

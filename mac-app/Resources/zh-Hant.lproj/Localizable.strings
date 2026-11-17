@@ -90,7 +90,8 @@
 "The phone stopped before finishing. Send again." = "手機在傳完之前中斷了，請再傳一次。";
 "Sending stopped because this phone was removed. Pair it again to send." = "這支手機的配對已經移除，所以傳送停止了。要再傳的話，請重新配對。";
 "Sending stopped partway. Move your phone closer to your Mac and send again." = "傳到一半停住了。請把手機拿近 Mac 一點，再傳一次。";
-"Something went wrong. Send again. If it keeps happening, update ATA on both your phone and your Mac." = "傳送失敗了，請再傳一次。一直這樣的話，請把手機和 Mac 上的 ATA 都更新到最新版。";
+"Your phone couldn't reach this Mac. Connect both to the same Wi-Fi and send again." = "手機連不上這台 Mac。請讓手機和 Mac 連上同一個 Wi-Fi，再傳一次。";
+"Something went wrong. Send again. If it keeps happening, update ATA on both your phone and your Mac." ="傳送失敗了，請再傳一次。一直這樣的話，請把手機和 Mac 上的 ATA 都更新到最新版。";
 "1 file didn't arrive completely. Send it again." = "有 1 個檔案沒有完整收到，請再傳一次。";
 "%lld files didn't arrive completely. Send them again." = "有 %lld 個檔案沒有完整收到，請再傳一次。";
 

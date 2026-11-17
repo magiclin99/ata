@@ -146,7 +146,7 @@ final class AppModel: ObservableObject {
             DispatchQueue.main.async { MainWindowController.shared.show() }
             return
         }
-        Log.info("ATA \(info?["CFBundleShortVersionString"] as? String ?? "?") (\(info?["CFBundleVersion"] as? String ?? "?")) starting; pid \(getpid())")
+        Log.info("ATA \(info?["CFBundleShortVersionString"] as? String ?? "?") (\(info?["CFBundleVersion"] as? String ?? "?")) starting; pid \(getpid())", public: true)
 
         // One time: bring over pairings an earlier build kept in the Keychain (never prompts).
         if !store.fileExists { KeychainPairingImport.run(into: store) }
@@ -275,15 +275,13 @@ final class AppModel: ObservableObject {
     /// thing to try (TERMS.md). The original text goes to the log only.
     nonisolated static func plainError(_ e: String) -> String {
         Log.info("transfer error shown to the user as plain text; detail: \(e)")
-        switch e {
-        case "cancelled": return String(localized: "The phone cancelled sending.")
-        case "phone disconnected", "phone ended the session before the transfer finished":
-            return String(localized: "The phone stopped before finishing. Send again.")
-        case "device removed": return String(localized: "Sending stopped because this phone was removed. Pair it again to send.")
-        default:
-            if e.hasPrefix("timed out") {
-                return String(localized: "Sending stopped partway. Move your phone closer to your Mac and send again.")
-            }
+        switch TransferErrorKind.classify(e) {
+        case .cancelled: return String(localized: "The phone cancelled sending.")
+        case .phoneStopped: return String(localized: "The phone stopped before finishing. Send again.")
+        case .deviceRemoved: return String(localized: "Sending stopped because this phone was removed. Pair it again to send.")
+        case .timedOut: return String(localized: "Sending stopped partway. Move your phone closer to your Mac and send again.")
+        case .noPath: return String(localized: "Your phone couldn't reach this Mac. Connect both to the same Wi-Fi and send again.")
+        case .other:
             return String(localized: "Something went wrong. Send again. If it keeps happening, update ATA on both your phone and your Mac.")
         }
     }

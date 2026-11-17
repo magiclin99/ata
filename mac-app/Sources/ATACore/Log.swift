@@ -1,10 +1,19 @@
 import Foundation
+import os
 
-/// Timestamped log lines to stdout and (optionally, SPEC §9 `--log-file`) to a file.
-/// Never pass key material or the pairing URI to these functions.
+/// Timestamped log lines to stdout, to the unified log (subsystem `io.github.magiclin99.ata.mac`, one category per
+/// tag; read with `/usr/bin/log show --predicate 'subsystem == "io.github.magiclin99.ata.mac"'`) and (optionally,
+/// SPEC §9 `--log-file`) to a file. A Mac app started from Finder has its stdout on /dev/null, so the unified log
+/// is the only place a release build's lines can be read.
+///
+/// Never pass key material or the pairing URI to these functions. In the unified log a line is redacted
+/// (`<private>`) unless the call passes `public: true`; pass it only for lines with nothing personal in them
+/// (state names, durations, counts, the transport chosen) — never names, file names, paths, addresses or IDs.
 public enum Log {
+    public static let subsystem = "io.github.magiclin99.ata.mac"
     private static let lock = NSLock()
     private static var fileHandle: FileHandle?
+    nonisolated(unsafe) private static var loggers: [String: Logger] = [:]
     nonisolated(unsafe) public static var echoToStdout = true
     private static let fmt: DateFormatter = {
         let f = DateFormatter()
@@ -29,24 +38,30 @@ public enum Log {
         }
     }
 
-    public static func log(_ tag: String, _ msg: String) {
+    public static func log(_ tag: String, _ msg: String, public isPublic: Bool = false) {
         lock.lock(); defer { lock.unlock() }
         let line = "\(fmt.string(from: Date())) [\(tag)] \(msg)\n"
         let d = Data(line.utf8)
         if echoToStdout { FileHandle.standardOutput.write(d) }
         if let h = fileHandle { try? h.write(contentsOf: d) }
+        let logger = loggers[tag] ?? Logger(subsystem: subsystem, category: tag)
+        loggers[tag] = logger
+        // Default level (not info/debug) so the lines are kept on disk and `log show` finds them without flags.
+        let level: OSLogType = tag == "ERR" ? .error : .default
+        if isPublic { logger.log(level: level, "\(msg, privacy: .public)") }
+        else { logger.log(level: level, "\(msg)") }
     }
 
-    public static func ble(_ m: String) { log("BLE", m) }
-    public static func msg(_ m: String) { log("MSG", m) }
-    public static func auth(_ m: String) { log("AUTH", m) }
-    public static func tcp(_ m: String) { log("TCP", m) }
-    public static func rtc(_ m: String) { log("RTC", m) }
-    public static func file(_ m: String) { log("FILE", m) }
-    public static func session(_ m: String) { log("SESSION", m) }
-    public static func pair(_ m: String) { log("PAIR", m) }
-    public static func info(_ m: String) { log("INFO", m) }
-    public static func err(_ m: String) { log("ERR", m) }
+    public static func ble(_ m: String, public p: Bool = false) { log("BLE", m, public: p) }
+    public static func msg(_ m: String, public p: Bool = false) { log("MSG", m, public: p) }
+    public static func auth(_ m: String, public p: Bool = false) { log("AUTH", m, public: p) }
+    public static func tcp(_ m: String, public p: Bool = false) { log("TCP", m, public: p) }
+    public static func rtc(_ m: String, public p: Bool = false) { log("RTC", m, public: p) }
+    public static func file(_ m: String, public p: Bool = false) { log("FILE", m, public: p) }
+    public static func session(_ m: String, public p: Bool = false) { log("SESSION", m, public: p) }
+    public static func pair(_ m: String, public p: Bool = false) { log("PAIR", m, public: p) }
+    public static func info(_ m: String, public p: Bool = false) { log("INFO", m, public: p) }
+    public static func err(_ m: String, public p: Bool = false) { log("ERR", m, public: p) }
 }
 
 /// Short, secret-free rendering of a protocol JSON message for logs (SDP bodies are summarised).

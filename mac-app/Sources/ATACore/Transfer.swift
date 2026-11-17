@@ -58,7 +58,7 @@ final class TCPFileReceiver {
             t.name = "ata.file.conn"
             t.start()
         }
-        Log.tcp("file listener on 0.0.0.0:\(listener.port)")
+        Log.tcp("file listener on 0.0.0.0:\(listener.port)", public: true)
     }
 
     func cancel() {
@@ -88,7 +88,7 @@ final class TCPFileReceiver {
         }
         guard ATACrypto.constantTimeEqual(got, sid) else { Log.tcp("#\(id) sid mismatch; closing"); return }
         guard claim.tryClaim("lan") else { Log.tcp("#\(id) sid ok but the transfer is already running on \(claim.current ?? "?"); closing"); return }
-        Log.tcp("#\(id) sid ok; receiving records")
+        Log.tcp("#\(id) sid ok; receiving records", public: true)
         listener.stop()   // one data connection per session
         cb.activity()
 
@@ -110,7 +110,7 @@ final class TCPFileReceiver {
                     Log.tcp("#\(id) -> 0x04 \(String(data: reply.body, encoding: .utf8) ?? "")")
                 }
             }
-            Log.tcp("#\(id) 0x05 received; stream complete")
+            Log.tcp("#\(id) 0x05 received; stream complete", public: true)
             cb.finished("lan", rx.saved, rx.failedCount)
         } catch {
             rx.abort()
