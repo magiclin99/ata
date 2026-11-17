@@ -22,28 +22,12 @@ public final class CoreWLANRadio: WiFiRadio {
         return lanIPv4Addresses().first { $0.name == name }?.ip
     }
 
+    /// Joins by name through `networksetup` (see `joinByName`). CoreWLAN's own join needs a scan result, and without
+    /// Location permission macOS blanks the name in an app's scan results, which airportd then cannot join (-3900,
+    /// seen on a real device). networksetup scans by itself, so a separate CoreWLAN scan would only add ~6 s.
     public func join(ssid: String, password: String) throws {
-        guard let i = iface else { throw HotspotError.unsupported }
-        let found: Set<CWNetwork>
-        do { found = try i.scanForNetworks(withName: ssid) } catch { throw HotspotError.joinFailed("scan: \((error as NSError).code)") }
-        // The scan is filtered by name. Without Location permission the results may carry no name at all, so an
-        // exact match is preferred but any result of this filtered scan is accepted.
-        let candidates = found.filter { $0.ssid == ssid }
-        guard let net = (candidates.isEmpty ? found : candidates).max(by: { $0.rssiValue < $1.rssiValue }) else {
-            throw HotspotError.notFound
-        }
-        // Without Location permission macOS may blank the name in scan results ("Filtering SSID from scan results"),
-        // and it cannot join a result that has no name (airportd fails with -3900). Logged without any names.
-        let named = found.filter { $0.ssid != nil }.count
-        Log.log("WIFI", "scan: \(found.count) result(s), \(named) with a name, \(candidates.count) matching; joining one \(net.ssid == nil ? "without" : "with") a name, channel \(net.wlanChannel?.channelNumber ?? 0)", public: true)
-        if net.ssid == nil, let name = i.interfaceName {
-            try joinByName(interface: name, ssid: ssid, password: password)
-            return
-        }
-        do { try i.associate(to: net, password: password) } catch {
-            // NSError domain/code only: the description could echo network details.
-            throw HotspotError.joinFailed("associate: \((error as NSError).domain) \((error as NSError).code)\(net.ssid == nil ? ", result had no name" : "")")
-        }
+        guard let name = iface?.interfaceName else { throw HotspotError.unsupported }
+        try joinByName(interface: name, ssid: ssid, password: password)
     }
 
     public func disassociate() { iface?.disassociate() }

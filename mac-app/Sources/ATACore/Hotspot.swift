@@ -59,9 +59,10 @@ public struct HotspotTimings {
     /// later, and a scan that misses them costs a whole `retryEvery`.
     public var firstScanDelay: TimeInterval = 2
     public var scanFor: TimeInterval = 30
-    /// macOS gives an app that is not frontmost at most one live scan per 10 s; an earlier request only gets the
-    /// cached results of the last scan (airportd: "requested a live scan less than 10 seconds after previous request").
-    public var retryEvery: TimeInterval = 10.5
+    /// Pause between join attempts. Each attempt is a `networksetup` run with its own ~6 s scan; macOS gives a
+    /// process at most one live scan per 10 s (airportd: "requested a live scan less than 10 seconds after previous
+    /// request ... returning cached scan results"), so scan time plus this pause stays at 10 s or more.
+    public var retryEvery: TimeInterval = 4
     public var addressWait: TimeInterval = 15
     public var rejoinWait: TimeInterval = 10
     public var powerCycleWait: TimeInterval = 20
