@@ -37,6 +37,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -313,6 +314,9 @@ class TransferService : Service() {
         if (skipRequested && hotspotPossible && failure?.code == ErrorCode.NO_PATH) {
             // The user tapped "use phone's Wi-Fi" while WebRTC was trying: same as tapping it after the failure.
             log.i("transfer: switching to the phone's hotspot")
+            // Reconnecting at once can land on the Bluetooth connection that is still being torn down (no `hello`
+            // for 8 s on a real device, then a full scan); a short pause avoids that.
+            delay(1_500)
             return runTransfer(uris, macIdHex, address, forceRtc = false, viaHotspot = true)
         }
         finish(outcome, failure, macName, t0, sendStart, hotspotOffer = hotspotPossible && failure?.code == ErrorCode.NO_PATH)
