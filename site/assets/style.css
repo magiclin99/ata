@@ -140,9 +140,10 @@ footer.site a { color: var(--muted); }
 .btn.big { font-size: 19px; padding: 14px 26px; }
 .note-line { color: var(--muted); font-size: 15px; margin: 12px 0 0; }
 
-/* One primary call to action: desktop shows the Mac download, phones show the phone path. */
+/* One primary call to action: wide screens show the Mac download, narrow screens the phone path.
+   Width only: some phones report a fine pointer, which used to hide the phone download. */
 .for-phone { display: none; }
-@media (max-width: 700px) and (pointer: coarse) {
+@media (max-width: 700px) {
   .for-phone { display: block; }
   .for-desktop { display: none; }
 }
