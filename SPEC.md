@@ -140,12 +140,13 @@ HMAC 輸入的串接：標籤是 ASCII bytes（不含結尾 0），macId / phone
 流程（同一個 session）：
 1. 手機 `send`（`caps`:["hotspot"]）→ Mac `accept`（`hotspot`:true，照常開 TCP 監聽，`0.0.0.0`）。
 2. 手機用 `WifiManager.startLocalOnlyHotspot` 開熱點（名稱與密碼由系統決定；最多等 15 秒），把名稱與密碼用 `hotspot` 送出。這則訊息只走加密後的 BLE；密碼不得寫進任何 log。
-3. Mac 記下目前 Wi-Fi 狀態（是否開啟、是否連著網路），並把這份狀態寫到 `~/Library/Application Support/io.github.magiclin99.ata.mac/wifi-restore.json`，然後用 CoreWLAN 掃描這個名稱並加入（Wi-Fi 關著就先打開）；第一次掃描前先等 2 秒（手機剛開的熱點要一下子才開始廣播），掃不到每 10.5 秒重試（macOS 對不在前景的 app 每 10 秒只做一次真正的掃描，太早再掃只拿到上一次的快取結果），總共最多 30 秒；加入後等 Wi-Fi 介面拿到 IPv4 位址，最多 15 秒。成功送 `hotspot_ready`，失敗送 `hotspot_error`（之後照常等手機的 `bye`）。加入期間不計 session 的閒置逾時。
+3. Mac 記下目前 Wi-Fi 狀態（是否開啟、是否連著網路），並把這份狀態寫到 `~/Library/Application Support/io.github.magiclin99.ata.mac/wifi-restore.json`，然後用 CoreWLAN 掃描這個名稱並加入（Wi-Fi 關著就先打開）；第一次掃描前先等 2 秒（手機剛開的熱點要一下子才開始廣播），掃不到每 10.5 秒重試（macOS 對不在前景的 app 每 10 秒只做一次真正的掃描，太早再掃只拿到上一次的快取結果），總共最多 30 秒。macOS 不給沒有定位權限的 app 看掃描結果裡的網路名稱，而沒有名稱的掃描結果 CoreWLAN 加入不了（airportd 錯誤 -3900），所以這時改用 `/usr/sbin/networksetup -setairportnetwork <介面> <名稱> -`，密碼從 stdin 給（不出現在行程的參數列，也不寫 log）。已知限制：這個做法依賴系統工具的行為；Mac 若設定「更改網路需要管理者」就會失敗（之後照常恢復）。加入後等 Wi-Fi 介面拿到 IPv4 位址，最多 15 秒。成功送 `hotspot_ready`，失敗送 `hotspot_error`（之後照常等手機的 `bye`）。加入期間不計 session 的閒置逾時。
 4. 手機收 `hotspot_ready`（最多等 60 秒），對 `lan` 的位址連 TCP（socket 不綁網路，走熱點介面；每次 3 秒，最多 15 秒），之後完全照第 7a 節（`sid`、`kFile` 加密的紀錄）。
 5. 傳完照常 `0x05` → `bye`（`via`:"hotspot"）。手機送出 `bye` 後才關熱點。
 
 Mac 一定要回到原本的網路（session 用任何方式結束都一樣：完成、失敗、手機取消、BLE 斷線、逾時、Mac app 結束）：
 - 斷開熱點；原本 Wi-Fi 是關的就關掉；原本連著網路就等 macOS 自動連回已知網路（最多 10 秒），沒連回就把 Wi-Fi 關掉再打開（之後最多等 20 秒）；原本開著但沒連網路就只斷開。
+- 恢復之後試著把手機的熱點從 Mac 的「已儲存網路」移除（`networksetup -removepreferredwirelessnetwork`）；macOS 要求管理者權限時就留著，結果寫 log。
 - 判斷「連著網路」只看 Wi-Fi 介面有沒有 IPv4 位址，不讀網路名稱（macOS 讀網路名稱需要定位權限）。
 - 結果寫 log；沒能確認連回時，Mac 畫面告訴使用者從選單列的 Wi-Fi 圖示選回自己的網路。
 - App 結束時（含 SIGTERM）先做完這一步再結束，最多等 20 秒。App 當掉時，下次啟動看到 `wifi-restore.json` 就檢查：Wi-Fi 介面的位址還在熱點的網段就照上面的步驟恢復，然後刪檔。

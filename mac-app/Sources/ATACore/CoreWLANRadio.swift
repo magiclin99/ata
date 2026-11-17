@@ -32,11 +32,56 @@ public final class CoreWLANRadio: WiFiRadio {
         guard let net = (candidates.isEmpty ? found : candidates).max(by: { $0.rssiValue < $1.rssiValue }) else {
             throw HotspotError.notFound
         }
+        // Without Location permission macOS may blank the name in scan results ("Filtering SSID from scan results"),
+        // and it cannot join a result that has no name (airportd fails with -3900). Logged without any names.
+        let named = found.filter { $0.ssid != nil }.count
+        Log.log("WIFI", "scan: \(found.count) result(s), \(named) with a name, \(candidates.count) matching; joining one \(net.ssid == nil ? "without" : "with") a name, channel \(net.wlanChannel?.channelNumber ?? 0)", public: true)
+        if net.ssid == nil, let name = i.interfaceName {
+            try joinByName(interface: name, ssid: ssid, password: password)
+            return
+        }
         do { try i.associate(to: net, password: password) } catch {
-            // NSError code only: the description could echo network details.
-            throw HotspotError.joinFailed("associate: \((error as NSError).domain) \((error as NSError).code)")
+            // NSError domain/code only: the description could echo network details.
+            throw HotspotError.joinFailed("associate: \((error as NSError).domain) \((error as NSError).code)\(net.ssid == nil ? ", result had no name" : "")")
         }
     }
 
     public func disassociate() { iface?.disassociate() }
+
+    public func forget(ssid: String) -> Bool {
+        guard let name = iface?.interfaceName else { return false }
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/sbin/networksetup")
+        p.arguments = ["-removepreferredwirelessnetwork", name, ssid]
+        let out = Pipe()
+        p.standardOutput = out; p.standardError = out; p.standardInput = FileHandle.nullDevice
+        do { try p.run() } catch { return false }
+        let text = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        p.waitUntilExit()
+        return p.terminationStatus == 0 && text.contains("Removed")
+    }
+
+    /// Joins by name with the system's `networksetup` tool: CoreWLAN can only join a scan result, and without Location
+    /// permission macOS blanks the name in scan results, which it then cannot join. The password goes in on stdin
+    /// (networksetup reads it there when given "-"), so it never appears in the process list; it is never logged.
+    private func joinByName(interface: String, ssid: String, password: String) throws {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/sbin/networksetup")
+        p.arguments = ["-setairportnetwork", interface, ssid, "-"]
+        let out = Pipe(), inp = Pipe()
+        p.standardOutput = out; p.standardError = out; p.standardInput = inp
+        do { try p.run() } catch { throw HotspotError.joinFailed("networksetup: could not run") }
+        inp.fileHandleForWriting.write(Data((password + "\n").utf8))
+        try? inp.fileHandleForWriting.close()
+        let data = out.fileHandleForReading.readDataToEndOfFile()
+        p.waitUntilExit()
+        let text = String(decoding: data, as: UTF8.self)
+        // networksetup exits 0 even when it fails; it prints why (e.g. "Could not find network …",
+        // "Failed to join network … Error: -3905"). Only the error number is kept.
+        if p.terminationStatus != 0 || text.contains("Could not") || text.contains("Failed") || text.contains("Error") {
+            if text.contains("Could not find") { throw HotspotError.notFound }
+            let code = text.range(of: #"-?\d{3,}"#, options: .regularExpression).map { String(text[$0]) } ?? "status \(p.terminationStatus)"
+            throw HotspotError.joinFailed("networksetup \(code)")
+        }
+    }
 }

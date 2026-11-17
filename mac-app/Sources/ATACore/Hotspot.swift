@@ -13,6 +13,12 @@ public protocol WiFiRadio: AnyObject {
     /// One scan for `ssid` and one association attempt. Throws `HotspotError.notFound` if the scan did not see it.
     func join(ssid: String, password: String) throws
     func disassociate()
+    /// Removes `ssid` from the Mac's saved networks (joining saves it). False if macOS refused (e.g. needs an admin).
+    func forget(ssid: String) -> Bool
+}
+
+public extension WiFiRadio {
+    func forget(ssid: String) -> Bool { true }
 }
 
 public enum HotspotError: Error, Equatable, CustomStringConvertible {
@@ -41,6 +47,8 @@ public struct WiFiRestorePoint: Codable, Equatable {
     public var hotspotIP: String?
     /// An association attempt was made (a scan that found nothing changes nothing, so it needs no undo).
     public var associationTouched = false
+    /// The hotspot's name, to remove it from the saved networks afterwards (not secret; the password is never stored).
+    public var ssid: String?
     public init(powered: Bool, connected: Bool, hotspotIP: String? = nil) {
         self.powered = powered; self.connected = connected; self.hotspotIP = hotspotIP
     }
@@ -102,8 +110,10 @@ public final class HotspotJoiner {
         guard radio.hasWiFi else { return .failure(.unsupported) }
         let before = WiFiRestorePoint(powered: radio.isPowered(), connected: radio.ipv4() != nil)
         let oldIP = radio.ipv4()
-        restorePoint = before
-        saveMarker(before)
+        var point = before
+        point.ssid = ssid
+        restorePoint = point
+        saveMarker(point)
         Log.log("WIFI", "joining the phone's hotspot (Wi-Fi was \(before.powered ? "on" : "off"), \(before.connected ? "connected" : "not connected"))", public: true)
         let t0 = Date()
         if !before.powered {
@@ -129,7 +139,7 @@ public final class HotspotJoiner {
             }
             if joined { break }
             if Date().addingTimeInterval(timings.retryEvery) > scanDeadline { return .failure(lastError) }
-            Log.log("WIFI", "hotspot not joined yet (\(lastError.wire)); retrying", public: true)
+            Log.log("WIFI", "hotspot not joined yet (\(lastError)); retrying", public: true)
             sleepUnlessCancelled(timings.retryEvery)
         }
         let addrDeadline = Date().addingTimeInterval(timings.addressWait)
@@ -184,6 +194,9 @@ public final class HotspotJoiner {
             }
         }
         Log.log("WIFI", "Wi-Fi restore \(ok ? "done" : "NOT confirmed") after \(Int(Date().timeIntervalSince(t0) * 1000)) ms", public: true)
+        if let ssid = before.ssid {
+            Log.log("WIFI", "removing the phone's Wi-Fi from saved networks: \(radio.forget(ssid: ssid) ? "done" : "refused by macOS")", public: true)
+        }
         return ok
     }
 

@@ -496,7 +496,7 @@ public final class ReceiverEngine {
                     self.sendEncrypted(s, ["t": "hotspot_ready", "lan": [ip], "tcpPort": port])
                 case .failure(let e):
                     s.hotspot = .failed
-                    Log.session("hotspot join failed: \(e.wire)", public: true)
+                    Log.session("hotspot join failed: \(e)", public: true)
                     self.sendEncrypted(s, ["t": "hotspot_error", "error": e.wire])
                     // Go back right away; the phone will send `bye`.
                     self.restoreWiFi()
