@@ -66,7 +66,7 @@
   <details><summary>為什麼 Mac 說它無法檢查 ATA？</summary>
     <p>因為 ATA 不是從 App Store 下載的，也沒有付費送 Apple 檢查，所以第一次打開時，Mac 會請你自己允許。<a href="../install/#s3">安裝說明</a>裡有每一步要按哪裡，只需要做一次。</p></details>
   <details><summary>為什麼手機要「附近的裝置」、位置或相機權限？</summary>
-    <p>「<strong>附近的裝置</strong>」是讓 ATA 透過藍牙找到你的 Mac，ATA 不會用它來定位你。比較舊的 Android 會改成問「<strong>位置</strong>」權限，ATA 一樣不會用到你的位置。<strong>相機</strong>只在配對時掃 QR code 用，畫面不會存下來，也不會傳出去。如果不小心按了拒絕，ATA 會顯示「<strong>開啟設定</strong>」按鈕，讓你重新允許。</p></details>
+    <p>「<strong>附近的裝置</strong>」是讓 ATA 透過藍牙找到你的 Mac，ATA 不會用它來定位你。比較舊的 Android 會改成問「<strong>位置</strong>」權限，ATA 一樣不會用到你的位置。如果選了「<strong>用手機的 Wi-Fi 傳送</strong>」，Android 會再問一次「<strong>附近的裝置</strong>」（Android 12 是「<strong>位置</strong>」），因為要用它才能打開手機的 Wi-Fi 給 Mac 連。<strong>相機</strong>只在配對時掃 QR code 用，畫面不會存下來，也不會傳出去。如果不小心按了拒絕，ATA 會顯示「<strong>開啟設定</strong>」按鈕，讓你重新允許。</p></details>
   <details><summary>我可以看看它是怎麼運作的嗎？</summary>
     <p>可以。程式碼是公開的，任何人都能檢查。<a href="https://github.com/magiclin99/ata">在 GitHub 上看程式碼</a>。</p></details>
 </section>
@@ -80,7 +80,8 @@
       <li>把手機拿近一點。</li>
     </ul></details>
   <details><summary>顯示連不上我的 Mac</summary>
-    <p>讓手機連上和 Mac <strong>同一個 Wi-Fi</strong>，再試一次。有些公司、學校、飯店或公共 Wi-Fi，在兩台不在同一個網路時會擋住這種連線。</p></details>
+    <p>讓手機連上和 Mac <strong>同一個 Wi-Fi</strong>，再試一次。有些公司、學校、飯店或公共 Wi-Fi，在兩台不在同一個網路時會擋住這種連線。</p>
+    <p>兩台連不到彼此時，ATA 會提供「<strong>用手機的 Wi-Fi 傳送</strong>」。按下去，手機會開一個只給你的 Mac 用的 Wi-Fi：Mac 暫時離開自己的 Wi-Fi 幾秒鐘收檔案，傳完會自己連回去。</p></details>
   <details id="firewall" open><summary>傳得很慢，或 ATA 說被防火牆擋住</summary>
     <p>可能是 Mac 的防火牆擋住了手機的直接連線，通常是因為 Mac 詢問時按了「<strong>拒絕</strong>」。這時還是傳得過去，只是很慢。修正方法：</p>
     <ol>

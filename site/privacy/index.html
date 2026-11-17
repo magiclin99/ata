@@ -29,7 +29,7 @@
 <section class="hero">
   <h1>Privacy Policy</h1>
   <p class="lede">Short version: ATA collects no data about you and sends nothing to us or anyone else. Your files go directly from your phone to your own Mac. The only outside contact: when your phone and Mac aren't on the same Wi-Fi, a connection helper run by Google or Cloudflare sees your network address (section 3).</p>
-  <p class="fine">Applies to: the ATA Android app (<code>io.github.magiclin99.ata</code>) and the ATA Mac app. Effective date: November 16, 2026.
+  <p class="fine">Applies to: the ATA Android app (<code>io.github.magiclin99.ata</code>) and the ATA Mac app. Effective date: November 17, 2026.
     Developer: magiclin99, contact <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>. <a href="#zh-tw" lang="zh-Hant-TW">中文版在下方</a>.</p>
 </section>
 
@@ -58,6 +58,8 @@
   <h3>Different networks</h3>
   <p>When they aren't on the same Wi-Fi, the two devices connect to each other directly over the internet (WebRTC). To find each other, each device first asks a public connection helper run by <strong>Google</strong> or <strong>Cloudflare</strong> (technically a STUN server: <code>stun.l.google.com</code>, <code>stun.cloudflare.com</code>) for its own network address. Those helpers see your devices' network addresses (IP addresses and ports), as any internet service you contact would. They never receive your files, file names, device names, or keys, and they handle that request under Google's and Cloudflare's own privacy policies.
     Your phone and Mac also learn each other's network addresses, which they need in order to connect. The connection is encrypted (DTLS). ATA never uses a relay server (TURN), so your files never pass through any server.</p>
+  <h3>Your phone's own Wi-Fi</h3>
+  <p>If your phone and Mac can't reach each other, ATA offers <strong>Use phone's Wi-Fi</strong>. Only if you tap it, your phone turns on a temporary Wi-Fi with no internet, and sends its name and password to your Mac over the encrypted Bluetooth connection. Your Mac joins it, receives the files (encrypted the same way as on the same Wi-Fi), then goes back to its own Wi-Fi and removes the phone's Wi-Fi from its saved networks. The phone turns its Wi-Fi off right after. Nothing goes to the internet, and the password is never written to any log.</p>
 </section>
 
 <section>
@@ -79,10 +81,12 @@
     <thead><tr><th>App</th><th>Permission</th><th>Used for</th></tr></thead>
     <tbody>
       <tr><td>Android</td><td>Nearby devices (Bluetooth); Location on Android 9–11 only</td><td>Finding and connecting to your Mac. Location isn't used.</td></tr>
+      <tr><td>Android</td><td>Nearby Wi-Fi devices (Android 13 and later), Location (Android 12 only), change Wi-Fi state; asked only when you tap Use phone's Wi-Fi</td><td>Turning on your phone's temporary Wi-Fi for your Mac. Location isn't used.</td></tr>
       <tr><td>Android</td><td>Internet, network state</td><td>Sending files over Wi-Fi or the internet, and the connection-helper request described in section 3.</td></tr>
       <tr><td>Android</td><td>Camera (only when you tap scan)</td><td>Reading the pairing QR code on the phone. Frames aren't stored or sent. Asked only when you pair.</td></tr>
       <tr><td>Android</td><td>Notifications, foreground service</td><td>Showing progress and keeping a transfer running when you leave the app.</td></tr>
       <tr><td>Mac</td><td>Bluetooth, Local Network, incoming connections</td><td>Being found by your phone and receiving files.</td></tr>
+      <tr><td>Mac</td><td>Wi-Fi (no extra permission)</td><td>Only when you tap Use phone's Wi-Fi: joining your phone's temporary Wi-Fi, then going back to your own Wi-Fi.</td></tr>
       <tr><td>Mac</td><td>Notifications, Login Items</td><td>Telling you a file arrived, and opening ATA when you log in to your Mac (turned on when you pair your first phone; you can switch it off).</td></tr>
     </tbody>
   </table></div>
@@ -114,7 +118,7 @@
 <section class="hero">
   <h1>隱私權政策</h1>
   <p class="lede">簡單說：ATA 不收集任何關於你的資料，也不會傳任何東西給我們或其他人。你的檔案直接從手機傳到你自己的 Mac。唯一的對外接觸：手機和 Mac 不在同一個 Wi-Fi 時，Google 或 Cloudflare 提供的連線輔助服務會看到你的網路位址（見第 3 節）。</p>
-  <p class="fine">適用範圍：ATA Android app（<code>io.github.magiclin99.ata</code>）與 ATA Mac app。生效日期：2026 年 11 月 16 日。開發者：magiclin99，聯絡信箱 <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>。<a href="#en" lang="en">English version above</a>.</p>
+  <p class="fine">適用範圍：ATA Android app（<code>io.github.magiclin99.ata</code>）與 ATA Mac app。生效日期：2026 年 11 月 17 日。開發者：magiclin99，聯絡信箱 <a href="mailto:magiclin99@gmail.com">magiclin99@gmail.com</a>。<a href="#en" lang="en">English version above</a>.</p>
 </section>
 
 <section>
@@ -140,6 +144,8 @@
   <p>手機和 Mac 連同一個 Wi-Fi 時，檔案會直接透過這個 Wi-Fi 傳送，並用只有你兩台裝置才有的金鑰加密（AES-256-GCM），不會連到網際網路。</p>
   <h3>不同的網路</h3>
   <p>不在同一個 Wi-Fi 時，兩台裝置會透過網際網路直接互相連線（WebRTC）。為了找到對方，每台裝置會先向 <strong>Google</strong> 或 <strong>Cloudflare</strong> 提供的公開連線輔助服務（技術名稱是 STUN 伺服器：<code>stun.l.google.com</code>、<code>stun.cloudflare.com</code>）查詢自己的網路位址。這些服務看得到你裝置的網路位址（IP 位址與連接埠），就像你連到任何網路服務一樣；它們不會收到你的檔案、檔名、裝置名稱或金鑰，並依 Google 與 Cloudflare 各自的隱私權政策處理這個請求。你的手機和 Mac 也會得知彼此的網路位址，這是互相連線所必需的。連線經過加密（DTLS）。ATA 從不使用轉送伺服器（TURN），所以你的檔案不會經過任何伺服器。</p>
+  <h3>手機自己的 Wi-Fi</h3>
+  <p>手機和 Mac 連不到彼此時，ATA 會提供「<strong>用手機的 Wi-Fi 傳送</strong>」。只有你按下去，手機才會開一個不能上網的臨時 Wi-Fi，並透過加密的藍牙連線把它的名稱和密碼交給你的 Mac。Mac 連上後收檔案（和同一個 Wi-Fi 時一樣加密），傳完就連回自己原本的 Wi-Fi，並把手機的 Wi-Fi 從已儲存的網路中移除；手機隨即關掉這個 Wi-Fi。過程中不會連到網際網路，密碼也不會寫進任何紀錄。</p>
 </section>
 
 <section>
@@ -161,10 +167,12 @@
     <thead><tr><th>App</th><th>權限</th><th>用途</th></tr></thead>
     <tbody>
       <tr><td>Android</td><td>附近的裝置（藍牙）；僅 Android 9–11 需要位置</td><td>找到並連線到你的 Mac；不使用位置</td></tr>
+      <tr><td>Android</td><td>附近的 Wi-Fi 裝置（Android 13 以上）、位置（僅 Android 12）、變更 Wi-Fi 狀態；只在你按「用手機的 Wi-Fi 傳送」時詢問</td><td>打開手機的臨時 Wi-Fi 給你的 Mac 連；不使用位置</td></tr>
       <tr><td>Android</td><td>網際網路、網路狀態</td><td>透過 Wi-Fi 或網際網路傳送檔案，以及第 3 節說明的連線輔助查詢</td></tr>
       <tr><td>Android</td><td>相機（只在你點選掃描時）</td><td>在手機上讀取配對 QR code；畫面不儲存也不傳送。只在配對時詢問</td></tr>
       <tr><td>Android</td><td>通知、前景服務</td><td>顯示進度，離開 app 時讓傳輸繼續</td></tr>
       <tr><td>Mac</td><td>藍牙、區域網路、接受傳入連線</td><td>讓手機找到並接收檔案</td></tr>
+      <tr><td>Mac</td><td>Wi-Fi（不需要額外權限）</td><td>只在你按「用手機的 Wi-Fi 傳送」時：連上手機的臨時 Wi-Fi，傳完連回你自己的 Wi-Fi</td></tr>
       <tr><td>Mac</td><td>通知、登入項目</td><td>通知檔案送達；登入 Mac 時打開 ATA（配對第一支手機時會打開這個設定，可以關掉）</td></tr>
     </tbody>
   </table></div>
