@@ -54,7 +54,7 @@ final class FakeRadio: WiFiRadio {
 
 func fastTimings() -> HotspotTimings {
     var t = HotspotTimings()
-    t.scanFor = 1; t.retryEvery = 0.1; t.addressWait = 1; t.rejoinWait = 0.4; t.powerCycleWait = 0.4; t.poll = 0.02
+    t.firstScanDelay = 0; t.scanFor = 1; t.retryEvery = 0.1; t.addressWait = 1; t.rejoinWait = 0.4; t.powerCycleWait = 0.4; t.poll = 0.02
     return t
 }
 

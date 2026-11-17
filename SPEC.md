@@ -140,7 +140,7 @@ HMAC 輸入的串接：標籤是 ASCII bytes（不含結尾 0），macId / phone
 流程（同一個 session）：
 1. 手機 `send`（`caps`:["hotspot"]）→ Mac `accept`（`hotspot`:true，照常開 TCP 監聽，`0.0.0.0`）。
 2. 手機用 `WifiManager.startLocalOnlyHotspot` 開熱點（名稱與密碼由系統決定；最多等 15 秒），把名稱與密碼用 `hotspot` 送出。這則訊息只走加密後的 BLE；密碼不得寫進任何 log。
-3. Mac 記下目前 Wi-Fi 狀態（是否開啟、是否連著網路），並把這份狀態寫到 `~/Library/Application Support/io.github.magiclin99.ata.mac/wifi-restore.json`，然後用 CoreWLAN 掃描這個名稱並加入（Wi-Fi 關著就先打開）；掃不到每 3 秒重試，總共最多 30 秒；加入後等 Wi-Fi 介面拿到 IPv4 位址，最多 15 秒。成功送 `hotspot_ready`，失敗送 `hotspot_error`（之後照常等手機的 `bye`）。加入期間不計 session 的閒置逾時。
+3. Mac 記下目前 Wi-Fi 狀態（是否開啟、是否連著網路），並把這份狀態寫到 `~/Library/Application Support/io.github.magiclin99.ata.mac/wifi-restore.json`，然後用 CoreWLAN 掃描這個名稱並加入（Wi-Fi 關著就先打開）；第一次掃描前先等 2 秒（手機剛開的熱點要一下子才開始廣播），掃不到每 10.5 秒重試（macOS 對不在前景的 app 每 10 秒只做一次真正的掃描，太早再掃只拿到上一次的快取結果），總共最多 30 秒；加入後等 Wi-Fi 介面拿到 IPv4 位址，最多 15 秒。成功送 `hotspot_ready`，失敗送 `hotspot_error`（之後照常等手機的 `bye`）。加入期間不計 session 的閒置逾時。
 4. 手機收 `hotspot_ready`（最多等 60 秒），對 `lan` 的位址連 TCP（socket 不綁網路，走熱點介面；每次 3 秒，最多 15 秒），之後完全照第 7a 節（`sid`、`kFile` 加密的紀錄）。
 5. 傳完照常 `0x05` → `bye`（`via`:"hotspot"）。手機送出 `bye` 後才關熱點。
 

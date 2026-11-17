@@ -47,8 +47,13 @@ public struct WiFiRestorePoint: Codable, Equatable {
 }
 
 public struct HotspotTimings {
+    /// The phone sends the name as soon as Android reports the hotspot started; its first beacons can come a moment
+    /// later, and a scan that misses them costs a whole `retryEvery`.
+    public var firstScanDelay: TimeInterval = 2
     public var scanFor: TimeInterval = 30
-    public var retryEvery: TimeInterval = 3
+    /// macOS gives an app that is not frontmost at most one live scan per 10 s; an earlier request only gets the
+    /// cached results of the last scan (airportd: "requested a live scan less than 10 seconds after previous request").
+    public var retryEvery: TimeInterval = 10.5
     public var addressWait: TimeInterval = 15
     public var rejoinWait: TimeInterval = 10
     public var powerCycleWait: TimeInterval = 20
@@ -104,6 +109,7 @@ public final class HotspotJoiner {
         if !before.powered {
             do { try radio.setPower(true) } catch { return .failure(.joinFailed("power on: \(error)")) }
         }
+        sleepUnlessCancelled(timings.firstScanDelay)
         let scanDeadline = Date().addingTimeInterval(timings.scanFor)
         var lastError: HotspotError = .notFound
         var joined = false
