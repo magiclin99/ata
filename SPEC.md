@@ -135,13 +135,14 @@ HMAC 輸入的串接：標籤是 ASCII bytes（不含結尾 0），macId / phone
 
 觸發與同意：
 - 一般傳送照舊（區網 → WebRTC）。結果是「沒有直連路徑」、且這次的 `accept.hotspot` 為 true、手機也支援時，手機的失敗畫面多一個選項，說明 Mac 會暫時離開目前的 Wi-Fi、傳完自動連回，由使用者按下才開始。不自動切換 Mac 的網路。
+- 不必等失敗：區網跳過、只剩 WebRTC 在試、而且 `accept.hotspot` 為 true 時，WebRTC 試了 4 秒後手機就先顯示同一個選項。按下時手機放棄 WebRTC（`bye` 照常 `no_path`），再照下一點開始熱點傳送；WebRTC 若在這之前就連上，選項自然消失，照常傳。
 - 按下後手機先要權限（Android 12/12L：位置；Android 13 以上：附近裝置），再重新開始一次傳送（重新 BLE 握手），這次在 `accept` 之後直接走熱點，不試區網與 WebRTC。
 
 流程（同一個 session）：
 1. 手機 `send`（`caps`:["hotspot"]）→ Mac `accept`（`hotspot`:true，照常開 TCP 監聽，`0.0.0.0`）。
 2. 手機用 `WifiManager.startLocalOnlyHotspot` 開熱點（名稱與密碼由系統決定；最多等 15 秒），把名稱與密碼用 `hotspot` 送出。這則訊息只走加密後的 BLE；密碼不得寫進任何 log。
 3. Mac 記下目前 Wi-Fi 狀態（是否開啟、是否連著網路），並把這份狀態寫到 `~/Library/Application Support/io.github.magiclin99.ata.mac/wifi-restore.json`，然後用 `/usr/sbin/networksetup -setairportnetwork <介面> <名稱> -` 依名稱加入（Wi-Fi 關著就先打開；密碼從 stdin 給，不出現在行程的參數列，也不寫 log）。不用 CoreWLAN 自己加入：沒有定位權限的 app 拿到的掃描結果沒有網路名稱，而沒有名稱的結果 airportd 加入不了（錯誤 -3900）。第一次加入前先等 2 秒（手機剛開的熱點要一下子才開始廣播）；找不到或失敗就隔 4 秒再試（networksetup 每次自己掃描約 6 秒，macOS 每個行程每 10 秒只做一次真正的掃描），總共最多 30 秒。已知限制：依賴系統工具的行為；Mac 若設定「更改網路需要管理者」就會失敗（之後照常恢復）。加入後等 Wi-Fi 介面拿到 IPv4 位址，最多 15 秒。成功送 `hotspot_ready`，失敗送 `hotspot_error`（之後照常等手機的 `bye`）。加入期間不計 session 的閒置逾時。
-4. 手機收 `hotspot_ready`（最多等 60 秒），對 `lan` 的位址連 TCP（socket 不綁網路，走熱點介面；每次 3 秒，最多 15 秒），之後完全照第 7a 節（`sid`、`kFile` 加密的紀錄）。
+4. 手機收 `hotspot_ready`（最多等 60 秒），對 `lan` 的位址連 TCP（socket 不綁網路，走熱點介面；每次 3 秒，最多 60 秒：開著防火牆的 Mac 第一次會問「是否允許 ATA 接受傳入的網路連線」，要留時間給人按。連不到超過 5 秒，手機就提示「如果 Mac 問是否允許 ATA 接受傳入的網路連線，請按允許」；Mac 這段時間的閒置上限是 75 秒，不是平常的 30 秒）。最後還是連不到，`bye.error` 是 `hotspot_unreachable`（和 Mac 加入失敗的 `hotspot_failed` 分開，手機用不同的說明），之後完全照第 7a 節（`sid`、`kFile` 加密的紀錄）。
 5. 傳完照常 `0x05` → `bye`（`via`:"hotspot"）。手機送出 `bye` 後才關熱點。
 
 Mac 一定要回到原本的網路（session 用任何方式結束都一樣：完成、失敗、手機取消、BLE 斷線、逾時、Mac app 結束）：

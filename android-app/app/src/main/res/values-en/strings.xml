@@ -77,6 +77,7 @@
     <string name="phase_lan">Connecting to your Mac…</string>
     <string name="phase_rtc">Not on the same Wi-Fi, so sending over the internet. This may be slower…</string>
     <string name="phase_hotspot">Your Mac \"%1$s\" is joining this phone\'s Wi-Fi for a moment. It goes back to its own Wi-Fi when done…</string>
+    <string name="phase_hotspot_firewall">Waiting for your Mac \"%1$s\" to answer. If your Mac asks whether ATA may accept incoming network connections, click Allow.</string>
     <string name="phase_sending">Sending to your Mac \"%1$s\"</string>
     <string name="phase_done">Sent to your Mac \"%1$s\"</string>
     <string name="phase_done_cellular">Sent to your Mac \"%1$s\" (used about %2$s of mobile data)</string>
@@ -112,6 +113,7 @@
     <string name="err_rejected_folder">Your Mac can\'t find the save folder. Choose one again in ATA on the Mac.</string>
     <string name="err_no_path">Couldn\'t reach your Mac. Connect your phone to the same Wi-Fi as the Mac, then try again.</string>
     <string name="err_hotspot_failed">Your Mac couldn\'t join this phone\'s Wi-Fi. Connect your phone to the same Wi-Fi as the Mac, then try again.</string>
+    <string name="err_hotspot_unreachable">Your Mac joined this phone\'s Wi-Fi, but the phone couldn\'t reach it. If your Mac asked about incoming network connections, click Allow, then try again.</string>
     <string name="hotspot_offer_title">Send using this phone\'s Wi-Fi?</string>
     <string name="hotspot_offer_text">Your phone can briefly make a Wi-Fi just for your Mac. While sending, the Mac leaves its current Wi-Fi (no internet on the Mac for that moment) and goes back to it automatically when done.</string>
     <string name="hotspot_offer_button">Use phone\'s Wi-Fi</string>

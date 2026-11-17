@@ -63,6 +63,8 @@ data class TransferState(
     val address: String? = null,
     /** Failed with no path, but both sides can use this phone's temporary hotspot (SPEC §7c): offer it. */
     val hotspotOffer: Boolean = false,
+    /** On the hotspot, the Mac has not answered for a few seconds: show the "click Allow on your Mac" hint. */
+    val hotspotWaitingMac: Boolean = false,
 ) {
     val totalSize: Long get() = files.sumOf { it.size }
     val active: Boolean get() = !phase.terminal
@@ -97,6 +99,7 @@ class TransferService : Service() {
         private const val EXTRA_ADDRESS = "address"
         private const val EXTRA_FORCE_RTC = "forceRtc"
         private const val EXTRA_VIA_HOTSPOT = "viaHotspot"
+        private const val ACTION_SKIP_TO_HOTSPOT = "io.github.magiclin99.ata.SKIP_TO_HOTSPOT"
         private const val CHANNEL_PROGRESS = "transfer"
         private const val CHANNEL_RESULT = "result"
         private const val NOTIF_PROGRESS = 1
@@ -143,6 +146,11 @@ class TransferService : Service() {
         fun cancel(ctx: Context) {
             ctx.startService(Intent(ctx, TransferService::class.java).setAction(ACTION_CANCEL))
         }
+
+        /** SPEC §7c: the user chose the phone's Wi-Fi while WebRTC was still trying; switch to it. */
+        fun skipToHotspot(ctx: Context) {
+            ctx.startService(Intent(ctx, TransferService::class.java).setAction(ACTION_SKIP_TO_HOTSPOT))
+        }
     }
 
     // Off the main thread: the engine touches every 16–64 KiB chunk.
@@ -181,6 +189,11 @@ class TransferService : Service() {
                 val viaHotspot = intent.getBooleanExtra(EXTRA_VIA_HOTSPOT, false)
                 job = scope.launch { runTransfer(uris, mac, address, forceRtc, viaHotspot) }
             }
+            ACTION_SKIP_TO_HOTSPOT -> {
+                log.i("service: switch to the phone's hotspot requested")
+                skipRequested = true
+                engine?.skipToHotspot()
+            }
             ACTION_CANCEL -> {
                 log.i("service: cancel requested")
                 if (job?.isActive == true) job?.cancel() else stopSelf()
@@ -209,11 +222,13 @@ class TransferService : Service() {
     // ICE pair's local side is a cellular interface. The LAN path is bound to the Wi-Fi/Ethernet network, so it
     // never counts. Payload bytes only; framing and encryption add a few percent, hence "about" in the UI.
     @Volatile private var rtcPeer: AndroidRtcPeer? = null
+    @Volatile private var engine: TransferEngine? = null
+    @Volatile private var skipRequested = false
     private var lastTotalSent = 0L
     private var cellularBytes = 0L
 
     private suspend fun runTransfer(uris: List<Uri>, macIdHex: String?, address: String?, forceRtc: Boolean, viaHotspot: Boolean) {
-        rtcPeer = null; lastTotalSent = 0L; cellularBytes = 0L
+        rtcPeer = null; lastTotalSent = 0L; cellularBytes = 0L; skipRequested = false
         val t0 = SystemClock.elapsedRealtime()
         var sendStart = 0L
         var outcome: TransferOutcome? = null
@@ -279,8 +294,9 @@ class TransferService : Service() {
                 log, androidLanDialer(this, log), { AndroidRtcPeer(this, log).also { rtcPeer = it } }, forceRtc,
                 hotspot = hotspot, viaHotspot = viaHotspot,
             )
+            this.engine = engine
             sendStart = SystemClock.elapsedRealtime()
-            outcome = engine.run(session, sources, listener)
+            outcome = try { engine.run(session, sources, listener) } finally { this.engine = null }
             failure = outcome.error
             hotspotPossible = outcome.hotspotPossible && !viaHotspot
         } catch (e: CancellationException) {
@@ -294,6 +310,11 @@ class TransferService : Service() {
         } finally {
             link?.close()
         }
+        if (skipRequested && hotspotPossible && failure?.code == ErrorCode.NO_PATH) {
+            // The user tapped "use phone's Wi-Fi" while WebRTC was trying: same as tapping it after the failure.
+            log.i("transfer: switching to the phone's hotspot")
+            return runTransfer(uris, macIdHex, address, forceRtc = false, viaHotspot = true)
+        }
         finish(outcome, failure, macName, t0, sendStart, hotspotOffer = hotspotPossible && failure?.code == ErrorCode.NO_PATH)
     }
 
@@ -305,10 +326,15 @@ class TransferService : Service() {
                     Stage.ConnectingLan -> it.copy(phase = Phase.LAN)
                     Stage.ConnectingRtc -> it.copy(phase = Phase.RTC)
                     Stage.ConnectingHotspot -> it.copy(phase = Phase.HOTSPOT)
+                    Stage.WaitingForMacOnHotspot -> it.copy(phase = Phase.HOTSPOT, hotspotWaitingMac = true)
                     is Stage.Sending -> it.copy(phase = Phase.SENDING, path = stage.path)
                 }
             }
             notifyProgress(force = true)
+        }
+
+        override fun onHotspotPossible() {
+            TransferHub.update { it.copy(hotspotOffer = true) }
         }
 
         override fun onProgress(fileIndex: Int, fileSent: Long, totalSent: Long) {

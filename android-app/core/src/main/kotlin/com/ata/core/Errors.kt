@@ -22,6 +22,9 @@ enum class ErrorCode {
     NO_PATH,
     /** SPEC §7c: the phone's temporary hotspot could not be started, or the Mac could not join it. */
     HOTSPOT_FAILED,
+    /** SPEC §7c: the Mac joined the phone's hotspot, but the phone could not connect to it there (e.g. the Mac's
+     *  firewall was still asking, or said no). */
+    HOTSPOT_UNREACHABLE,
     /** A path was established but the transfer broke (disconnect, timeout, bad record, decrypt failure). */
     INTERRUPTED,
     /** One or more files were reported `ok:false` by the Mac. */

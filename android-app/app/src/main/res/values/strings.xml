@@ -93,6 +93,7 @@
     <string name="phase_lan">正在連線到你的 Mac…</string>
     <string name="phase_rtc">不在同一個 Wi-Fi，改用網路傳送，可能會比較慢…</string>
     <string name="phase_hotspot">你的 Mac「%1$s」正暫時連上這支手機的 Wi-Fi，傳完會自動連回原本的網路…</string>
+    <string name="phase_hotspot_firewall">正在等你的 Mac「%1$s」回應。如果 Mac 問是否允許 ATA 接受傳入的網路連線，請按「允許」。</string>
     <string name="phase_sending">正在傳送到你的 Mac「%1$s」</string>
     <string name="phase_done">已傳送到你的 Mac「%1$s」</string>
     <string name="phase_done_cellular">已傳送到你的 Mac「%1$s」（用了約 %2$s 行動數據）</string>
@@ -129,6 +130,7 @@
     <string name="err_rejected_folder">Mac 上的儲存位置找不到了。請在 Mac 的 ATA 裡重新選一個。</string>
     <string name="err_no_path">連不上你的 Mac。請讓手機和 Mac 連上同一個 Wi-Fi，再試一次。</string>
     <string name="err_hotspot_failed">Mac 沒辦法連上這支手機的 Wi-Fi。請讓手機和 Mac 連上同一個 Wi-Fi，再試一次。</string>
+    <string name="err_hotspot_unreachable">Mac 已經連上這支手機的 Wi-Fi，但手機連不到它。如果 Mac 問過是否允許接受傳入的網路連線，請按「允許」，再試一次。</string>
     <string name="hotspot_offer_title">改用這支手機的 Wi-Fi 傳送？</string>
     <string name="hotspot_offer_text">這支手機可以暫時開一個只給你的 Mac 用的 Wi-Fi。傳送時 Mac 會先離開現在的 Wi-Fi（這段時間 Mac 不能上網），傳完會自動連回原本的網路。</string>
     <string name="hotspot_offer_button">用手機的 Wi-Fi 傳送</string>

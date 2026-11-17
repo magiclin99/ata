@@ -210,7 +210,7 @@ final class HotspotEngineTests: EngineTestCase {
         radio = FakeRadio()
         joiner = HotspotJoiner(radio: radio, markerURL: dir.appendingPathComponent(".wifi-restore.json"), timings: fastTimings())
         var cfg = EngineConfig(macId: macId, macName: "Test Mac", saveDir: dir)
-        cfg.idleTimeout = 5; cfg.handshakeTimeout = 5; cfg.finishGrace = 2
+        cfg.idleTimeout = 5; cfg.hotspotConnectWait = 7; cfg.handshakeTimeout = 5; cfg.finishGrace = 2
         cfg.lanAddresses = { ["127.0.0.1"] }
         cfg.hotspot = joiner
         engine = ReceiverEngine(config: cfg, store: store)
@@ -326,8 +326,10 @@ final class HotspotEngineTests: EngineTestCase {
         _ = try sendWithCaps(p, files([10]))
         try p.sendEncrypted(["t": "hotspot", "ssid": "Phone-1234", "psk": psk])
         XCTAssertEqual(try p.receiveEncrypted()["t"] as? String, "hotspot_ready")
-        // The phone goes silent: the 5 s idle timeout ends the session.
-        let s = try XCTUnwrap(events.sessionEnded(10))
+        // The phone goes silent. On the hotspot the engine waits longer than the 5 s idle limit (the phone may be
+        // waiting for a firewall click on the Mac), here 7 s, then ends the session.
+        XCTAssertNil(events.sessionEnded(5.5), "still waiting past the normal idle limit")
+        let s = try XCTUnwrap(events.sessionEnded(5))
         XCTAssertFalse(s.ok)
         XCTAssertEqual(restoredEvent(), true)
     }

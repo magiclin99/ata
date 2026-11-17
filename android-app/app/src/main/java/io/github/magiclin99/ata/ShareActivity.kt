@@ -42,7 +42,10 @@ class ShareActivity : ComponentActivity() {
                     onPick = ::start,
                     onRetry = { TransferHub.clearFinished(); picking = true },
                     onClose = { finish() },
-                    onHotspot = { mac, address -> start(mac, address, viaHotspot = true) },
+                    onHotspot = { mac, address ->
+                        // While WebRTC is still trying, the running transfer switches over; after a failure, start anew.
+                        if (TransferHub.busy) TransferService.skipToHotspot(this) else start(mac, address, viaHotspot = true)
+                    },
                 )
             }
         }

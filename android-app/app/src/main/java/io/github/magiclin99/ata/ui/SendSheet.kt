@@ -402,6 +402,17 @@ private fun TransferBody(s: TransferState, canRetry: Boolean, onRetry: () -> Uni
         }
     }
 
+    // SPEC §7c: different networks, so only the internet path is left and it may fail after ~20 s. After a few
+    // seconds of it, offer the phone's Wi-Fi right away instead of making the user wait for the failure.
+    if (s.phase == Phase.RTC && s.hotspotOffer && canRetry && s.macIdHex != null) {
+        var show by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) { delay(4_000); show = true }
+        if (show) {
+            Spacer(Modifier.size(12.dp))
+            HotspotOffer(onGo = { onHotspot(s.macIdHex, s.address) })
+        }
+    }
+
     if (s.files.isNotEmpty()) {
         Spacer(Modifier.size(16.dp))
         val total = s.totalSize

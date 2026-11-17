@@ -56,6 +56,9 @@ public struct EngineConfig {
     public var handshakeTimeout: TimeInterval = 15
     /// No BLE message and no file bytes for this long → the session is torn down.
     public var idleTimeout: TimeInterval = 30
+    /// SPEC §7c: on the phone's hotspot, how long to wait for the phone's TCP connection. The phone keeps trying for
+    /// 60 s so a person can answer a first-time firewall prompt ("accept incoming network connections?").
+    public var hotspotConnectWait: TimeInterval = 75
     /// After 0x05, how long to wait for the phone's `bye` before ending the session anyway.
     public var finishGrace: TimeInterval = 10
     public var lanAddresses: () -> [String] = { lanIPv4Addresses().map(\.ip) }
@@ -608,6 +611,12 @@ public final class ReceiverEngine {
         emit(.sessionEnded(summary))
     }
 
+    /// While on the phone's hotspot and before its connection arrives, the phone may be waiting for the user to answer
+    /// the firewall prompt; otherwise the normal idle limit.
+    private func idleLimit(_ s: Session) -> TimeInterval {
+        s.hotspot == .joined && s.claim.current == nil ? max(config.idleTimeout, config.hotspotConnectWait) : config.idleTimeout
+    }
+
     private func tick() {
         let now = Date()
         for st in links.values where st.session == nil && !st.dead && !st.authPending && now.timeIntervalSince(st.openedAt) > config.handshakeTimeout {
@@ -624,8 +633,8 @@ public final class ReceiverEngine {
                 }
             } else if s.hotspot == .joining {
                 s.lastActivity = now   // joining has its own time limits (SPEC §7c)
-            } else if now.timeIntervalSince(s.lastActivity) > config.idleTimeout {
-                endSession(s, error: "timed out (no activity for \(Int(config.idleTimeout)) s)")
+            } else if now.timeIntervalSince(s.lastActivity) > idleLimit(s) {
+                endSession(s, error: "timed out (no activity for \(Int(idleLimit(s))) s)")
             }
         }
         if let o = offer, !o.used, now >= o.expiresAt, !offerExpiryReported {

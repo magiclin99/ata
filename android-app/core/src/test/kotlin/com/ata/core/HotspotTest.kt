@@ -4,6 +4,9 @@ import com.ata.core.Msg.str
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.After
@@ -33,7 +36,11 @@ class HotspotTest {
         assertFalse(all.contains(Codec.b64url(k)))
     }
 
-    private class FakeHotspot(private val log: AtaLog, private val psk: String, private val failStart: Boolean = false) : HotspotProvider {
+    private class FakeHotspot(
+        private val log: AtaLog, private val psk: String, private val failStart: Boolean = false,
+        /** The Mac "does not answer" this many dials first (a firewall prompt waiting for a click); -1 = never answers. */
+        private var unreachableDials: Int = 0,
+    ) : HotspotProvider {
         var started = 0
         var stopped = 0
         override suspend fun start(timeoutMs: Long): HotspotCredentials {
@@ -41,7 +48,11 @@ class HotspotTest {
             if (failStart) throw IOException("incompatible mode")
             return HotspotCredentials("Phone-AB12", psk)
         }
-        override suspend fun dial(ips: List<String>, port: Int): Socket? = TcpLanDialer(log).dial(ips, port)
+        override suspend fun dial(ips: List<String>, port: Int): Socket? {
+            if (unreachableDials < 0) return null
+            if (unreachableDials > 0) { unreachableDials--; return null }
+            return TcpLanDialer(log).dial(ips, port)
+        }
         override fun stop() { stopped++ }
     }
 
@@ -150,6 +161,61 @@ class HotspotTest {
             assertEquals(ErrorCode.HOTSPOT_FAILED, out.error!!.code)
             assertNull("nothing was sent to the Mac", mac.hotspotMsg)
             assertEquals(1, h.stopped)
+        }
+    }
+
+    @Test fun keepsTryingWhileTheMacAsksAndShowsTheHint() = runBlocking {
+        withTimeout(20_000) {
+            val mac = pairedMac().apply { hotspotSupported = true }
+            val h = FakeHotspot(log, psk, unreachableDials = 4)   // ~2 s of "no answer"
+            val (bytes, src) = file("a.bin", 5_000)
+            val out = TransferEngine(log, TcpLanDialer(log), null, timeouts = Timeouts(hotspotHintAfter = 300), hotspot = h, viaHotspot = true)
+                .run(connect(mac), listOf(src), listener)
+            mac.finished.await()
+            assertTrue(out.error?.toString(), out.ok)
+            assertArrayEquals(bytes, mac.received["a.bin"])
+            assertTrue(Stage.WaitingForMacOnHotspot in listener.stages)
+        }
+    }
+
+    @Test fun macJoinedButUnreachableIsItsOwnError() = runBlocking {
+        withTimeout(20_000) {
+            val mac = pairedMac().apply { hotspotSupported = true }
+            val h = FakeHotspot(log, psk, unreachableDials = -1)
+            val out = TransferEngine(log, TcpLanDialer(log), null, timeouts = Timeouts(hotspotDial = 1_000, hotspotHintAfter = 300), hotspot = h, viaHotspot = true)
+                .run(connect(mac), listOf(file("x", 10).second), listener)
+            mac.finished.await()
+            assertEquals(ErrorCode.HOTSPOT_UNREACHABLE, out.error!!.code)
+            assertEquals("hotspot_unreachable", mac.bye!!.str("error"))
+            assertEquals(1, h.stopped)
+        }
+    }
+
+    @Test fun choosingTheHotspotWhileWebRtcTriesEndsTheRunAtOnce() = runBlocking {
+        withTimeout(20_000) {
+            val mac = pairedMac().apply { hotspotSupported = true; advertisedPort = 1 }
+            val hanging = object : RtcPeer {
+                override suspend fun createOffer(gatherTimeoutMs: Long) = "v=0 fake-offer"
+                override suspend fun setAnswer(sdp: String) {}
+                override suspend fun awaitOpen(timeoutMs: Long) { awaitCancellation() }
+                override val channel: RecordChannel get() = error("not open")
+                override fun close() {}
+            }
+            var offered = false
+            val l = object : TransferListener {
+                override fun onHotspotPossible() { offered = true }
+            }
+            val engine = TransferEngine(log, TcpLanDialer(log), RtcPeerFactory { hanging }, hotspot = FakeHotspot(log, psk))
+            val session = connect(mac)
+            val skipper = scope.launch { while (!offered) delay(20); delay(300); engine.skipToHotspot() }
+            val t0 = System.nanoTime()
+            val out = engine.run(session, listOf(file("x", 10).second), l)
+            mac.finished.await()
+            skipper.join()
+            assertEquals(ErrorCode.NO_PATH, out.error!!.code)
+            assertTrue(out.hotspotPossible)
+            assertEquals("no_path", mac.bye!!.str("error"))
+            assertTrue("ended promptly", (System.nanoTime() - t0) / 1_000_000 < 5_000)
         }
     }
 

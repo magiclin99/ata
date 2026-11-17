@@ -6,6 +6,9 @@ import com.ata.core.Msg.str
 import com.ata.core.Msg.strList
 import com.ata.core.Msg.type
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
@@ -30,6 +33,8 @@ sealed interface Stage {
     data object ConnectingRtc : Stage
     /** SPEC §7c: starting this phone's temporary hotspot and waiting for the Mac to join it. */
     data object ConnectingHotspot : Stage
+    /** SPEC §7c: the Mac is on the hotspot but has not answered yet for a few seconds (first-time firewall prompt?). */
+    data object WaitingForMacOnHotspot : Stage
     data class Sending(val path: Path) : Stage
 }
 
@@ -40,6 +45,9 @@ interface TransferListener {
     fun onProgress(fileIndex: Int, fileSent: Long, totalSent: Long) {}
 
     fun onFileDone(fileIndex: Int, ok: Boolean, error: String?) {}
+
+    /** After `accept`: the Mac can join this phone's hotspot, so the UI may offer it (SPEC §7c). */
+    fun onHotspotPossible() {}
 }
 
 data class FileOutcome(val name: String, val size: Long, val ok: Boolean, val error: String?)
@@ -101,7 +109,10 @@ class Timeouts(
     val hotspotStart: Long = 15_000,
     /** The Mac scans up to 30 s and waits up to 15 s for an address (SPEC §7c). */
     val hotspotReady: Long = 60_000,
-    val hotspotDial: Long = 15_000,
+    /** Long enough for a person to answer a first-time "accept incoming connections?" prompt on the Mac. */
+    val hotspotDial: Long = 60_000,
+    /** After this long without reaching the Mac on the hotspot, the UI shows the firewall hint. */
+    val hotspotHintAfter: Long = 5_000,
 )
 
 /**
@@ -120,6 +131,14 @@ class TransferEngine(
     /** The user chose "send using this phone's Wi-Fi": skip LAN and WebRTC and go straight to the hotspot. */
     private val viaHotspot: Boolean = false,
 ) {
+    private val skipRtc = CompletableDeferred<Unit>()
+
+    /**
+     * The user chose the phone's hotspot while WebRTC was still trying: give WebRTC up now. The run then ends with
+     * [ErrorCode.NO_PATH] (the Mac treats it like any no-path ending) and the caller starts a hotspot transfer.
+     */
+    fun skipToHotspot() { skipRtc.complete(Unit) }
+
     suspend fun run(session: SecureSession, files: List<SourceFile>, listener: TransferListener): TransferOutcome {
         val outcomes = files.map { FileOutcome(it.name, it.size, ok = false, error = null) }.toMutableList()
         var path: Path? = null
@@ -155,19 +174,20 @@ class TransferEngine(
                     val port = reply.int("tcpPort") ?: 0
                     val ips = reply.strList("lan")
                     hotspotPossible = hotspot != null && reply.bool("hotspot") == true && port in 1..65535
+                    if (hotspotPossible && !viaHotspot) listener.onHotspotPossible()
 
                     if (viaHotspot) {
                         val h = hotspot
                         if (h == null || !hotspotPossible) throw AtaException(ErrorCode.NO_PATH, "the Mac cannot join this phone's hotspot")
                         listener.onStage(Stage.ConnectingHotspot)
                         hotspotStarted = true
-                        val sock = connectHotspot(session, h, port)
+                        val sock = connectHotspot(session, h, port, listener)
                         val ch = TcpRecordChannel(sock, session.keys)
                         channel = ch
                         try {
                             ch.open()
                         } catch (e: IOException) {
-                            throw AtaException(ErrorCode.HOTSPOT_FAILED, "TCP sid write failed: ${e.message}", e)
+                            throw AtaException(ErrorCode.HOTSPOT_UNREACHABLE, "TCP sid write failed: ${e.message}", e)
                         }
                         path = Path.HOTSPOT
                     } else if (forceRtc) log.i("LAN skipped (debugForceRtc)")
@@ -197,7 +217,17 @@ class TransferEngine(
                             throw AtaException(ErrorCode.NO_PATH, "WebRTC unavailable: ${e.message}", e)
                         }
                         peer = p
-                        connectRtc(session, p)
+                        if (skipRtc.isCompleted) throw AtaException(ErrorCode.NO_PATH, "user chose the phone's hotspot")
+                        coroutineScope {
+                            val attempt = async { connectRtc(session, p) }
+                            select<Unit> {
+                                attempt.onAwait { }
+                                skipRtc.onAwait {
+                                    attempt.cancel()
+                                    throw AtaException(ErrorCode.NO_PATH, "user chose the phone's hotspot while WebRTC was trying")
+                                }
+                            }
+                        }
                         channel = p.channel
                         path = Path.RTC
                     }
@@ -242,7 +272,7 @@ class TransferEngine(
     }
 
     /** SPEC §7c steps 2–4. Returns a socket to the Mac on the hotspot network. */
-    private suspend fun connectHotspot(session: SecureSession, h: HotspotProvider, port: Int): java.net.Socket {
+    private suspend fun connectHotspot(session: SecureSession, h: HotspotProvider, port: Int, listener: TransferListener): java.net.Socket {
         val creds = try {
             h.start(timeouts.hotspotStart)
         } catch (e: CancellationException) {
@@ -258,10 +288,20 @@ class TransferEngine(
         if (r.type == "hotspot_error") throw AtaException(ErrorCode.HOTSPOT_FAILED, "Mac could not join: ${r.str("error")}")
         val ips = r.strList("lan")
         val p = r.int("tcpPort")?.takeIf { it in 1..65535 } ?: port
-        val deadline = System.nanoTime() + timeouts.hotspotDial * 1_000_000
+        // The Mac is on the hotspot now. A Mac with its firewall on may ask once whether ATA may accept incoming
+        // connections; keep trying long enough for a person to answer, and say so after a few seconds.
+        val t0 = System.nanoTime()
+        val deadline = t0 + timeouts.hotspotDial * 1_000_000
+        var hinted = false
         while (true) {
             h.dial(ips, p)?.let { return it }
-            if (System.nanoTime() > deadline) throw AtaException(ErrorCode.HOTSPOT_FAILED, "could not reach the Mac on the hotspot")
+            val now = System.nanoTime()
+            if (now > deadline) throw AtaException(ErrorCode.HOTSPOT_UNREACHABLE, "could not reach the Mac on the hotspot")
+            if (!hinted && now - t0 > timeouts.hotspotHintAfter * 1_000_000) {
+                hinted = true
+                log.i("hotspot: Mac not reachable yet; asking the user to check the Mac")
+                listener.onStage(Stage.WaitingForMacOnHotspot)
+            }
             delay(500)
         }
     }

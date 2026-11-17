@@ -18,7 +18,7 @@ public enum TransferErrorKind: Equatable, Sendable {
         case "cancelled": return .cancelled
         case "phone disconnected", "phone ended the session before the transfer finished": return .phoneStopped
         case "device removed": return .deviceRemoved
-        case "no_path", "hotspot_failed": return .noPath
+        case "no_path", "hotspot_failed", "hotspot_unreachable": return .noPath
         default:
             if error.hasPrefix("timed out") { return .timedOut }
             if error.hasPrefix("WebRTC transfer failed:") { return .noPath }
